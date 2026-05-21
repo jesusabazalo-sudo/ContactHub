@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import App from './App';
 import ErrorBoundary from './components/system/ErrorBoundary';
 import { AuthProvider } from './features/auth/AuthProvider';
@@ -17,5 +18,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Toaster richColors position="top-right" />
       </BrowserRouter>
     </ErrorBoundary>
+    <SpeedInsights />
   </React.StrictMode>,
 );
