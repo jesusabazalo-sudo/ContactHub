@@ -12,7 +12,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
   const orderLabel = category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : '';
 
   return (
-    <article className="group rounded-lg border border-line bg-panel p-5 transition duration-200 hover:-translate-y-1 hover:border-brand-400/35 hover:bg-white/[0.06]">
+    <article className="card-hover group rounded-lg border border-line bg-panel p-5 transition duration-200 hover:-translate-y-1 hover:border-brand-400/35 hover:bg-white/[0.06]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-400/10 text-brand-400">
           <Icon name={category.icon} className="h-5 w-5" />

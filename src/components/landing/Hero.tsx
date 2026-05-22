@@ -11,7 +11,7 @@ const stats = [
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-radial-grid">
+    <section className="hero-gradient relative overflow-hidden bg-radial-grid">
       <div className="container-shell grid min-h-[calc(100vh-4rem)] items-center gap-12 py-16 lg:grid-cols-[1fr_0.9fr] lg:py-20">
         <div className="max-w-4xl">
           <Badge>La información que otros no comparten</Badge>
@@ -22,7 +22,7 @@ export default function Hero() {
             Hay personas que llevan meses buscando exactamente lo que está aquí organizado. No tienen que saberlo — pero tú ya lo sabes.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/catalogo" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
+            <Link to="/catalogo" className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
               Déjame ver qué hay
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -33,7 +33,7 @@ export default function Hero() {
           <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
             {stats.map((stat) => (
               <div key={stat.label} className="rounded-lg border border-line bg-white/5 p-4 count-up">
-                <div className="font-display text-2xl font-bold text-white">{stat.value}</div>
+                <div className="stat-number font-display text-2xl font-bold">{stat.value}</div>
                 <div className="mt-1 text-xs font-medium uppercase text-gray-500">{stat.label}</div>
               </div>
             ))}

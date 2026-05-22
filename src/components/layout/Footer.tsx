@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 import { createWhatsAppUrl } from '../../lib/whatsapp';
 
@@ -24,7 +24,7 @@ export default function Footer() {
             className="focus-ring mt-5 inline-flex items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-sm font-semibold text-brand-400 transition hover:bg-brand-400 hover:text-ink-950"
           >
             <MessageCircle className="h-4 w-4" />
-            WhatsApp
+            Soporte WhatsApp
           </a>
         </div>
 
@@ -47,7 +47,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-line py-5">
-        <div className="container-shell text-sm text-gray-500">© 2026 ContactHub</div>
+        <div className="container-shell text-sm text-gray-500">© 2025 ContactHub · Hecho en Perú 🇵🇪</div>
       </div>
     </footer>
   );

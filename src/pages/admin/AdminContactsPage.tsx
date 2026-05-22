@@ -1,4 +1,4 @@
-import { Edit3, ExternalLink, RefreshCw, Save, Search, Trash2, X, XCircle } from 'lucide-react';
+import { Edit3, ExternalLink, Plus, RefreshCw, Save, Search, Trash2, X, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -68,6 +68,8 @@ export default function AdminContactsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editing, setEditing] = useState<ContactRow | null>(null);
   const [editTags, setEditTags] = useState('');
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newContact, setNewContact] = useState({ name: '', phone: '', category_id: '' });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +152,59 @@ export default function AdminContactsPage() {
     }
   }
 
+  async function saveNewContact() {
+    if (!supabase || !isSupabaseConfigured) {
+      toast.error('Falta conectar Supabase.');
+      return;
+    }
+    const name = sanitizeText(newContact.name, 160);
+    const formattedPhone = formatPhone(newContact.phone);
+    const phone = sanitizePhone(formattedPhone);
+    const categoryId = newContact.category_id;
+
+    if (!name || !phone || !categoryId) {
+      toast.error('Completa nombre, teléfono y categoría.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const { data, error: insertError } = await supabase
+        .from('contacts')
+        .insert({
+          name,
+          phone,
+          phone_masked: maskPhone(phone),
+          category_id: categoryId,
+          description: '',
+          country_flag: '🇵🇪',
+          country_code: 'PE',
+          tags: [],
+          source: 'manual',
+          status: 'active',
+          risk_level: 'safe',
+        })
+        .select('*')
+        .single();
+
+      if (insertError) {
+        console.error('saveNewContact:', insertError.message);
+        toast.error(insertError.message);
+        return;
+      }
+
+      if (data) {
+        setContacts((current) => [data as ContactRow, ...current].slice(0, pageSize));
+        setTotalCount((count) => count + 1);
+      }
+      setIsAddOpen(false);
+      setNewContact({ name: '', phone: '', category_id: '' });
+      toast.success('Contacto agregado.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function deactivateRow(contact: ContactRow) {
     setActionLoading(true);
     try {
@@ -210,6 +265,10 @@ export default function AdminContactsPage() {
             <p className="mt-2 text-sm text-gray-400">Busca, edita, desactiva o elimina contactos reales de Supabase.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setIsAddOpen(true)} className="focus-ring btn-primary-glow inline-flex items-center gap-2 rounded-full bg-brand-400 px-4 py-2 text-sm font-bold text-ink-950 hover:bg-white">
+              <Plus className="h-4 w-4" />
+              ➕ Agregar contacto
+            </button>
             <Link to="/admin/importar" className="focus-ring inline-flex items-center gap-2 rounded-full bg-brand-400 px-4 py-2 text-sm font-bold text-ink-950 hover:bg-white">
               <ExternalLink className="h-4 w-4" />
               Importar contactos
@@ -356,6 +415,41 @@ export default function AdminContactsPage() {
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Tags separados por coma</span><input value={editTags} onChange={(event) => setEditTags(event.target.value)} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
             </div>
             <button type="button" disabled={actionLoading} onClick={() => void saveEdit()} className="focus-ring mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:opacity-60"><Save className="h-4 w-4" />Guardar cambios</button>
+          </div>
+        </div>
+      ) : null}
+
+      {isAddOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-line bg-ink-900 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-display text-2xl font-bold text-white">Agregar contacto</h3>
+                <p className="mt-2 text-sm text-gray-400">Carga rápida manual en Supabase.</p>
+              </div>
+              <button type="button" onClick={() => setIsAddOpen(false)} className="rounded-full border border-line p-2 text-white"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="mt-6 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-gray-300">Nombre</span>
+                <input value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: sanitizeText(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" />
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-gray-300">Teléfono</span>
+                <input value={newContact.phone} onChange={(event) => setNewContact({ ...newContact, phone: sanitizePhone(event.target.value) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" />
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-gray-300">Categoría</span>
+                <select value={newContact.category_id} onChange={(event) => setNewContact({ ...newContact, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">
+                  <option value="">Selecciona categoría</option>
+                  {categories.map((category, index) => <option key={category.id} value={category.id}>{formatCategoryOptionLabel(category, index)}</option>)}
+                </select>
+              </label>
+            </div>
+            <button type="button" disabled={actionLoading} onClick={() => void saveNewContact()} className="focus-ring btn-primary-glow mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:opacity-60">
+              <Save className="h-4 w-4" />
+              Guardar
+            </button>
           </div>
         </div>
       ) : null}

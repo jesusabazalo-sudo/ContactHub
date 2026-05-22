@@ -14,7 +14,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
 
   return (
     <article
-      className={`relative rounded-lg border p-5 transition duration-200 hover:-translate-y-1 ${
+      className={`card-hover relative rounded-lg border p-5 transition duration-200 hover:-translate-y-1 ${
         plan.isRecommended
           ? 'border-brand-400/55 bg-brand-400/10 shadow-glow'
           : plan.isPremium
@@ -46,7 +46,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
         href={createWhatsAppUrl(planWhatsAppMessage(plan.name))}
         target="_blank"
         rel="noreferrer"
-        className="focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+        className="focus-ring btn-primary-glow mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
       >
         <MessageCircle className="h-4 w-4" />
         {plan.cta}

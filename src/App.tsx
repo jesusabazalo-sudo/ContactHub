@@ -20,7 +20,7 @@ import AdminCustomersPage from './pages/admin/AdminCustomersPage';
 import AdminCategoriasPage from './pages/admin/AdminCategoriasPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminImportarPage from './pages/admin/AdminImportarPage';
-import AdminRewardsPage from './pages/admin/AdminRewardsPage';
+import AdminRecompensasPage from './pages/admin/AdminRecompensasPage';
 import AdminSoportePage from './pages/admin/AdminSoportePage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 
@@ -47,7 +47,7 @@ export default function App() {
           <Route path="/admin/contactos" element={<AdminGuard><AdminContactsPage /></AdminGuard>} />
           <Route path="/admin/categorias" element={<AdminGuard><AdminCategoriasPage /></AdminGuard>} />
           <Route path="/admin/importar" element={<AdminGuard><AdminImportarPage /></AdminGuard>} />
-          <Route path="/admin/recompensas" element={<AdminGuard><AdminRewardsPage /></AdminGuard>} />
+          <Route path="/admin/recompensas" element={<AdminGuard><AdminRecompensasPage /></AdminGuard>} />
           <Route path="/admin/soporte" element={<AdminGuard><AdminSoportePage /></AdminGuard>} />
         </Route>
         <Route path="*" element={<Navigate to="/error" replace />} />

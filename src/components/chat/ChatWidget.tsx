@@ -93,10 +93,16 @@ export default function ChatWidget() {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight });
   }, [messages.length, isOpen]);
 
+  useEffect(() => {
+    const openChat = () => setIsOpen(true);
+    window.addEventListener('contacthub:open-chat', openChat);
+    return () => window.removeEventListener('contacthub:open-chat', openChat);
+  }, []);
+
   if (!user) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
       {isOpen ? (
         <div className="mb-4 flex h-[480px] w-[340px] max-w-[90vw] flex-col overflow-hidden rounded-2xl border border-line bg-[#0F2027] shadow-2xl sm:max-w-none">
           <div className="flex items-center justify-between border-b border-line p-4">

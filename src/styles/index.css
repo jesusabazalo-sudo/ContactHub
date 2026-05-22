@@ -98,3 +98,51 @@ select {
   padding-bottom: 8px !important;
   background: rgba(15, 32, 39, 0.97) !important;
 }
+
+.hero-gradient {
+  background: linear-gradient(135deg, #0F2027 0%, #0d2a1f 40%, #0a1a12 70%, #0F2027 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.card-hover {
+  transition: all 0.25s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(29,180,122,0.2);
+  border-color: rgba(29,180,122,0.5) !important;
+}
+
+.btn-primary-glow {
+  box-shadow: 0 4px 20px rgba(29,180,122,0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-glow:hover {
+  box-shadow: 0 6px 28px rgba(29,180,122,0.55);
+  transform: translateY(-2px);
+}
+
+.badge-pulse {
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+.stat-number {
+  background: linear-gradient(135deg, #1DB47A, #09E193);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

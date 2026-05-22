@@ -1,6 +1,6 @@
 import { ArrowRight, TimerReset } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import PromoCountdown from '../promos/PromoCountdown';
+import PromoOffers from '../promos/PromoOffers';
 
 export default function PromoSection() {
   return (
@@ -14,13 +14,13 @@ export default function PromoSection() {
             <h2 className="font-display text-2xl font-bold text-white">Hoy los precios son estos.</h2>
             <p className="mt-2 text-sm leading-6 text-gray-300">Mañana no prometo nada.</p>
           </div>
-          <Link to="/precios" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-brand-400">
-            Ver precios
+          <Link to="/promos" className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-brand-400">
+            Ver promociones
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mt-4">
-          <PromoCountdown />
+        <div className="mt-6">
+          <PromoOffers compact />
         </div>
       </div>
     </section>
