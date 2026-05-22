@@ -114,7 +114,7 @@ export default function AuthPage() {
           <div className="mt-8 grid gap-4">
             {[
               ['Preview limitado', 'Antes de comprar verás muestras seguras y teléfonos ocultos.'],
-              ['Acceso manual', 'El admin activa carpetas después de confirmar el pago por WhatsApp/Yape.'],
+              ['Acceso manual', 'El admin activa carpetas después de confirmar el pago guiado por el chat.'],
               ['RLS primero', 'La seguridad real vive en Supabase, no en trucos del frontend.'],
             ].map(([title, text]) => (
               <div key={title} className="rounded-lg border border-line bg-panel p-5">

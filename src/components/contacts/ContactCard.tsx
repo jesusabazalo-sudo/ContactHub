@@ -1,6 +1,6 @@
-import { Clipboard, LockKeyhole, MessageCircle } from 'lucide-react';
+import { Clipboard, LockKeyhole } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatPhone, maskPhone, phoneToWhatsapp } from '../../utils/phone';
+import { formatPhone, maskPhone } from '../../utils/phone';
 
 type ContactCardContact = {
   id: string;
@@ -34,7 +34,6 @@ export default function ContactCard({
 }: ContactCardProps) {
   const tags = contact.tags ?? [];
   const visiblePhone = canSeeFullPhone ? formatPhone(contact.phone) : maskPhone(contact.phone ?? contact.phoneMasked);
-  const whatsappPhone = phoneToWhatsapp(contact.phone);
 
   async function copyPhone() {
     if (!canSeeFullPhone || !contact.phone) return;
@@ -77,17 +76,6 @@ export default function ContactCard({
 
           {canSeeFullPhone ? (
             <div className="flex flex-wrap gap-2">
-              {whatsappPhone ? (
-                <a
-                  href={`https://wa.me/${whatsappPhone}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand-400 px-4 text-xs font-bold text-ink-950 transition duration-150 hover:scale-[1.02] hover:bg-white active:scale-95"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp
-                </a>
-              ) : null}
               <button
                 type="button"
                 onClick={() => void copyPhone()}

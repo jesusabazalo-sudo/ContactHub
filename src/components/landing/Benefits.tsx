@@ -5,7 +5,7 @@ const benefits = [
   {
     icon: Clock3,
     title: 'El tiempo que no recuperas',
-    text: 'El tiempo que no recuperas buscando en grupos de WhatsApp podría estar generándote resultados. Aquí está lo que encontrarías después de semanas — sin las semanas.',
+    text: 'El tiempo que no recuperas buscando en grupos dispersos podría estar generándote resultados. Aquí está lo que encontrarías después de semanas — sin las semanas.',
   },
   {
     icon: FolderKanban,

@@ -23,7 +23,7 @@ export default function LegalPage() {
           <article className="rounded-lg border border-line bg-panel p-6">
             <h2 className="text-lg font-bold text-white">Activación manual</h2>
             <p className="mt-3 text-sm leading-6 text-gray-400">
-              En esta primera versión, la compra se coordina por WhatsApp/Yape y el acceso se otorga manualmente desde administración después de
+              En esta primera versión, la compra se coordina por el chat de ContactHub y el acceso se otorga manualmente desde administración después de
               confirmar el pago.
             </p>
           </article>

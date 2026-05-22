@@ -1,11 +1,8 @@
 import { ArrowRight, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const yapePlinUrl =
-  'https://wa.me/51963187899?text=Hola%2C+quiero+hacer+un+pago+por+Yape%2FPlin+para+acceder+a+ContactHub.';
-
-function openChat() {
-  window.dispatchEvent(new Event('contacthub:open-chat'));
+function openChat(message?: string) {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
   window.setTimeout(() => {
     document.querySelector('[data-contacthub-chat]')?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, 50);
@@ -30,25 +27,24 @@ export default function FinalCTA() {
             Quiero acceso ahora
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <a
-            href={yapePlinUrl}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => openChat('Hola, quiero hacer un pago por Yape/Plin para acceder a ContactHub.')}
             className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:border-brand-400/50 hover:bg-brand-400/10"
           >
             💜 Pagar por Yape / Plin
-          </a>
+          </button>
         </div>
         <p className="mx-auto mt-5 max-w-xl text-xs leading-5 text-gray-500">
           🔒 ¿Prefieres más información antes de pagar?{' '}
-          <button type="button" onClick={openChat} className="font-semibold text-brand-400 underline-offset-4 hover:underline">
+          <button type="button" onClick={() => openChat('Hola, tengo una duda sobre ContactHub.')} className="font-semibold text-brand-400 underline-offset-4 hover:underline">
             Escríbenos por el chat
           </button>{' '}
-          — te brindamos nuestro WhatsApp para mayor confianza y seguridad.
+          — te guiamos paso a paso antes de pagar.
         </p>
         <p className="mt-4 text-xs text-gray-500">
           <MessageCircle className="mr-1 inline h-3.5 w-3.5" />
-          Desde S/20 por carpeta · S/360 acceso total · Yape / Plin / WhatsApp
+          Desde S/20 por carpeta · S/360 acceso total · Yape / Plin
         </p>
       </div>
     </section>

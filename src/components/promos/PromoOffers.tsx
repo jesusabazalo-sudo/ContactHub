@@ -77,8 +77,8 @@ function formatRemaining(target: Date) {
   return `${String(days).padStart(2, '0')} días ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-function waUrl(message: string) {
-  return `https://wa.me/51963187899?text=${encodeURIComponent(message)}`;
+function openChat(message: string) {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
 }
 
 export default function PromoOffers({ compact = false }: { compact?: boolean }) {
@@ -133,15 +133,14 @@ export default function PromoOffers({ compact = false }: { compact?: boolean }) 
                 <span className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-gray-200">Sin descuento adicional</span>
               )}
               <div className="mt-4 rounded-xl border border-brand-400/25 bg-brand-400/10 p-3 text-sm leading-6 text-gray-100">{offer.gift}</div>
-              <a
-                href={waUrl(offer.message)}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => openChat(offer.message)}
                 className="focus-ring btn-primary-glow mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
               >
                 <MessageCircle className="h-4 w-4" />
-                {state.isPromoDay ? 'Quiero esta promo →' : 'Aprovechar ahora'}
-              </a>
+                Quiero esta promo →
+              </button>
             </div>
           </article>
         ))}

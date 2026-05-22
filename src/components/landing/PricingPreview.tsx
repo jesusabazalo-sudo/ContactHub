@@ -11,7 +11,7 @@ export default function PricingPreview() {
           <SectionHeading
             eyebrow="Planes"
             title="Elige el nivel de acceso que realmente necesitas"
-            description="La compra se confirma por WhatsApp/Yape y el acceso se activa manualmente desde el panel interno."
+            description="La compra se coordina por el chat y el acceso se activa manualmente desde el panel interno."
           />
           <Link to="/precios" className="text-sm font-bold text-brand-400 transition hover:text-white">
             Comparar todos los planes

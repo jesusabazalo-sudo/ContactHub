@@ -9,7 +9,7 @@ export const faqs = [
   },
   {
     question: '¿Cómo recibo el acceso?',
-    answer: 'Te registras, confirmas tu pago por WhatsApp y el acceso se activa desde el panel interno.',
+    answer: 'Te registras, coordinas tu pago por el chat de ContactHub y el acceso se activa desde el panel interno.',
   },
   {
     question: '¿El acceso es inmediato?',
@@ -33,6 +33,6 @@ export const faqs = [
   },
   {
     question: '¿Hay soporte?',
-    answer: 'Sí. Si tienes una duda, puedes escribir directamente por WhatsApp.',
+    answer: 'Sí. Si tienes una duda, usa la burbuja de chat de ContactHub.',
   },
 ];

@@ -12,7 +12,7 @@ export default function PricingPage() {
           <SectionHeading
             eyebrow="Precios"
             title="Hoy los precios son estos. Mañana no prometo nada."
-            description="Cada plan se confirma por WhatsApp. Después de validar el pago, el admin activa tus carpetas dentro de ContactHub."
+            description="Cada plan se coordina por el chat de ContactHub. Después de validar el pago, el admin activa tus carpetas."
           />
           <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {pricingPlans.map((plan) => (

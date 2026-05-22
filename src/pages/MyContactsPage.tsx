@@ -6,11 +6,14 @@ import FriendlyErrorState from '../components/system/FriendlyErrorState';
 import LoadingState from '../components/system/LoadingState';
 import { useAuth } from '../features/auth/AuthProvider';
 import { sanitizeText } from '../lib/sanitize';
-import { createWhatsAppUrl } from '../lib/whatsapp';
 import { getMyContactsData, type MyContactsData, type UnlockedContact } from '../services/myContactsService';
-import { formatPhone, phoneToWhatsapp } from '../utils/phone';
+import { formatPhone } from '../utils/phone';
 
 const TOTAL_FOLDERS = 25;
+
+function openSupportChat(message: string) {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
+}
 
 export default function MyContactsPage() {
   const { user } = useAuth();
@@ -120,15 +123,14 @@ export default function MyContactsPage() {
               <p className="text-sm leading-6 text-gray-200">
                 Tienes {unlockedCount} carpetas. Si agregas {needsForPower} más llegas al Pack Power y ahorras S/Z. ¿Te interesa?
               </p>
-              <a
-                href={createWhatsAppUrl(`Hola, tengo ${unlockedCount} carpeta(s) en ContactHub y quiero saber cómo llegar al Pack Power.`)}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => openSupportChat(`Hola, tengo ${unlockedCount} carpeta(s) en ContactHub y quiero saber cómo llegar al Pack Power.`)}
                 className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
               >
                 <MessageCircle className="h-4 w-4" />
-                Consultar por WhatsApp
-              </a>
+                Consultar por chat
+              </button>
             </div>
           </div>
         ) : null}
@@ -234,15 +236,14 @@ function EmptyContactsState({ userEmail }: { userEmail: string | null }) {
             <Link to="/catalogo" className="focus-ring rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35">
               Explorar catálogo
             </Link>
-            <a
-              href={createWhatsAppUrl('Hola, ya probé los contactos gratis y quiero ver qué acceso me conviene.')}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => openSupportChat('Hola, ya probé los contactos gratis y quiero ver qué acceso me conviene.')}
               className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
             >
               <MessageCircle className="h-4 w-4" />
-              Escribir por WhatsApp
-            </a>
+              Escribir por chat
+            </button>
           </div>
         </div>
       </div>
@@ -286,15 +287,6 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <a
-          href={createContactWhatsAppUrl(contact.phone, `Hola, vengo de ContactHub y quiero consultar por: ${contact.name}`)}
-          target="_blank"
-          rel="noreferrer"
-          className="focus-ring inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
-        >
-          <MessageCircle className="h-4 w-4" />
-          WhatsApp
-        </a>
         <button
           type="button"
           onClick={copyPhone}
@@ -308,8 +300,4 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
   );
 }
 
-function createContactWhatsAppUrl(phone: string, message: string) {
-  const normalizedPhone = phoneToWhatsapp(phone);
-  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
-}
 

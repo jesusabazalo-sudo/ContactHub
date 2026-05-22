@@ -15,7 +15,7 @@ const steps = [
   {
     icon: KeyRound,
     title: 'Desbloquea lo necesario',
-    text: 'Confirma tu acceso por WhatsApp y el admin activa tus carpetas desde Supabase.',
+    text: 'Coordina tu acceso por el chat y el admin activa tus carpetas desde Supabase.',
   },
 ];
 

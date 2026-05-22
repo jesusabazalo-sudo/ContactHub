@@ -1,6 +1,5 @@
 import { Check, MessageCircle } from 'lucide-react';
 import { APP_CONFIG } from '../../config/app';
-import { createWhatsAppUrl, planWhatsAppMessage } from '../../lib/whatsapp';
 import type { PricingPlan } from '../../types';
 import Badge from '../ui/Badge';
 
@@ -11,6 +10,17 @@ type PricingCardProps = {
 
 export default function PricingCard({ plan, compact = false }: PricingCardProps) {
   const folderText = plan.folderLimit === 'total' ? 'Acceso total' : `${plan.folderLimit} carpeta${plan.folderLimit === 1 ? '' : 's'}`;
+  const chatMessages: Record<string, string> = {
+    individual: 'Hola, quiero la carpeta de S/20',
+    starter: 'Hola, quiero el plan Starter de S/65',
+    'fast-track': 'Hola, quiero el Fast Track de S/99',
+    power: 'Hola, quiero el Power de S/150',
+    'elite-total': 'Hola, quiero el Elite Total de S/360',
+  };
+
+  function openChat() {
+    window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: chatMessages[plan.id] ?? `Hola, quiero información sobre ${plan.name}` } }));
+  }
 
   return (
     <article
@@ -42,15 +52,14 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
           Acceso privado por carpeta
         </div>
       </div>
-      <a
-        href={createWhatsAppUrl(planWhatsAppMessage(plan.name))}
-        target="_blank"
-        rel="noreferrer"
+      <button
+        type="button"
+        onClick={openChat}
         className="focus-ring btn-primary-glow mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
       >
         <MessageCircle className="h-4 w-4" />
         {plan.cta}
-      </a>
+      </button>
     </article>
   );
 }

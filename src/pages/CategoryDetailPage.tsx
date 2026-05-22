@@ -6,7 +6,6 @@ import Badge from '../components/ui/Badge';
 import Icon from '../components/ui/Icon';
 import { useAuth } from '../features/auth/AuthProvider';
 import { isSupabaseConfigured, queryWithRetry, supabase, withTimeout } from '../lib/supabaseClient';
-import { categoryWhatsAppMessage, createWhatsAppUrl } from '../lib/whatsapp';
 import { getCategoryDetail, type CatalogContact } from '../services/catalogService';
 import type { Category } from '../types';
 
@@ -25,6 +24,11 @@ export default function CategoryDetailPage() {
   const [detail, setDetail] = useState<CategoryDetailState | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  function openChatForCategory() {
+    if (!category) return;
+    window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: `Hola, quiero desbloquear la carpeta ${category.name}` } }));
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -216,15 +220,14 @@ export default function CategoryDetailPage() {
             {!canViewFullCategory && rewardCount ? <p className="mt-2 text-xs font-semibold text-amber-200">{rewardCount} contacto(s) visibles por recompensa.</p> : null}
             {!canViewFullCategory ? (
               <div className="mt-6 grid gap-3">
-                <a
-                  href={createWhatsAppUrl(categoryWhatsAppMessage(category.name))}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={openChatForCategory}
                   className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Desbloquear carpeta
-                </a>
+                </button>
                 <Link to="/?trial=1" className="focus-ring inline-flex w-full items-center justify-center rounded-full border border-line bg-white/5 px-4 py-3 text-sm font-bold text-white transition hover:border-brand-400/35">
                   Probar 3 contactos gratis
                 </Link>

@@ -1,6 +1,5 @@
 import { MessageCircle } from 'lucide-react';
 import SectionHeading from '../components/ui/SectionHeading';
-import { createWhatsAppUrl, servicesWhatsAppMessage } from '../lib/whatsapp';
 
 const services = [
   {
@@ -11,13 +10,13 @@ const services = [
     name: 'Desarrollo Web',
     text: 'Páginas web claras, rápidas y preparadas para que un negocio pueda mostrar lo que ofrece sin vueltas.',
     badge: '🚀 Próximamente',
-    url: 'https://wa.me/51963187899?text=Hola%2C+estoy+interesado+en+que+me+hagas+una+p%C3%A1gina+web+para+mi+negocio.+Vi+que+ofreces+ese+servicio+en+ContactHub.',
+    message: 'Hola, estoy interesado en una página web para mi negocio. Vi ese servicio en ContactHub.',
   },
   {
     name: 'Impulsa tu negocio',
     text: 'Promoción y exposición para proyectos que necesitan llegar a más personas correctas.',
     badge: '🚀 Próximamente',
-    url: 'https://wa.me/51963187899?text=Hola%2C+quiero+impulsar+mi+negocio+o+p%C3%A1gina+web.+Vi+la+opci%C3%B3n+de+promoci%C3%B3n+en+ContactHub.',
+    message: 'Hola, quiero impulsar mi negocio o página web. Vi esa opción en ContactHub.',
   },
   {
     name: 'Automatizaciones con IA',
@@ -33,6 +32,10 @@ const services = [
   },
 ];
 
+function openChat(message: string) {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
+}
+
 export default function ServicesPage() {
   return (
     <section className="section-pad bg-ink-950">
@@ -46,34 +49,31 @@ export default function ServicesPage() {
           {services.map((service) => (
             <article
               key={service.name}
-              role={service.url ? 'button' : undefined}
-              tabIndex={service.url ? 0 : undefined}
-              onClick={() => service.url && window.open(service.url, '_blank', 'noopener,noreferrer')}
+              role={service.message ? 'button' : undefined}
+              tabIndex={service.message ? 0 : undefined}
+              onClick={() => service.message && openChat(service.message)}
               onKeyDown={(event) => {
-                if (service.url && (event.key === 'Enter' || event.key === ' ')) {
+                if (service.message && (event.key === 'Enter' || event.key === ' ')) {
                   event.preventDefault();
-                  window.open(service.url, '_blank', 'noopener,noreferrer');
+                  openChat(service.message);
                 }
               }}
-              className={`relative rounded-lg border border-line bg-panel p-6 ${service.url ? 'cursor-pointer transition hover:border-brand-400/35' : ''}`}
+              className={`card-hover relative rounded-lg border border-line bg-panel p-6 ${service.message ? 'cursor-pointer transition hover:border-brand-400/35' : ''}`}
             >
-              {service.badge ? (
-                <span className="absolute right-4 top-4 rounded-md bg-amber-700 px-2.5 py-1 text-xs font-bold text-white">{service.badge}</span>
-              ) : null}
+              {service.badge ? <span className="absolute right-4 top-4 rounded-md bg-amber-700 px-2.5 py-1 text-xs font-bold text-white">{service.badge}</span> : null}
               <h2 className="pr-28 text-lg font-bold text-white">{service.name}</h2>
               <p className="mt-3 text-sm leading-6 text-gray-400">{service.text}</p>
             </article>
           ))}
         </div>
-        <a
-          href={createWhatsAppUrl(servicesWhatsAppMessage())}
-          target="_blank"
-          rel="noreferrer"
-          className="focus-ring mt-8 inline-flex items-center gap-2 rounded-full bg-brand-400 px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+        <button
+          type="button"
+          onClick={() => openChat('Hola, quiero hablar sobre un proyecto digital para mi negocio.')}
+          className="focus-ring btn-primary-glow mt-8 inline-flex items-center gap-2 rounded-full bg-brand-400 px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
         >
           <MessageCircle className="h-4 w-4" />
-          Quiero hablar de mi proyecto
-        </a>
+          Abrir chat sobre mi proyecto
+        </button>
       </div>
     </section>
   );

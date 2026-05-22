@@ -31,6 +31,10 @@ function Stars({ value }: { value: number }) {
   );
 }
 
+function openChat(message: string) {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
+}
+
 export default function PublicReviews() {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
@@ -102,7 +106,7 @@ export default function PublicReviews() {
         user_id: user.id,
         review_id: data?.id ?? null,
         status: 'pending',
-        admin_note: 'Solicitud creada desde reseña pública. Falta validar captura por WhatsApp si aplica.',
+        admin_note: 'Solicitud creada desde reseña pública. Falta validar captura por chat si aplica.',
       });
 
       setSent(true);
@@ -169,11 +173,11 @@ export default function PublicReviews() {
               {sent ? (
                 <div className="rounded-xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-gray-300">
                   <p className="font-bold text-white">Tu comentario fue enviado y será revisado.</p>
-                  <p className="mt-2">¿Quieres 3 contactos extra? Mándame la captura por WhatsApp para activar tu recompensa.</p>
-                  <a href="https://wa.me/51963187899?text=Hola%2C+dej%C3%A9+mi+comentario+en+ContactHub+y+quiero+activar+mis+3+contactos+extra." target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-400 px-4 py-2 text-xs font-bold text-ink-950">
+                  <p className="mt-2">¿Quieres 3 contactos extra? Escríbenos por el chat para revisar tu recompensa.</p>
+                  <button type="button" onClick={() => openChat('Hola, dejé mi comentario en ContactHub y quiero activar mis 3 contactos extra.')} className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-400 px-4 py-2 text-xs font-bold text-ink-950">
                     <MessageCircle className="h-4 w-4" />
-                    Enviar captura
-                  </a>
+                    Abrir chat
+                  </button>
                 </div>
               ) : null}
             </div>

@@ -13,5 +13,5 @@ export const APP_CONFIG = {
   trialCtaText: 'Quiero ver si esto me sirve',
   buyCtaText: 'Ya entendí — quiero entrar',
   welcomeChatMessage:
-    'Hola 👋 Soy Jesús — el que armó todo esto. No te voy a vender nada. Pero si tienes una pregunta real, te respondo con la verdad. ¿Qué estás buscando?',
+    'Hola 👋 Soy el asistente de ContactHub. Te puedo ayudar con precios, carpetas, pagos, acceso y dudas. ¿Qué estás buscando?',
 } as const;
