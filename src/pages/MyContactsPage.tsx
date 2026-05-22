@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import FriendlyErrorState from '../components/system/FriendlyErrorState';
 import LoadingState from '../components/system/LoadingState';
+import ProgressBar from '../components/ui/ProgressBar';
 import { useAuth } from '../features/auth/AuthProvider';
 import { sanitizeText } from '../lib/sanitize';
 import { getMyContactsData, type MyContactsData, type UnlockedContact } from '../services/myContactsService';
@@ -31,6 +32,15 @@ export default function MyContactsPage() {
 
     try {
       const nextData = await getMyContactsData(user.id);
+      const nextUnlockedCount = nextData.folders.length;
+      const storageKey = `contacthub:unlocked-folders:${user.id}`;
+      const previousValue = window.localStorage.getItem(storageKey);
+
+      if (previousValue !== null && nextUnlockedCount > Number(previousValue)) {
+        toast.success('🎉 ¡Acceso desbloqueado! Tu nueva carpeta ya está disponible.');
+      }
+
+      window.localStorage.setItem(storageKey, String(nextUnlockedCount));
       setData(nextData);
       if (nextData.folders.length && activeCategoryId !== 'all' && !nextData.folders.some((folder) => folder.id === activeCategoryId)) {
         setActiveCategoryId('all');
@@ -70,7 +80,7 @@ export default function MyContactsPage() {
   }
 
   if (!data?.folders.length) {
-    return <EmptyContactsState userEmail={user?.email ?? null} />;
+    return <EmptyContactsState userEmail={user?.email ?? null} totalFolders={TOTAL_FOLDERS} />;
   }
 
   const unlockedCount = data.folders.length;
@@ -112,9 +122,7 @@ export default function MyContactsPage() {
             </div>
             <p className="text-sm text-gray-400">{data.contacts.length} contactos visibles en acceso rápido</p>
           </div>
-          <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-brand-400 transition-all" style={{ width: `${progress}%` }} />
-          </div>
+          <ProgressBar value={progress} className="mt-5" />
         </div>
 
         {unlockedCount >= 1 && unlockedCount <= 3 ? (
@@ -217,33 +225,66 @@ export default function MyContactsPage() {
   );
 }
 
-function EmptyContactsState({ userEmail }: { userEmail: string | null }) {
+function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | null; totalFolders: number }) {
   return (
     <section className="section-pad bg-ink-950">
       <div className="container-shell">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-line bg-panel p-8 text-center">
-          {userEmail ? (
-            <p className="mb-4 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-400">
-              Sesión activa: {userEmail}
-            </p>
-          ) : null}
-          <h1 className="font-display text-3xl font-bold text-white">Todavía no tienes ninguna carpeta desbloqueada.</h1>
-          <p className="mt-4 text-base leading-7 text-gray-300">Puedes ver una prueba gratis o desbloquear una carpeta cuando quieras.</p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link to="/?trial=1" className="focus-ring rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
-              Ver prueba gratis
-            </Link>
-            <Link to="/catalogo" className="focus-ring rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35">
-              Explorar catálogo
-            </Link>
-            <button
-              type="button"
-              onClick={() => openSupportChat('Hola, ya probé los contactos gratis y quiero ver qué acceso me conviene.')}
-              className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Escribir por chat
-            </button>
+        <div className="mx-auto max-w-5xl rounded-2xl border border-line bg-panel p-6 shadow-2xl shadow-black/20 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div>
+              {userEmail ? (
+                <p className="mb-5 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-400">
+                  Sesión activa: {userEmail}
+                </p>
+              ) : null}
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-400">Tu progreso de acceso</p>
+              <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+                Todavía no tienes ninguna carpeta desbloqueada, pero ya puedes empezar.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-300">
+                Cada acceso que obtengas te acerca al acceso total. Puedes probar contactos reales, explorar el catálogo o escribir por chat para que te orientemos.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link to="/?trial=1" className="focus-ring rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
+                  Ver prueba gratis
+                </Link>
+                <Link
+                  to="/catalogo"
+                  className="focus-ring rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
+                >
+                  Explorar catálogo
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => openSupportChat('Hola, quiero desbloquear una carpeta de ContactHub. ¿Qué opción me recomiendas?')}
+                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 py-3 text-sm font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Escribir por chat
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-brand-400/25 bg-ink-950/70 p-5">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-400">Carpetas desbloqueadas</p>
+                  <p className="mt-2 font-display text-4xl font-bold text-white">0%</p>
+                </div>
+                <p className="pb-1 text-sm font-semibold text-brand-300">0 de {totalFolders}</p>
+              </div>
+              <ProgressBar value={0} className="mt-5" />
+              <p className="mt-5 text-sm leading-6 text-gray-400">
+                Cuando actives tu primera carpeta, esta barra subirá automáticamente y verás tus contactos completos aquí.
+              </p>
+              <button
+                type="button"
+                onClick={() => openSupportChat('Hola, quiero saber cómo desbloquear mi primera carpeta en ContactHub.')}
+                className="focus-ring mt-5 w-full rounded-full bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-400 hover:text-ink-950"
+              >
+                Desbloquear una carpeta
+              </button>
+            </div>
           </div>
         </div>
       </div>

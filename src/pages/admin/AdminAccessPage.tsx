@@ -182,7 +182,7 @@ export default function AdminAccessPage() {
         categoryNames: result.categoryNames,
         message: result.message,
       });
-      toast.success('Acceso activado.');
+      toast.success('🎉 ¡Acceso desbloqueado! Tu nueva carpeta ya está disponible.');
       setSelectedPendingId(null);
       setNotes('');
       setSelectedCategoryIds([]);
@@ -395,6 +395,9 @@ export default function AdminAccessPage() {
             <div className="mt-6 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-5">
               <p className="font-semibold text-white">Acceso activado para {activationResult.email ?? 'cliente'}.</p>
               <p className="mt-2 text-sm text-brand-200">{activationResult.categoryNames.join(', ')}</p>
+              <div className="mt-4 rounded-lg border border-brand-400/25 bg-brand-400/10 p-4 text-sm font-semibold text-brand-100">
+                ✅ Permiso activado. Ya puedes explorar tu nuevo acceso.
+              </div>
               <div className="mt-4 rounded-lg border border-line bg-ink-950/70 p-4 text-sm leading-6 text-gray-300">{activationResult.message}</div>
               <button
                 type="button"

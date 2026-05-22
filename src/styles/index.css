@@ -146,3 +146,13 @@ select {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+.progress-fill {
+  transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms ease;
+  box-shadow: 0 0 18px rgba(29, 180, 122, 0.35);
+}
+
+.chat-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(29, 180, 122, 0.5) transparent;
+}

@@ -70,6 +70,7 @@ export default function ChatWidget() {
   const [text, setText] = useState('');
   const [unread, setUnread] = useState(0);
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   async function loadMessages() {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
@@ -136,6 +137,13 @@ export default function ChatWidget() {
     }, 350);
   }
 
+  function resizeTextarea() {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+  }
+
   useEffect(() => {
     void loadMessages();
   }, [user?.id]);
@@ -157,8 +165,12 @@ export default function ChatWidget() {
   }, [isOpen, messages.length]);
 
   useEffect(() => {
-    messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight });
+    messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages.length, isOpen]);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [text, isOpen]);
 
   useEffect(() => {
     const openChat = (event: Event) => {
@@ -174,58 +186,66 @@ export default function ChatWidget() {
   return (
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
       {isOpen ? (
-        <div className="mb-4 flex h-[520px] w-[340px] max-w-[90vw] flex-col overflow-hidden rounded-2xl border border-line bg-[#0F2027] shadow-2xl sm:max-w-none">
-          <div className="flex items-center justify-between border-b border-line p-4">
+        <div className="fixed inset-x-3 bottom-24 flex h-[min(78vh,640px)] flex-col overflow-hidden rounded-2xl border border-brand-400/20 bg-[#0F2027] shadow-2xl sm:static sm:mb-4 sm:h-[620px] sm:w-[400px] sm:max-w-[calc(100vw-2rem)]">
+          <div className="flex items-center justify-between border-b border-line bg-white/[0.03] p-5">
             <div>
-              <p className="font-bold text-white">💬 Soporte ContactHub</p>
+              <p className="font-display text-lg font-bold text-white">💬 Soporte ContactHub</p>
               <p className="mt-1 flex items-center gap-2 text-xs text-brand-400">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400" />
                 En línea
               </p>
             </div>
-            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-line p-2 text-white">
+            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-line bg-white/5 p-2 text-white transition hover:border-brand-400/40">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div ref={messagesRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+
+          <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto p-5">
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm ${message.sender === 'user' ? 'bg-brand-500 text-ink-950' : 'bg-white/10 text-white'}`}>
-                  <p>{message.message}</p>
+                <div className={`max-w-[84%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md bg-brand-500 text-ink-950' : 'rounded-bl-md bg-white/10 text-white'}`}>
+                  <p className="whitespace-pre-wrap">{message.message}</p>
                   <p className="mt-1 text-[10px] opacity-70">{new Date(message.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
             ))}
           </div>
-          <div className="border-t border-line p-3">
-            <div className="mb-3 flex flex-wrap gap-2">
+
+          <div className="border-t border-line bg-ink-950/40 p-4">
+            <div className="mb-3 grid grid-cols-2 gap-2">
               {quickActions.map((action) => (
-                <button key={action.label} type="button" onClick={() => void sendMessage(action.message)} className="rounded-full border border-line bg-white/5 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:border-brand-400/50">
+                <button key={action.label} type="button" onClick={() => void sendMessage(action.message)} className="rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-brand-400/50 hover:bg-brand-400/10">
                   {action.label}
                 </button>
               ))}
-              <a href={getWhatsAppUrl()} target="_blank" rel="noreferrer" className="rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-semibold text-brand-300">
+              <a href={getWhatsAppUrl()} target="_blank" rel="noreferrer" className="col-span-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-2 text-center text-xs font-semibold text-brand-300 transition hover:bg-brand-400/15">
                 Hablar con Jesús por WhatsApp
               </a>
             </div>
-            <div className="flex gap-2">
-              <input
+            <div className="flex items-end gap-2 rounded-2xl border border-line bg-ink-950/70 p-2">
+              <textarea
+                ref={textareaRef}
                 value={text}
-                onChange={(event) => setText(sanitizeText(event.target.value, 500))}
+                onChange={(event) => setText(event.target.value.slice(0, 500))}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') void sendMessage();
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    void sendMessage();
+                  }
                 }}
                 placeholder="Escribe tu mensaje"
-                className="focus-ring h-10 min-w-0 flex-1 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white"
+                rows={1}
+                className="chat-textarea focus-ring max-h-[120px] min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 text-white placeholder:text-gray-500"
               />
-              <button type="button" onClick={() => void sendMessage()} className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-ink-950">
+              <button type="button" onClick={() => void sendMessage()} className="focus-ring inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand-500 text-ink-950 transition hover:bg-white active:scale-95">
                 <Send className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
       ) : null}
-      <button type="button" onClick={() => setIsOpen((current) => !current)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#1DB47A] text-ink-950 shadow-glow">
+
+      <button type="button" onClick={() => setIsOpen((current) => !current)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#1DB47A] text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
         <MessageCircle className="h-6 w-6" />
         {unread ? <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">{unread}</span> : null}
       </button>
