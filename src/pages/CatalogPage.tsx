@@ -6,7 +6,7 @@ import LoadingState from '../components/system/LoadingState';
 import SectionHeading from '../components/ui/SectionHeading';
 import { APP_CONFIG } from '../config/app';
 import { useAuth } from '../features/auth/AuthProvider';
-import { sanitizeText } from '../lib/sanitize';
+import { sanitizeText, sanitizeTextInput } from '../lib/sanitize';
 import { supabase } from '../lib/supabaseClient';
 import { getCatalogCategories } from '../services/catalogService';
 import type { Category } from '../types';
@@ -81,7 +81,7 @@ export default function CatalogPage() {
           Puedes registrarte gratis, revisar qué existe en cada carpeta y ver teléfonos ocultos. Los números completos se muestran solo con acceso, prueba o recompensa aprobada.
         </div>
         <div className="mt-8">
-          <CategoryFilters query={query} filter={filter} onQueryChange={(value) => setQuery(sanitizeText(value, 80))} onFilterChange={setFilter} purchasedDisabled={!user} />
+          <CategoryFilters query={query} filter={filter} onQueryChange={(value) => setQuery(sanitizeTextInput(value, 80))} onFilterChange={setFilter} purchasedDisabled={!user} />
         </div>
         {filter === 'purchased' && user ? (
           <div className="mt-6 rounded-lg border border-brand-400/20 bg-brand-400/10 p-4 text-sm leading-6 text-gray-300">

@@ -8,7 +8,7 @@ import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
-import { sanitizeText } from '../../lib/sanitize';
+import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ChatMessage = {
@@ -183,7 +183,7 @@ export default function AdminSoportePage() {
                 ))}
               </div>
               <div className="mt-4 flex gap-2">
-                <input value={reply} onChange={(event) => setReply(sanitizeText(event.target.value, 500))} className="focus-ring h-11 flex-1 rounded-full border border-line bg-ink-950/70 px-4 text-white" placeholder="Respuesta" />
+                <input value={reply} onChange={(event) => setReply(sanitizeTextInput(event.target.value, 500))} className="focus-ring h-11 flex-1 rounded-full border border-line bg-ink-950/70 px-4 text-white" placeholder="Respuesta" />
                 <button type="button" onClick={() => void sendReply()} className="focus-ring inline-flex h-11 items-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950">
                   <Send className="h-4 w-4" />
                   Enviar respuesta

@@ -7,7 +7,7 @@ import FriendlyErrorState from '../components/system/FriendlyErrorState';
 import LoadingState from '../components/system/LoadingState';
 import ProgressBar from '../components/ui/ProgressBar';
 import { useAuth } from '../features/auth/AuthProvider';
-import { sanitizeText } from '../lib/sanitize';
+import { sanitizeText, sanitizeTextInput } from '../lib/sanitize';
 import { getMyContactsData, type MyContactsData, type UnlockedContact } from '../services/myContactsService';
 import { formatPhone } from '../utils/phone';
 
@@ -170,7 +170,7 @@ export default function MyContactsPage() {
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <input
                 value={query}
-                onChange={(event) => setQuery(sanitizeText(event.target.value, 80))}
+                onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
                 placeholder="Buscar por nombre, descripción, teléfono o tag"
                 className="focus-ring h-12 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white placeholder:text-gray-500"
               />

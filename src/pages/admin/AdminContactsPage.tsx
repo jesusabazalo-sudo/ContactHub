@@ -8,7 +8,7 @@ import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { formatDate } from '../../lib/format';
-import { sanitizePhone, sanitizeText } from '../../lib/sanitize';
+import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { deleteContact, deleteContactsBulk, getContacts, getTotalContactsCount, updateContact } from '../../services/adminContactsService';
 import { formatPhone, maskPhone } from '../../utils/phone';
@@ -288,7 +288,7 @@ export default function AdminContactsPage() {
               value={search}
               onChange={(event) => {
                 setCurrentPage(0);
-                setSearch(sanitizeText(event.target.value, 80));
+                setSearch(sanitizeTextInput(event.target.value, 80));
               }}
               placeholder="Buscar por nombre, teléfono, descripción o categoría"
               className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
@@ -434,7 +434,7 @@ export default function AdminContactsPage() {
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-gray-300">Nombre</span>
-                <input value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: sanitizeText(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" />
+                <input value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: sanitizeTextInput(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" />
               </label>
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-gray-300">Teléfono</span>

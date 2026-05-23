@@ -5,7 +5,7 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
-import { sanitizePhone, sanitizeText } from '../../lib/sanitize';
+import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
@@ -306,7 +306,7 @@ export default function AdminImportarPage() {
               <textarea
                 value={text}
                 onChange={(event) => {
-                  setText(sanitizeText(event.target.value, 20000));
+                  setText(sanitizeTextInput(event.target.value, 20000));
                   setResult('');
                   setFailed([]);
                   setRealSavedCount(null);

@@ -7,7 +7,7 @@ import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { useAuth } from '../../features/auth/AuthProvider';
-import { sanitizeEmail, sanitizeText } from '../../lib/sanitize';
+import { sanitizeEmail, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { formatDate } from '../../lib/format';
 import {
   cancelPendingPurchase,
@@ -372,7 +372,7 @@ export default function AdminAccessPage() {
               <span className="text-sm font-semibold text-gray-300">Nota interna</span>
               <textarea
                 value={notes}
-                onChange={(event) => setNotes(sanitizeText(event.target.value, 500))}
+                onChange={(event) => setNotes(sanitizeTextInput(event.target.value, 500))}
                 rows={3}
                 placeholder="Pago confirmado por WhatsApp/Yape."
                 className="focus-ring resize-none rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-sm text-white placeholder:text-gray-500"

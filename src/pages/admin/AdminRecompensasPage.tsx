@@ -8,7 +8,7 @@ import LoadingState from '../../components/system/LoadingState';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
-import { sanitizeText } from '../../lib/sanitize';
+import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ProfileRow = { id: string; email: string | null; full_name: string | null };
@@ -225,7 +225,7 @@ export default function AdminRecompensasPage() {
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <input
               value={query}
-              onChange={(event) => setQuery(sanitizeText(event.target.value, 80))}
+              onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
               placeholder="Buscar usuario por email o nombre"
               className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
             />
@@ -282,7 +282,7 @@ export default function AdminRecompensasPage() {
 
               <label className="mt-5 grid gap-2">
                 <span className="text-sm font-semibold text-gray-300">Motivo del regalo</span>
-                <textarea value={note} onChange={(event) => setNote(sanitizeText(event.target.value, 500))} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" />
+                <textarea value={note} onChange={(event) => setNote(sanitizeTextInput(event.target.value, 500))} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" />
               </label>
 
               <button

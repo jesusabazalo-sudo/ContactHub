@@ -4,7 +4,7 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
 import { formatDate } from '../../lib/format';
-import { sanitizeText } from '../../lib/sanitize';
+import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ProfileRow = {
@@ -123,7 +123,7 @@ export default function AdminCustomersPage() {
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <input
             value={query}
-            onChange={(event) => setQuery(sanitizeText(event.target.value, 80))}
+            onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
             placeholder="Buscar por email, nombre o teléfono"
             className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
           />

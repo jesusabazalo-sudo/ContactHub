@@ -8,7 +8,7 @@ import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
-import { sanitizeText } from '../../lib/sanitize';
+import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { getAdminCategories, getAdminUsers, type AdminCategory, type AdminProfile } from '../../services/adminService';
 
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <input
                 value={query}
-                onChange={(event) => setQuery(sanitizeText(event.target.value, 80))}
+                onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
                 placeholder="Buscar por email, nombre o teléfono"
                 className="focus-ring h-12 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white placeholder:text-gray-500"
               />
@@ -305,7 +305,7 @@ export default function AdminUsersPage() {
               <span className="text-sm font-semibold text-gray-300">Nota opcional</span>
               <textarea
                 value={giftNote}
-                onChange={(event) => setGiftNote(sanitizeText(event.target.value, 500))}
+                onChange={(event) => setGiftNote(sanitizeTextInput(event.target.value, 500))}
                 rows={3}
                 className="focus-ring resize-none rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-white"
               />
