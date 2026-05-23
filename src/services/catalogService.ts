@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
-import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
+import { applyOfficialCategoryDisplay } from '../data/officialCategories';
 import type { Category } from '../types';
 
 export type CatalogContact = {
@@ -22,7 +22,9 @@ export type CatalogContact = {
 };
 
 function mapCategory(row: any, contactsCount = 0): Category {
-  const official = applyOfficialCategoryDisplay(row);
+  // Do not infer identity from the array position. Category identity must come
+  // from the real row slug/name/sort_order so links and contact counts stay aligned.
+  const official = applyOfficialCategoryDisplay(row, -1);
   return {
     id: official.id,
     name: official.name ?? '',
@@ -66,21 +68,28 @@ function mapContact(row: any, isUnlocked: boolean): CatalogContact {
 }
 
 export async function getCatalogCategories() {
-  if (!supabase) return [];
-  const client = supabase;
-  const { data, error } = await client.from('categories').select('*').eq('is_active', true).order('sort_order', { ascending: true });
-  if (error) {
-    console.error('getCatalogCategories:', error.message);
+  try {
+    if (!supabase) return [];
+    const client = supabase;
+    const { data, error } = await client.from('categories').select('*').eq('is_active', true).order('name', { ascending: true });
+    if (error) {
+      console.error('getCatalogCategories error:', error);
+      return [];
+    }
+
+    const withCounts = await Promise.all(
+      (data ?? []).map(async (cat) => {
+        const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
+        if (countError) console.error('getCatalogCategories count:', countError.message);
+        return mapCategory(cat, count ?? 0);
+      }),
+    );
+
+    return withCounts.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name));
+  } catch (err) {
+    console.error('getCatalogCategories catch:', err);
     return [];
   }
-  const withCounts = await Promise.all(
-    sortByOfficialOrder(data ?? []).map(async (cat) => {
-      const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
-      if (countError) console.error('getCatalogCategories count:', countError.message);
-      return mapCategory(cat, count ?? 0);
-    }),
-  );
-  return sortByOfficialOrder(withCounts);
 }
 
 export async function getCategoryBySlug(slug: string) {

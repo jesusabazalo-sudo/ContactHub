@@ -1,0 +1,33 @@
+UPDATE contacts SET 
+  country_flag = CASE
+    WHEN phone LIKE '+51%' THEN '🇵🇪'
+    WHEN phone LIKE '+57%' THEN '🇨🇴'
+    WHEN phone LIKE '+52%' THEN '🇲🇽'
+    WHEN phone LIKE '+54%' THEN '🇦🇷'
+    WHEN phone LIKE '+55%' THEN '🇧🇷'
+    WHEN phone LIKE '+56%' THEN '🇨🇱'
+    WHEN phone LIKE '+591%' THEN '🇧🇴'
+    WHEN phone LIKE '+593%' THEN '🇪🇨'
+    WHEN phone LIKE '+595%' THEN '🇵🇾'
+    WHEN phone LIKE '+1%' THEN '🇺🇸'
+    WHEN phone LIKE '+34%' THEN '🇪🇸'
+    WHEN phone LIKE '+86%' THEN '🇨🇳'
+    WHEN phone LIKE '+20%' THEN '🇪🇬'
+    ELSE '🌎'
+  END,
+  country_code = CASE
+    WHEN phone LIKE '+51%' THEN 'PE'
+    WHEN phone LIKE '+57%' THEN 'CO'
+    WHEN phone LIKE '+52%' THEN 'MX'
+    WHEN phone LIKE '+54%' THEN 'AR'
+    WHEN phone LIKE '+55%' THEN 'BR'
+    WHEN phone LIKE '+56%' THEN 'CL'
+    WHEN phone LIKE '+591%' THEN 'BO'
+    WHEN phone LIKE '+593%' THEN 'EC'
+    WHEN phone LIKE '+595%' THEN 'PY'
+    WHEN phone LIKE '+1%' THEN 'US'
+    WHEN phone LIKE '+34%' THEN 'ES'
+    WHEN phone LIKE '+86%' THEN 'CN'
+    WHEN phone LIKE '+20%' THEN 'EG'
+    ELSE 'XX'
+  END;

@@ -8,6 +8,8 @@ type ContactCardContact = {
   description?: string | null;
   phone?: string | null;
   phoneMasked?: string | null;
+  countryFlag?: string | null;
+  country_flag?: string | null;
   tags?: string[] | null;
 };
 
@@ -34,6 +36,7 @@ export default function ContactCard({
 }: ContactCardProps) {
   const tags = contact.tags ?? [];
   const visiblePhone = canSeeFullPhone ? formatPhone(contact.phone) : maskPhone(contact.phone ?? contact.phoneMasked);
+  const countryFlag = contact.countryFlag ?? contact.country_flag ?? '';
 
   async function copyPhone() {
     if (!canSeeFullPhone || !contact.phone) return;
@@ -70,7 +73,10 @@ export default function ContactCard({
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Teléfono</p>
-            <p className="mt-1 font-mono text-base font-bold text-white">{visiblePhone}</p>
+            <p className="mt-1 font-mono text-base font-bold text-white">
+              {countryFlag ? `${countryFlag} ` : ''}
+              {visiblePhone}
+            </p>
             {!canSeeFullPhone ? <p className="mt-1 text-xs text-gray-500">Número completo disponible al desbloquear.</p> : null}
           </div>
 

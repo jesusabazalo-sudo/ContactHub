@@ -1,5 +1,6 @@
 import { Copy, MessageCircle, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { APP_CONFIG } from '../../config/app';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { sanitizeText } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
@@ -12,9 +13,10 @@ type ChatMessage = {
   sender: 'user' | 'admin';
   read: boolean;
   created_at: string;
+  kind?: 'text' | 'yapeQr';
 };
 
-type ChatFlow = 'main' | 'prices' | 'promos' | 'folders' | 'folderDetail' | 'payment' | 'paid' | 'help' | 'missions' | 'human';
+type ChatFlow = 'main' | 'prices' | 'promos' | 'folders' | 'folderDetail' | 'payment' | 'paid' | 'qr' | 'help' | 'missions' | 'human';
 
 type ChatAction = {
   label: string;
@@ -26,6 +28,7 @@ type ChatAction = {
     | 'folder'
     | 'payment'
     | 'paid'
+    | 'yapeQr'
     | 'help'
     | 'helpTopic'
     | 'missions'
@@ -146,7 +149,7 @@ function hasAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word));
 }
 
-function localMessage(message: string, sender: 'user' | 'admin'): ChatMessage {
+function localMessage(message: string, sender: 'user' | 'admin', kind: ChatMessage['kind'] = 'text'): ChatMessage {
   return {
     id: `${sender}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     user_id: null,
@@ -155,6 +158,7 @@ function localMessage(message: string, sender: 'user' | 'admin'): ChatMessage {
     read: true,
     message,
     created_at: new Date().toISOString(),
+    kind,
   };
 }
 
@@ -164,7 +168,7 @@ function cleanEnv(value?: string) {
 
 function getPaymentMethods(): PaymentMethod[] {
   const yapeNumber = cleanEnv(import.meta.env.NEXT_PUBLIC_YAPE_NUMBER as string | undefined);
-  const yapeQrUrl = cleanEnv(import.meta.env.NEXT_PUBLIC_YAPE_QR_URL as string | undefined);
+  const yapeQrUrl = cleanEnv(import.meta.env.NEXT_PUBLIC_YAPE_QR_URL as string | undefined) || APP_CONFIG.qrYapeUrl;
   const plinNumber = cleanEnv(import.meta.env.NEXT_PUBLIC_PLIN_NUMBER as string | undefined);
   const plinQrUrl = cleanEnv(import.meta.env.NEXT_PUBLIC_PLIN_QR_URL as string | undefined);
   const methods: PaymentMethod[] = [];
@@ -180,7 +184,7 @@ function paymentInfoMessage() {
 }
 
 function getWhatsAppUrl(message: string) {
-  const number = cleanEnv(import.meta.env.NEXT_PUBLIC_WHATSAPP_NUMBER as string | undefined).replace(/\D/g, '');
+  const number = (cleanEnv(import.meta.env.NEXT_PUBLIC_WHATSAPP_NUMBER as string | undefined) || APP_CONFIG.whatsappNumber).replace(/\D/g, '');
   if (!number) return null;
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
@@ -205,6 +209,27 @@ function findCategoryFromText(text: string) {
     const haystack = normalizeText(`${category.name} ${category.shortName} ${category.finds.join(' ')}`);
     return category.name !== 'PROHIBIDO' && haystack.split(/\s+/).some((word) => word.length > 4 && text.includes(word));
   });
+}
+
+function YapeQrMessage({ paymentName }: { paymentName: string }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '12px' }}>
+      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>
+        💜 Escanea este QR con tu app Yape para pagar:
+      </p>
+      <img
+        src={APP_CONFIG.qrYapeUrl}
+        alt="QR Yape - Jesus Francisco Abazalo Mori"
+        style={{ width: '200px', maxWidth: '100%', borderRadius: '12px', border: '2px solid #1DB47A', margin: '0 auto' }}
+      />
+      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
+        A nombre de: {paymentName}
+      </p>
+      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+        Después de pagar, toca "Ya pagué" y envía el comprobante
+      </p>
+    </div>
+  );
 }
 
 function PaymentCard({
@@ -338,8 +363,8 @@ export default function ChatWidget() {
   const receiptInputRef = useRef<HTMLInputElement | null>(null);
 
   const paymentMethods = useMemo(() => getPaymentMethods(), []);
-  const paymentName = cleanEnv(import.meta.env.NEXT_PUBLIC_PAYMENT_NAME as string | undefined);
-  const hasWhatsApp = Boolean(cleanEnv(import.meta.env.NEXT_PUBLIC_WHATSAPP_NUMBER as string | undefined));
+  const paymentName = cleanEnv(import.meta.env.NEXT_PUBLIC_PAYMENT_NAME as string | undefined) || 'Jesus Francisco Abazalo Mori';
+  const hasWhatsApp = Boolean(cleanEnv(import.meta.env.NEXT_PUBLIC_WHATSAPP_NUMBER as string | undefined) || APP_CONFIG.whatsappNumber);
 
   const quickActions = useMemo<ChatAction[]>(() => {
     if (currentFlow === 'prices') {
@@ -374,11 +399,18 @@ export default function ChatWidget() {
     }
     if (currentFlow === 'payment') {
       return [
-        { label: 'Ver QR Yape', type: 'payment' },
+        { label: 'Ver QR Yape', type: 'yapeQr' },
         { label: 'Subir comprobante', type: 'uploadReceipt' },
         { label: 'Ya pagué', type: 'paid' },
         ...(selectedPlan ? [{ label: 'Ver qué incluye', type: 'helpTopic' as const, value: 'planIncludes' }] : []),
         { label: 'Volver al inicio', type: 'main' },
+      ];
+    }
+    if (currentFlow === 'qr') {
+      return [
+        ...(hasWhatsApp ? [{ label: '📸 Ya pagué — enviar comprobante', type: 'whatsapp' as const, value: 'receiptShort' }] : []),
+        { label: 'Subir comprobante', type: 'uploadReceipt' },
+        { label: '🔙 Volver', type: 'payment' },
       ];
     }
     if (currentFlow === 'paid') {
@@ -429,6 +461,11 @@ export default function ChatWidget() {
     await persistMessage(message, 'admin', false);
   }
 
+  function addYapeQrMessage() {
+    setMessages((current) => [...current, localMessage('QR Yape', 'admin', 'yapeQr')]);
+    setCurrentFlow('qr');
+  }
+
   async function addUserMessage(message: string) {
     setMessages((current) => [...current, localMessage(message, 'user')]);
     await persistMessage(message, 'user', false);
@@ -446,6 +483,15 @@ export default function ChatWidget() {
   }
 
   function openWhatsApp(value?: string) {
+    if (value === 'receiptShort') {
+      const url = getWhatsAppUrl('Hola Jesús, acabo de hacer el pago por Yape. Te mando el comprobante.');
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      if (!whatsappNoticeShown) setWhatsappNoticeShown(true);
+      return;
+    }
     const whatsappMessage =
       value === 'receipt'
         ? 'Hola Jesús, vengo desde ContactHub. Ya realicé el pago por Yape y quiero enviar mi comprobante para activar mi acceso.'
@@ -568,6 +614,10 @@ export default function ChatWidget() {
       const plan = plans.find((item) => item.id === action.value) ?? plans[0];
       setSelectedPlan(plan);
       await addAssistantMessage(renderPlanMessage(plan), 'payment');
+      return;
+    }
+    if (action.type === 'yapeQr') {
+      addYapeQrMessage();
       return;
     }
     if (action.type === 'payment') {
@@ -769,7 +819,7 @@ export default function ChatWidget() {
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[88%] rounded-2xl px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md bg-brand-500 text-ink-950' : 'rounded-bl-md bg-white/10 text-white'}`}>
-                  <p className="whitespace-pre-wrap">{message.message}</p>
+                  {message.kind === 'yapeQr' ? <YapeQrMessage paymentName={paymentName} /> : <p className="whitespace-pre-wrap">{message.message}</p>}
                   <p className="mt-2 text-[10px] opacity-65">{new Date(message.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>

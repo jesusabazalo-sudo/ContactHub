@@ -1,4 +1,3 @@
-import { sortByOfficialOrder } from '../../data/officialCategories';
 import type { Category } from '../../types';
 import CategoryCard from './CategoryCard';
 
@@ -18,7 +17,7 @@ export default function CatalogGrid({ categories }: CatalogGridProps) {
     );
   }
 
-  const orderedCategories = sortByOfficialOrder(categories);
+  const orderedCategories = [...categories].sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name));
   const premiumCategory = orderedCategories.find((category) => category.sortOrder === 25 || category.isPremiumOfficial);
   const regularCategories = orderedCategories.filter((category) => category.id !== premiumCategory?.id);
 

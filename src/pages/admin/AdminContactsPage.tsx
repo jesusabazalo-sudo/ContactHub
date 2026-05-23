@@ -6,14 +6,13 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
-import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { formatDate } from '../../lib/format';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
-import { deleteContact, deleteContactsBulk, getContacts, getTotalContactsCount, updateContact } from '../../services/adminContactsService';
+import { deleteContact, deleteContactsBulk, getCountryCode, getFlag, updateContact } from '../../services/adminContactsService';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
-type CategoryOption = { id: string; name: string; slug: string; icon?: string | null; sort_order?: number | null };
+type CategoryOption = { id: string; name: string; icon?: string | null };
 type ContactStatus = 'active' | 'inactive' | 'review' | 'rejected';
 type ContactRow = {
   id: string;
@@ -26,6 +25,8 @@ type ContactRow = {
   status: ContactStatus;
   risk_level: 'safe' | 'review' | 'prohibited';
   created_at: string;
+  category_name?: string;
+  category_icon?: string;
 };
 
 const pageSize = 50;
@@ -42,19 +43,6 @@ export function parseContactLine(line: string) {
   const name = cleanLine.replace(phoneMatch[0], '').replace(/[\(\)\-—–:,\.]/g, ' ').replace(/\s+/g, ' ').trim();
   if (!name || name.length < 2) return null;
   return { name, phone };
-}
-
-async function loadCategoriesSafe() {
-  if (!supabase || !isSupabaseConfigured) return [];
-  const sorted = await supabase.from('categories').select('id,name,slug,icon,sort_order').order('sort_order', { ascending: true }).order('name', { ascending: true });
-  const result = sorted.error?.message.toLowerCase().includes('sort_order')
-    ? await supabase.from('categories').select('id,name,slug,icon').order('name', { ascending: true })
-    : sorted;
-  if (result.error) {
-    console.error('AdminContactsPage categories:', result.error.message);
-    return [];
-  }
-  return sortByOfficialOrder((result.data ?? []).map((category) => applyOfficialCategoryDisplay(category)));
 }
 
 export default function AdminContactsPage() {
@@ -74,28 +62,102 @@ export default function AdminContactsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [categoryData, data, total] = await Promise.all([
-          loadCategoriesSafe(),
-          getContacts({ search, categoryId: selectedCategory, status: selectedStatus, page: currentPage }),
-          getTotalContactsCount({ search, categoryId: selectedCategory, status: selectedStatus }),
-        ]);
-        setCategories(categoryData);
-        setContacts(data as ContactRow[]);
-        setTotalCount(total);
-        setSelectedIds([]);
-      } catch (err) {
-        console.error('AdminContactsPage load:', err);
-        setError('Error al cargar contactos. Intenta de nuevo.');
-      } finally {
-        setLoading(false);
+  const loadCategories = async () => {
+    if (!supabase || !isSupabaseConfigured) {
+      setCategories([]);
+      return;
+    }
+
+    const { data, error: categoriesError } = await supabase
+      .from('categories')
+      .select('id, name, icon')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+
+    if (categoriesError) {
+      console.error('loadCategories error:', categoriesError);
+      setCategories([]);
+      return;
+    }
+
+    setCategories(data ?? []);
+  };
+
+  const loadContacts = async () => {
+    if (!supabase || !isSupabaseConfigured) {
+      setContacts([]);
+      setTotalCount(0);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      let query = supabase
+        .from('contacts')
+        .select('id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level')
+        .order('created_at', { ascending: false })
+        .range(currentPage * 50, (currentPage + 1) * 50 - 1);
+
+      const searchTerm = search.trim();
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
-    };
-    void load();
+      if (selectedCategory && selectedCategory !== 'all') {
+        query = query.eq('category_id', selectedCategory);
+      }
+      if (selectedStatus && selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+
+      const { data: contactsData, error: contactsError } = await query;
+      if (contactsError) throw contactsError;
+
+      const { data: catsData, error: catsError } = await supabase.from('categories').select('id, name, icon');
+      if (catsError) console.error('loadContacts categories error:', catsError);
+      const catsMap = new Map((catsData ?? []).map((category) => [category.id, category]));
+
+      const enriched = (contactsData ?? []).map((contact) => ({
+        ...contact,
+        description: contact.description ?? '',
+        tags: contact.tags ?? [],
+        risk_level: contact.risk_level ?? 'safe',
+        category_name: catsMap.get(contact.category_id)?.name ?? 'Sin categoría',
+        category_icon: catsMap.get(contact.category_id)?.icon ?? '📁',
+      })) as ContactRow[];
+
+      setContacts(enriched);
+      setSelectedIds([]);
+
+      let countQuery = supabase.from('contacts').select('id', { count: 'exact', head: true });
+      if (searchTerm) {
+        countQuery = countQuery.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      }
+      if (selectedCategory && selectedCategory !== 'all') {
+        countQuery = countQuery.eq('category_id', selectedCategory);
+      }
+      if (selectedStatus && selectedStatus !== 'all') {
+        countQuery = countQuery.eq('status', selectedStatus);
+      }
+      const { count, error: countError } = await countQuery;
+      if (countError) console.error('loadContacts count error:', countError);
+      setTotalCount(count ?? 0);
+    } catch (err) {
+      console.error('loadContacts error:', err);
+      setError('Error al cargar contactos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadCategories();
+  }, []);
+
+  useEffect(() => {
+    void loadContacts();
   }, [search, selectedCategory, selectedStatus, currentPage]);
 
   const categoryById = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
@@ -117,13 +179,7 @@ export default function AdminContactsPage() {
   }
 
   async function reloadCurrentPage() {
-    const [data, total] = await Promise.all([
-      getContacts({ search, categoryId: selectedCategory, status: selectedStatus, page: currentPage }),
-      getTotalContactsCount({ search, categoryId: selectedCategory, status: selectedStatus }),
-    ]);
-    setContacts(data as ContactRow[]);
-    setTotalCount(total);
-    setSelectedIds([]);
+    await loadContacts();
   }
 
   async function saveEdit() {
@@ -177,8 +233,8 @@ export default function AdminContactsPage() {
           phone_masked: maskPhone(phone),
           category_id: categoryId,
           description: '',
-          country_flag: '🇵🇪',
-          country_code: 'PE',
+          country_flag: getFlag(phone),
+          country_code: getCountryCode(phone),
           tags: [],
           source: 'manual',
           status: 'active',
@@ -303,9 +359,9 @@ export default function AdminContactsPage() {
             className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white"
           >
             <option value="all">Todas las categorías</option>
-            {categories.map((category, index) => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {formatCategoryOptionLabel(category, index)}
+                {category.icon ?? '📁'} {category.name}
               </option>
             ))}
           </select>
@@ -360,11 +416,25 @@ export default function AdminContactsPage() {
                     <p className="font-semibold text-white">{contact.name}</p>
                     <p className="mt-1 line-clamp-1 text-xs text-gray-500">{contact.description}</p>
                   </td>
-                  <td className="px-4 py-3 font-mono text-gray-300">{formatPhone(contact.phone)}</td>
+                  <td className="px-4 py-3 font-mono text-gray-300">{contact.phone_masked ?? maskPhone(contact.phone)}</td>
                   <td className="px-4 py-3 text-gray-300">
-                    {categoryById.get(contact.category_id) ? formatCategoryOptionLabel(categoryById.get(contact.category_id)!, 0) : contact.category_id}
+                    {contact.category_icon ?? categoryById.get(contact.category_id)?.icon ?? '📁'} {contact.category_name ?? categoryById.get(contact.category_id)?.name ?? 'Sin categoría'}
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{contact.status ?? 'sin estado'}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        contact.status === 'active'
+                          ? 'bg-brand-400/10 text-brand-200'
+                          : contact.status === 'inactive'
+                            ? 'bg-gray-400/10 text-gray-300'
+                            : contact.status === 'review'
+                              ? 'bg-amber-300/10 text-amber-100'
+                              : 'bg-red-400/10 text-red-100'
+                      }`}
+                    >
+                      {contact.status ?? 'sin estado'}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-gray-400">{formatDate(contact.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -411,7 +481,7 @@ export default function AdminContactsPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Nombre</span><input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono</span><input value={editing.phone} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.map((category, index) => <option key={category.id} value={category.id}>{formatCategoryOptionLabel(category, index)}</option>)}</select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.map((category) => <option key={category.id} value={category.id}>{category.icon ?? '📁'} {category.name}</option>)}</select></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Estado</span><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="active">active</option><option value="inactive">inactive</option><option value="review">review</option><option value="rejected">rejected</option></select></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Descripción</span><textarea value={editing.description ?? ''} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Tags separados por coma</span><input value={editTags} onChange={(event) => setEditTags(event.target.value)} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
@@ -444,7 +514,7 @@ export default function AdminContactsPage() {
                 <span className="text-sm font-semibold text-gray-300">Categoría</span>
                 <select value={newContact.category_id} onChange={(event) => setNewContact({ ...newContact, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">
                   <option value="">Selecciona categoría</option>
-                  {categories.map((category, index) => <option key={category.id} value={category.id}>{formatCategoryOptionLabel(category, index)}</option>)}
+                  {categories.map((category) => <option key={category.id} value={category.id}>{category.icon ?? '📁'} {category.name}</option>)}
                 </select>
               </label>
             </div>
