@@ -13,6 +13,21 @@ const links = [
   { label: 'Preguntas', to: '/faq' },
 ];
 
+function HubLogoMark() {
+  return (
+    <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-brand-400/30 bg-brand-400/10 shadow-[0_0_22px_rgba(29,180,122,0.18)]" aria-hidden="true">
+      <svg viewBox="0 0 36 36" className="h-7 w-7">
+        <path d="M18 18 9 11M18 18l10-5M18 18l4 11" fill="none" stroke="#1DB47A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="18" cy="18" r="4.4" fill="#1DB47A" />
+        <circle cx="9" cy="11" r="3.2" fill="#09E193" />
+        <circle cx="28" cy="13" r="3.2" fill="#09E193" />
+        <circle cx="22" cy="29" r="3.2" fill="#09E193" />
+        <circle cx="18" cy="18" r="1.35" fill="#071111" />
+      </svg>
+    </span>
+  );
+}
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
@@ -45,9 +60,7 @@ export default function Header() {
       <header className={`sticky top-0 z-40 border-b border-line bg-ink-950/82 backdrop-blur-xl transition-all ${isCompact ? 'navbar-compact' : ''}`}>
         <div className="container-shell flex h-16 items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-brand-400/30 bg-brand-400/10 font-display text-sm font-bold text-brand-400">
-              CH
-            </span>
+            <HubLogoMark />
             <span className="font-display text-lg font-bold text-white">ContactHub</span>
           </Link>
 

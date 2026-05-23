@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
 
 export type AdminProfile = {
   id: string;
@@ -13,7 +14,7 @@ export type AdminProfile = {
   usedTrial: boolean;
 };
 
-export type AdminCategory = { id: string; name: string; slug: string; contactsCount: number; isActive: boolean };
+export type AdminCategory = { id: string; name: string; slug: string; contactsCount: number; isActive: boolean; sortOrder?: number | null; icon?: string | null; shortDescription?: string; tags?: string[]; whatYouCanFind?: string[] };
 export type AdminUserAccess = { categoryId: string; categoryName: string; status: 'active' | 'revoked'; createdAt: string; updatedAt: string };
 export type AdminFoundUser = { id: string; email: string | null; fullName: string | null; phone: string | null; createdAt: string; activeAccesses: AdminUserAccess[] };
 export type AdminPlan = { id: string; name: string; price: number; folderLimit: number | null; isTotalAccess: boolean };
@@ -118,13 +119,26 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
     return [];
   }
   const withCounts = await Promise.all(
-    (cats ?? []).map(async (cat) => {
+    sortByOfficialOrder(cats ?? []).map(async (cat) => {
       const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
       if (countError) console.error('getAdminCategories count:', countError.message);
-      return { id: cat.id, name: cat.name, slug: cat.slug, contactsCount: count ?? 0, isActive: cat.is_active, contacts_count: count ?? 0 };
+      const official = applyOfficialCategoryDisplay(cat) as any;
+      return {
+        id: cat.id,
+        name: official.name,
+        slug: cat.slug,
+        contactsCount: count ?? 0,
+        isActive: cat.is_active,
+        sortOrder: official.sortOrder,
+        icon: official.icon,
+        shortDescription: official.shortDescription,
+        tags: official.tags,
+        whatYouCanFind: official.whatYouCanFind,
+        contacts_count: count ?? 0,
+      };
     }),
   );
-  return withCounts;
+  return sortByOfficialOrder(withCounts);
 }
 
 export async function getAdminPlans(): Promise<AdminPlan[]> {
@@ -151,14 +165,17 @@ export async function getPendingPurchases(): Promise<PendingPurchase[]> {
   const [profilesResult, plansResult, categoriesResult] = await Promise.all([
     supabase.from('profiles').select('id,email').in('id', userIds),
     planIds.length ? supabase.from('plans').select('id,name').in('id', planIds) : Promise.resolve({ data: [], error: null }),
-    categoryIds.length ? supabase.from('categories').select('id,name').in('id', categoryIds) : Promise.resolve({ data: [], error: null }),
+    categoryIds.length ? supabase.from('categories').select('id,name,slug,icon,sort_order').in('id', categoryIds) : Promise.resolve({ data: [], error: null }),
   ]);
   if (profilesResult.error) console.error('getPendingPurchases profiles:', profilesResult.error.message);
   if (plansResult.error) console.error('getPendingPurchases plans:', plansResult.error.message);
   if (categoriesResult.error) console.error('getPendingPurchases categories:', categoriesResult.error.message);
   const emailByUser = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile.email]));
   const planById = new Map((plansResult.data ?? []).map((plan) => [plan.id, plan.name]));
-  const categoryById = new Map((categoriesResult.data ?? []).map((category) => [category.id, category.name]));
+  const categoryById = new Map((categoriesResult.data ?? []).map((category) => {
+    const official = applyOfficialCategoryDisplay(category) as any;
+    return [category.id, official.name];
+  }));
   return purchases.map((purchase) => ({
     id: purchase.id,
     userId: purchase.user_id,
@@ -185,9 +202,12 @@ export async function searchAdminUserByEmail(email: string): Promise<AdminFoundU
   const { data: accesses, error: accessError } = await supabase.from('user_category_access').select('category_id,status,created_at,updated_at').eq('user_id', profile.id).eq('status', 'active').order('created_at', { ascending: false });
   if (accessError) console.error('searchAdminUserByEmail access:', accessError.message);
   const categoryIds = [...new Set((accesses ?? []).map((access) => access.category_id))];
-  const categoriesResult = categoryIds.length ? await supabase.from('categories').select('id,name').in('id', categoryIds) : { data: [], error: null };
+  const categoriesResult = categoryIds.length ? await supabase.from('categories').select('id,name,slug,icon,sort_order').in('id', categoryIds) : { data: [], error: null };
   if (categoriesResult.error) console.error('searchAdminUserByEmail categories:', categoriesResult.error.message);
-  const categoryById = new Map((categoriesResult.data ?? []).map((category) => [category.id, category.name]));
+  const categoryById = new Map((categoriesResult.data ?? []).map((category) => {
+    const official = applyOfficialCategoryDisplay(category) as any;
+    return [category.id, official.name];
+  }));
   return {
     id: profile.id,
     email: profile.email,
@@ -212,7 +232,7 @@ export async function grantCategoryAccessesByEmail(params: { email: string; cate
 
   const [{ data: profile, error: profileError }, { data: categories, error: categoryError }] = await Promise.all([
     supabase.from('profiles').select('id,email,full_name,phone,created_at').ilike('email', normalizedEmail).maybeSingle(),
-    supabase.from('categories').select('id,name').in('id', categoryIds),
+    supabase.from('categories').select('id,name,slug,icon,sort_order').in('id', categoryIds),
   ]);
   if (profileError || categoryError || !profile) {
     if (profileError) console.error('grantCategoryAccessesByEmail profile:', profileError.message);
@@ -231,7 +251,12 @@ export async function grantCategoryAccessesByEmail(params: { email: string; cate
   if (purchaseError) console.error('grantCategoryAccessesByEmail purchases:', purchaseError.message);
   const { error: auditError } = await supabase.from('audit_logs').insert({ actor_id: params.adminUserId, action: 'admin_granted_category_access', target_type: 'user_category_access', target_id: profile.id, metadata: { email: profile.email, category_ids: categoryIds, source: params.source ?? 'manual' } });
   if (auditError) console.error('grantCategoryAccessesByEmail audit:', auditError.message);
-  return { userId: profile.id, email: profile.email, categoryNames: (categories ?? []).map((category) => category.name), message: activationWhatsAppMessage };
+  return {
+    userId: profile.id,
+    email: profile.email,
+    categoryNames: sortByOfficialOrder((categories ?? []).map((category) => applyOfficialCategoryDisplay(category) as any)).map((category) => category.name),
+    message: activationWhatsAppMessage,
+  };
 }
 
 export async function activateCategoryAccessByEmail(params: { email: string; categoryId: string; adminUserId: string; source?: 'manual' | 'pending_request'; pendingPurchaseId?: string; notes?: string }) {

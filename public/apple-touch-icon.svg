@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="ContactHub">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="36%" r="78%">
+      <stop offset="0%" stop-color="#12352B"/>
+      <stop offset="58%" stop-color="#0F2027"/>
+      <stop offset="100%" stop-color="#071111"/>
+    </radialGradient>
+    <filter id="glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="180" height="180" rx="42" fill="url(#bg)"/>
+  <rect x="9" y="9" width="162" height="162" rx="36" fill="none" stroke="#1DB47A" stroke-opacity="0.35" stroke-width="5"/>
+  <g stroke="#1DB47A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <path d="M90 92 48 59"/>
+    <path d="M90 92 132 65"/>
+    <path d="M90 92 106 137"/>
+    <circle cx="90" cy="92" r="18" fill="#1DB47A"/>
+    <circle cx="48" cy="59" r="13" fill="#09E193"/>
+    <circle cx="132" cy="65" r="13" fill="#09E193"/>
+    <circle cx="106" cy="137" r="13" fill="#09E193"/>
+  </g>
+  <circle cx="90" cy="92" r="6" fill="#071111"/>
+</svg>

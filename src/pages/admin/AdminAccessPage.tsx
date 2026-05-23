@@ -344,7 +344,12 @@ export default function AdminAccessPage() {
                           className="h-4 w-4 rounded border-line bg-ink-950 text-brand-400"
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-white">{category.name}</span>
+                          <span className="block truncate text-sm font-semibold text-white">
+                            {category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : ''}
+                            {category.icon ? `${category.icon} ` : ''}
+                            {category.name}
+                          </span>
+                          {category.shortDescription ? <span className="block truncate text-xs text-gray-500">{category.shortDescription}</span> : null}
                           <span className="block text-xs text-gray-500">{category.contactsCount} contactos</span>
                         </span>
                         {alreadyActive ? (

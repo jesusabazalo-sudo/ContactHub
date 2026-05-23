@@ -1,11 +1,11 @@
-import { Gift, RefreshCw, Search } from 'lucide-react';
+import { CheckCircle2, Gift, RefreshCw, Search, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
-import { formatCategoryOptionLabel } from '../../data/officialCategories';
+import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
 import { sanitizeText } from '../../lib/sanitize';
@@ -15,6 +15,26 @@ type ProfileRow = { id: string; email: string | null; full_name: string | null }
 type CategoryRow = { id: string; name: string; icon?: string | null; sort_order?: number | null };
 type AccessRow = { user_id: string; category_id: string; status: string };
 type RewardRow = { id: string; user_id: string; quantity: number; reason: string | null; created_at: string };
+type MissionRequestRow = {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_note: string | null;
+  screenshot_url: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+};
+
+function rewardsClient() {
+  if (!supabase || !isSupabaseConfigured) return null;
+  return supabase as unknown as { from: (table: string) => any };
+}
+
+function statusBadgeClass(status: MissionRequestRow['status']) {
+  if (status === 'approved') return 'border-brand-400/25 bg-brand-400/10 text-brand-100';
+  if (status === 'rejected') return 'border-red-400/25 bg-red-400/10 text-red-100';
+  return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
+}
 
 export default function AdminRecompensasPage() {
   const { user: adminUser } = useAuth();
@@ -22,32 +42,37 @@ export default function AdminRecompensasPage() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [accesses, setAccesses] = useState<AccessRow[]>([]);
   const [rewards, setRewards] = useState<RewardRow[]>([]);
+  const [missionRequests, setMissionRequests] = useState<MissionRequestRow[]>([]);
   const [query, setQuery] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadData() {
     setIsLoading(true);
     setError(null);
     try {
-      if (!supabase || !isSupabaseConfigured) {
+      const client = rewardsClient();
+      if (!client) {
         setError('Falta conectar Supabase.');
         setProfiles([]);
         setCategories([]);
         setAccesses([]);
         setRewards([]);
+        setMissionRequests([]);
         return;
       }
 
-      const [profilesRes, categoriesRes, accessesRes, rewardsRes] = await Promise.all([
-        supabase.from('profiles').select('id,email,full_name').order('email', { ascending: true }),
-        supabase.from('categories').select('id,name,icon,sort_order').order('sort_order', { ascending: true }).order('name', { ascending: true }),
-        supabase.from('user_category_access').select('user_id,category_id,status').eq('status', 'active'),
-        supabase.from('customer_rewards').select('id,user_id,quantity,reason,created_at').eq('reward_type', 'folder_gift').order('created_at', { ascending: false }),
+      const [profilesRes, categoriesRes, accessesRes, rewardsRes, requestsRes] = await Promise.all([
+        client.from('profiles').select('id,email,full_name').order('email', { ascending: true }),
+        client.from('categories').select('id,name,icon,sort_order').order('sort_order', { ascending: true }).order('name', { ascending: true }),
+        client.from('user_category_access').select('user_id,category_id,status').eq('status', 'active'),
+        client.from('customer_rewards').select('id,user_id,quantity,reason,created_at').eq('reward_type', 'folder_gift').order('created_at', { ascending: false }),
+        client.from('reward_requests').select('id,user_id,status,admin_note,screenshot_url,created_at,reviewed_at').order('created_at', { ascending: false }),
       ]);
 
       if (profilesRes.error) {
@@ -58,11 +83,13 @@ export default function AdminRecompensasPage() {
       if (categoriesRes.error) console.error('AdminRecompensas categories:', categoriesRes.error.message);
       if (accessesRes.error) console.error('AdminRecompensas accesses:', accessesRes.error.message);
       if (rewardsRes.error) console.error('AdminRecompensas rewards:', rewardsRes.error.message);
+      if (requestsRes.error) console.error('AdminRecompensas mission requests:', requestsRes.error.message);
 
       setProfiles(profilesRes.data ?? []);
-      setCategories(categoriesRes.data ?? []);
+      setCategories(sortByOfficialOrder((categoriesRes.data ?? []).map((category: CategoryRow) => applyOfficialCategoryDisplay(category) as CategoryRow)));
       setAccesses(accessesRes.data ?? []);
       setRewards(rewardsRes.data ?? []);
+      setMissionRequests(requestsRes.data ?? []);
     } catch (loadError) {
       console.error('AdminRecompensas load:', loadError);
       setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar recompensas.');
@@ -91,8 +118,44 @@ export default function AdminRecompensasPage() {
     setSelectedCategoryIds((current) => (current.includes(categoryId) ? current.filter((id) => id !== categoryId) : [...current, categoryId]));
   }
 
+  function prepareGiftFromMission(request: MissionRequestRow) {
+    setSelectedUserId(request.user_id);
+    setSelectedCategoryIds([]);
+    setNote(`Recompensa por misión. ${request.admin_note ?? ''}`.trim());
+    toast.info('Usuario cargado. Selecciona las carpetas o contactos que vas a regalar.');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function updateMissionStatus(request: MissionRequestRow, status: MissionRequestRow['status']) {
+    const client = rewardsClient();
+    if (!client) return;
+    setUpdatingRequestId(request.id);
+    try {
+      const { error: updateError } = await client
+        .from('reward_requests')
+        .update({
+          status,
+          reviewed_at: new Date().toISOString(),
+          admin_note: request.admin_note,
+        })
+        .eq('id', request.id);
+
+      if (updateError) {
+        console.error('AdminRecompensas request update:', updateError.message);
+        toast.error(updateError.message);
+        return;
+      }
+
+      toast.success(status === 'approved' ? 'Misión aprobada.' : 'Misión rechazada.');
+      await loadData();
+    } finally {
+      setUpdatingRequestId(null);
+    }
+  }
+
   async function sendGift() {
-    if (!supabase || !isSupabaseConfigured || !selectedUser || !adminUser?.id || !selectedCategoryIds.length) return;
+    const client = rewardsClient();
+    if (!client || !selectedUser || !adminUser?.id || !selectedCategoryIds.length) return;
     setIsSaving(true);
     try {
       const selectedCategories = categories.filter((category) => selectedCategoryIds.includes(category.id));
@@ -103,7 +166,7 @@ export default function AdminRecompensasPage() {
         status: 'active' as const,
       }));
 
-      const { error: accessError } = await supabase.from('user_category_access').upsert(rows, { onConflict: 'user_id,category_id' });
+      const { error: accessError } = await client.from('user_category_access').upsert(rows, { onConflict: 'user_id,category_id' });
       if (accessError) {
         console.error('AdminRecompensas gift access:', accessError.message);
         toast.error(accessError.message);
@@ -112,7 +175,7 @@ export default function AdminRecompensasPage() {
 
       const folderNames = selectedCategories.map((category) => category.name).join(', ');
       const message = `¡Hola! Te acabo de regalar acceso a ${folderNames} 🎁\nEspero que te sea muy útil. Cualquier cosa me avisas.`;
-      const { error: chatError } = await supabase.from('chat_messages').insert({
+      const { error: chatError } = await client.from('chat_messages').insert({
         user_id: selectedUser.id,
         session_id: selectedUser.id,
         sender: 'admin',
@@ -122,7 +185,7 @@ export default function AdminRecompensasPage() {
       if (chatError) console.error('AdminRecompensas gift chat:', chatError.message);
 
       const cleanNote = sanitizeText(note, 500);
-      const { error: rewardError } = await supabase.from('customer_rewards').insert({
+      const { error: rewardError } = await client.from('customer_rewards').insert({
         user_id: selectedUser.id,
         reward_type: 'folder_gift',
         quantity: selectedCategories.length,
@@ -140,7 +203,7 @@ export default function AdminRecompensasPage() {
     }
   }
 
-  if (isLoading) return <LoadingState title="Cargando recompensas" message="Leyendo usuarios, carpetas e historial." />;
+  if (isLoading) return <LoadingState title="Cargando recompensas" message="Leyendo usuarios, misiones e historial." />;
   if (error) return <FriendlyErrorState message={error} onRetry={loadData} />;
 
   return (
@@ -151,7 +214,7 @@ export default function AdminRecompensasPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-2xl font-bold text-white">Dar regalo de carpetas</h2>
-              <p className="mt-2 text-sm text-gray-400">Selecciona un usuario y activa carpetas como regalo.</p>
+              <p className="mt-2 text-sm text-gray-400">Selecciona un usuario y activa carpetas como regalo o recompensa manual.</p>
             </div>
             <button type="button" onClick={loadData} className="focus-ring rounded-full border border-line p-2 text-white">
               <RefreshCw className="h-4 w-4" />
@@ -237,6 +300,89 @@ export default function AdminRecompensasPage() {
           )}
         </section>
       </div>
+
+      <section className="mt-6 rounded-2xl border border-line bg-panel p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-white">Misiones en revisión</h2>
+            <p className="mt-2 text-sm text-gray-400">Solicitudes enviadas por usuarios que quieren ganar contactos extra apoyando ContactHub.</p>
+          </div>
+          <button type="button" onClick={loadData} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white">
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </button>
+        </div>
+
+        <div className="mt-5 overflow-x-auto rounded-xl border border-line">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-4 py-3">Usuario</th>
+                <th className="px-4 py-3">Estado</th>
+                <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Mensaje / evidencia</th>
+                <th className="px-4 py-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {missionRequests.map((request) => (
+                <tr key={request.id} className="border-t border-line align-top">
+                  <td className="px-4 py-3 text-white">{profileById.get(request.user_id)?.email ?? request.user_id}</td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusBadgeClass(request.status)}`}>{request.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{formatDate(request.created_at)}</td>
+                  <td className="px-4 py-3 text-gray-300">
+                    <p>{request.admin_note ?? 'Solicitud sin nota.'}</p>
+                    {request.screenshot_url ? (
+                      <a href={request.screenshot_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-bold text-brand-400 hover:text-white">
+                        Ver evidencia
+                      </a>
+                    ) : (
+                      <span className="mt-2 inline-flex text-xs text-gray-500">Evidencia por chat o pendiente.</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={updatingRequestId === request.id}
+                        onClick={() => void updateMissionStatus(request, 'approved')}
+                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-2 text-xs font-bold text-brand-100"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Aprobar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={updatingRequestId === request.id}
+                        onClick={() => void updateMissionStatus(request, 'rejected')}
+                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-100"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        Rechazar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => prepareGiftFromMission(request)}
+                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white"
+                      >
+                        <Gift className="h-3.5 w-3.5" />
+                        Otorgar recompensa
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!missionRequests.length ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-gray-400">Todavía no hay misiones pendientes.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section className="mt-6 rounded-2xl border border-line bg-panel p-5">
         <h2 className="font-display text-2xl font-bold text-white">Historial de regalos</h2>

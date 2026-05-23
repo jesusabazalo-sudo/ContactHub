@@ -1,26 +1,26 @@
-import { Clock3, FolderKanban, LockKeyhole, MessageCircle } from 'lucide-react';
+import { Compass, FolderKanban, LockKeyhole, MessageCircle } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 
 const benefits = [
   {
-    icon: Clock3,
-    title: 'El tiempo que no recuperas',
-    text: 'El tiempo que no recuperas buscando en grupos dispersos podría estar generándote resultados. Aquí está lo que encontrarías después de semanas — sin las semanas.',
+    icon: Compass,
+    title: 'Empieza por tu meta',
+    text: 'No todos buscan un contacto. Algunos buscan aprender, vender, trabajar, resolver un problema o abrir una oportunidad. ContactHub te ayuda a ordenar esa búsqueda.',
   },
   {
     icon: FolderKanban,
-    title: 'Sin alguien en el medio',
-    text: 'Sin alguien en el medio. Sin que te ignoren. Sin esperar. El contacto exacto, directo, listo para cuando tú quieras escribirle.',
+    title: 'Todo está organizado',
+    text: 'Explora categorías claras, descripciones útiles y contactos protegidos. Ves qué existe antes de decidir qué desbloquear.',
   },
   {
     icon: LockKeyhole,
-    title: 'Tu acceso es tuyo',
-    text: 'Tu acceso es tuyo. Nadie más lo ve, nadie más lo usa. Lo que compras, es solo tuyo.',
+    title: 'Privacidad primero',
+    text: 'Los usuarios gratis pueden explorar sin ver números reales. Los teléfonos completos solo aparecen con acceso, prueba o recompensa aprobada.',
   },
   {
     icon: MessageCircle,
-    title: 'Alguien real del otro lado',
-    text: 'Si tienes una duda, hay alguien real del otro lado. No un bot, no un FAQ — una persona que construyó esto y conoce cada contacto.',
+    title: 'Orientación cercana',
+    text: 'Si no sabes por dónde empezar, el chat te guía por metas: aprender, vender, conseguir proveedores, encontrar servicios o hacer crecer tu negocio.',
   },
 ];
 
@@ -28,10 +28,13 @@ export default function Benefits() {
   return (
     <section className="section-pad bg-ink-950">
       <div className="container-shell">
-        <SectionHeading title="Lo que descubres cuando dejas de buscar solo" />
+        <SectionHeading
+          title="Contactos con propósito, no listas sueltas"
+          description="Explora lo que necesitas, desbloquea lo que te sirve y avanza con más claridad."
+        />
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {benefits.map((benefit) => (
-            <article key={benefit.title} className="rounded-lg border border-line bg-panel p-5 transition duration-200 hover:-translate-y-1 hover:border-brand-400/30">
+            <article key={benefit.title} className="card-hover rounded-lg border border-line bg-panel p-5">
               <benefit.icon className="h-6 w-6 text-brand-400" />
               <h3 className="mt-5 text-base font-bold text-white">{benefit.title}</h3>
               <p className="mt-3 text-sm leading-6 text-gray-400">{benefit.text}</p>

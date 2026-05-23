@@ -11,8 +11,8 @@ export default function PricingPage() {
         <div className="container-shell">
           <SectionHeading
             eyebrow="Precios"
-            title="Hoy los precios son estos. Mañana no prometo nada."
-            description="Cada plan se coordina por el chat de ContactHub. Después de validar el pago, el admin activa tus carpetas."
+            title="Elige un acceso según tu objetivo"
+            description="Puedes explorar gratis primero. Si decides avanzar, el chat te orienta y el admin activa tus carpetas después de validar pago o recompensa."
           />
           <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {pricingPlans.map((plan) => (
@@ -20,7 +20,7 @@ export default function PricingPage() {
             ))}
           </div>
           <p className="mt-6 rounded-lg border border-line bg-white/5 p-4 text-sm leading-6 text-gray-300">
-            Promo activa: {APP_CONFIG.promo}
+            {APP_CONFIG.promo}
           </p>
         </div>
       </section>

@@ -11,11 +11,11 @@ type PricingCardProps = {
 export default function PricingCard({ plan, compact = false }: PricingCardProps) {
   const folderText = plan.folderLimit === 'total' ? 'Acceso total' : `${plan.folderLimit} carpeta${plan.folderLimit === 1 ? '' : 's'}`;
   const chatMessages: Record<string, string> = {
-    individual: 'Hola, quiero la carpeta de S/20',
-    starter: 'Hola, quiero el plan Starter de S/65',
-    'fast-track': 'Hola, quiero el Fast Track de S/99',
-    power: 'Hola, quiero el Power de S/150',
-    'elite-total': 'Hola, quiero el Elite Total de S/360',
+    individual: 'Hola, quiero la carpeta de S/20. Mi meta es encontrar una oportunidad concreta.',
+    starter: 'Hola, quiero el plan Starter de S/65. Quiero que me orienten según mi meta.',
+    'fast-track': 'Hola, quiero el Fast Track de S/99. Busco avanzar más rápido.',
+    power: 'Hola, quiero el Power de S/150. Quiero explorar varias oportunidades.',
+    'elite-total': 'Hola, quiero el Elite Total de S/360. Quiero acceso amplio a ContactHub.',
   };
 
   function openChat() {
@@ -50,6 +50,10 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
         <div className="flex items-center gap-2">
           <Check className="h-4 w-4 text-brand-400" />
           Acceso privado por carpeta
+        </div>
+        <div className="flex items-center gap-2">
+          <Check className="h-4 w-4 text-brand-400" />
+          Orientación por chat antes de pagar
         </div>
       </div>
       <button

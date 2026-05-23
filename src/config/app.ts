@@ -1,17 +1,17 @@
 export const APP_CONFIG = {
   name: 'ContactHub',
-  internalSlogan: 'No vendo contactos. Vendo oportunidades.',
-  headline: 'La mayoría pierde semanas buscando lo que tú encontrarás en los próximos 5 minutos.',
+  internalSlogan: 'Encuentra contactos y oportunidades que te acerquen a tus metas.',
+  headline: 'No todos buscan un contacto. Algunos buscan una oportunidad.',
   whatsappNumber: '+51963187899',
   displayWhatsapp: '+51 963 187 899',
   defaultCurrency: 'S/',
-  contactsClaim: '695+',
+  contactsClaim: '800+',
   categoriesClaim: '25',
   startingPrice: 'S/20',
-  promo: 'Compra 1 carpeta y recibe 2 más gratis hoy.',
+  promo: 'Explora, elige según tu meta y desbloquea solo lo que te sirve.',
   ownerAdminEmail: import.meta.env.VITE_OWNER_ADMIN_EMAIL || 'tu_correo_admin@ejemplo.com',
   trialCtaText: 'Quiero ver si esto me sirve',
-  buyCtaText: 'Ya entendí — quiero entrar',
+  buyCtaText: 'Ya entendí — quiero avanzar',
   welcomeChatMessage:
-    'Hola 👋 Soy el asistente de ContactHub. Te puedo ayudar con precios, carpetas, pagos, acceso y dudas. ¿Qué estás buscando?',
+    'Hola 👋 Soy el asistente de ContactHub. Antes de mostrarte algo: ¿qué estás buscando lograr?',
 } as const;

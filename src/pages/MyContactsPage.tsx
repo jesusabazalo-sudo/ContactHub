@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import MissionsSection from '../components/missions/MissionsSection';
 import FriendlyErrorState from '../components/system/FriendlyErrorState';
 import LoadingState from '../components/system/LoadingState';
 import ProgressBar from '../components/ui/ProgressBar';
@@ -97,9 +98,9 @@ export default function MyContactsPage() {
                 Sesión activa: {user.email}
               </p>
             ) : null}
-            <h1 className="font-display text-4xl font-bold leading-tight text-white">Estas son tus carpetas desbloqueadas.</h1>
+            <h1 className="font-display text-4xl font-bold leading-tight text-white">Tu camino dentro de ContactHub.</h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-gray-300">
-              Los teléfonos completos se cargan desde la vista segura `contact_unlocked_secure`, solo para categorías donde tienes acceso activo.
+              Aquí ves tus carpetas activas, tus contactos disponibles y el progreso hacia un acceso más completo.
             </p>
           </div>
           <button
@@ -129,7 +130,7 @@ export default function MyContactsPage() {
           <div className="mt-6 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <p className="text-sm leading-6 text-gray-200">
-                Tienes {unlockedCount} carpetas. Si agregas {needsForPower} más llegas al Pack Power y ahorras S/Z. ¿Te interesa?
+                Tienes {unlockedCount} carpetas. Si agregas {needsForPower} más llegas al Pack Power y desbloqueas más valor. ¿Te interesa?
               </p>
               <button
                 type="button"
@@ -142,6 +143,8 @@ export default function MyContactsPage() {
             </div>
           </div>
         ) : null}
+
+        <MissionsSection compact />
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {data.folders.map((folder) => (
@@ -242,7 +245,7 @@ function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | n
                 Todavía no tienes ninguna carpeta desbloqueada, pero ya puedes empezar.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-gray-300">
-                Cada acceso que obtengas te acerca al acceso total. Puedes probar contactos reales, explorar el catálogo o escribir por chat para que te orientemos.
+                Aún no tienes carpetas desbloqueadas, pero ya puedes explorar lo que hay. Cada acceso te acerca a los contactos que pueden ayudarte a avanzar.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link to="/?trial=1" className="focus-ring rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
@@ -261,6 +264,13 @@ function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | n
                 >
                   <MessageCircle className="h-4 w-4" />
                   Escribir por chat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openSupportChat('Hola, quiero ganar un contacto gratis con una misión. ¿Qué puedo hacer?')}
+                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
+                >
+                  Ganar contacto gratis
                 </button>
               </div>
             </div>
@@ -287,6 +297,7 @@ function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | n
             </div>
           </div>
         </div>
+        <MissionsSection compact />
       </div>
     </section>
   );

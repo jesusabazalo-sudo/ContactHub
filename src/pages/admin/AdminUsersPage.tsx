@@ -292,7 +292,11 @@ export default function AdminUsersPage() {
                     onChange={() => toggleGiftCategory(category.id)}
                     className="h-4 w-4 rounded border-line text-brand-400"
                   />
-                  <span className="text-sm font-semibold text-white">{category.name}</span>
+                  <span className="text-sm font-semibold text-white">
+                    {category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : ''}
+                    {category.icon ? `${category.icon} ` : ''}
+                    {category.name}
+                  </span>
                 </label>
               ))}
             </div>

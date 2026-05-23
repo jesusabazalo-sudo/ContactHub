@@ -74,9 +74,12 @@ export default function CatalogPage() {
       <div className="container-shell">
         <SectionHeading
           eyebrow="Catálogo"
-          title="25 carpetas para dejar de buscar a ciegas"
-          description={`${APP_CONFIG.contactsClaim} contactos activos organizados por intención: negocio, IA, cursos, proveedores, recursos digitales y oportunidades que no conviene tener regadas en chats.`}
+          title="Explora oportunidades según lo que quieres lograr"
+          description={`${APP_CONFIG.contactsClaim} contactos y oportunidades organizados por intención: aprender, vender, conseguir proveedores, encontrar servicios, mejorar un negocio o resolver una necesidad concreta.`}
         />
+        <div className="mt-8 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4 text-sm leading-6 text-gray-300">
+          Puedes registrarte gratis, revisar qué existe en cada carpeta y ver teléfonos ocultos. Los números completos se muestran solo con acceso, prueba o recompensa aprobada.
+        </div>
         <div className="mt-8">
           <CategoryFilters query={query} filter={filter} onQueryChange={(value) => setQuery(sanitizeText(value, 80))} onFilterChange={setFilter} purchasedDisabled={!user} />
         </div>

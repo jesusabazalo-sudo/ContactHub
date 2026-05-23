@@ -74,7 +74,7 @@ export default function AuthPage() {
           password,
           fullName: safeFullName,
         });
-        toast.success('Ya estás dentro. Ahora puedes probar contactos o desbloquear carpetas.');
+        toast.success('Cuenta creada. Ya puedes explorar ContactHub gratis.');
       }
 
       navigate(redirectTo, { replace: true });
@@ -107,15 +107,15 @@ export default function AuthPage() {
       <div className="container-shell grid gap-10 lg:grid-cols-[0.9fr_1fr] lg:items-start">
         <div>
           <SectionHeading
-            eyebrow="Acceso privado"
-            title="Entra, prueba y desbloquea solo lo que necesites"
-            description="El registro queda preparado para Supabase. Los contactos completos no se cargan desde archivos públicos."
+            eyebrow="Registro gratis"
+            title="Crea tu cuenta y empieza a explorar"
+            description="No necesitas comprar para entrar. Puedes revisar categorías, entender qué existe y ver teléfonos protegidos hasta desbloquear acceso."
           />
           <div className="mt-8 grid gap-4">
             {[
-              ['Preview limitado', 'Antes de comprar verás muestras seguras y teléfonos ocultos.'],
-              ['Acceso manual', 'El admin activa carpetas después de confirmar el pago guiado por el chat.'],
-              ['RLS primero', 'La seguridad real vive en Supabase, no en trucos del frontend.'],
+              ['Explora sin presión', 'Revisa qué existe dentro de ContactHub antes de decidir qué desbloquear.'],
+              ['Teléfonos protegidos', 'Los números completos solo aparecen con acceso, prueba gratuita o recompensa aprobada.'],
+              ['También puedes ganar', 'Si ahora no puedes pagar, completa misiones y envía evidencia para revisión.'],
             ].map(([title, text]) => (
               <div key={title} className="rounded-lg border border-line bg-panel p-5">
                 <p className="font-semibold text-white">{title}</p>
@@ -210,7 +210,7 @@ export default function AuthPage() {
               disabled={isLoading}
               className="focus-ring mt-2 inline-flex h-12 items-center justify-center rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isLoading ? 'Procesando...' : mode === 'login' ? 'Entrar a ContactHub' : 'Crear mi acceso'}
+              {isLoading ? 'Procesando...' : mode === 'login' ? 'Entrar a ContactHub' : 'Crear cuenta gratis'}
             </button>
           </form>
 

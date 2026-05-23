@@ -1,3 +1,4 @@
+import { sortByOfficialOrder } from '../../data/officialCategories';
 import type { Category } from '../../types';
 import CategoryCard from './CategoryCard';
 
@@ -17,11 +18,22 @@ export default function CatalogGrid({ categories }: CatalogGridProps) {
     );
   }
 
+  const orderedCategories = sortByOfficialOrder(categories);
+  const premiumCategory = orderedCategories.find((category) => category.sortOrder === 25 || category.isPremiumOfficial);
+  const regularCategories = orderedCategories.filter((category) => category.id !== premiumCategory?.id);
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {categories.map((category) => (
-        <CategoryCard key={category.id} category={category} />
-      ))}
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {regularCategories.map((category) => (
+          <CategoryCard key={category.id} category={category} />
+        ))}
+      </div>
+      {premiumCategory ? (
+        <div className="pt-2">
+          <CategoryCard category={premiumCategory} />
+        </div>
+      ) : null}
     </div>
   );
 }

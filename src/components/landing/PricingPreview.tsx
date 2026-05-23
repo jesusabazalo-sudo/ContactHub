@@ -10,8 +10,8 @@ export default function PricingPreview() {
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeading
             eyebrow="Planes"
-            title="Elige el nivel de acceso que realmente necesitas"
-            description="La compra se coordina por el chat y el acceso se activa manualmente desde el panel interno."
+            title="Elige según tu meta, no por impulso"
+            description="Puedes preguntar primero por chat. Te orientamos antes de pagar y el acceso se activa manualmente cuando corresponde."
           />
           <Link to="/precios" className="text-sm font-bold text-brand-400 transition hover:text-white">
             Comparar todos los planes

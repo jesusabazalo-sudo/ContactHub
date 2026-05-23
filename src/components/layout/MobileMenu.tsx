@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 type MobileMenuProps = {
   isOpen: boolean;

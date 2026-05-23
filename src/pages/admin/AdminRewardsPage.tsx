@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
-import { formatCategoryOptionLabel } from '../../data/officialCategories';
+import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type RewardRow = {
@@ -70,7 +70,7 @@ export default function AdminRewardsPage() {
       }
 
       setRequests(requestsResult.data ?? []);
-      setCategories(categoriesResult.data ?? []);
+      setCategories(sortByOfficialOrder((categoriesResult.data ?? []).map((category: CategoryRow) => applyOfficialCategoryDisplay(category) as CategoryRow)));
       setContacts(contactsResult.data ?? []);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar recompensas.';

@@ -6,7 +6,7 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
-import { formatCategoryOptionLabel } from '../../data/officialCategories';
+import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { formatDate } from '../../lib/format';
 import { sanitizePhone, sanitizeText } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
@@ -54,7 +54,7 @@ async function loadCategoriesSafe() {
     console.error('AdminContactsPage categories:', result.error.message);
     return [];
   }
-  return result.data ?? [];
+  return sortByOfficialOrder((result.data ?? []).map((category) => applyOfficialCategoryDisplay(category)));
 }
 
 export default function AdminContactsPage() {
@@ -361,7 +361,9 @@ export default function AdminContactsPage() {
                     <p className="mt-1 line-clamp-1 text-xs text-gray-500">{contact.description}</p>
                   </td>
                   <td className="px-4 py-3 font-mono text-gray-300">{formatPhone(contact.phone)}</td>
-                  <td className="px-4 py-3 text-gray-300">{categoryById.get(contact.category_id)?.name ?? contact.category_id}</td>
+                  <td className="px-4 py-3 text-gray-300">
+                    {categoryById.get(contact.category_id) ? formatCategoryOptionLabel(categoryById.get(contact.category_id)!, 0) : contact.category_id}
+                  </td>
                   <td className="px-4 py-3 text-gray-300">{contact.status ?? 'sin estado'}</td>
                   <td className="px-4 py-3 text-gray-400">{formatDate(contact.created_at)}</td>
                   <td className="px-4 py-3">

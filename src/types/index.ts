@@ -8,6 +8,8 @@ export type Category = {
   contactsCount: number;
   sortOrder?: number | null;
   tags: string[];
+  whatYouCanFind?: string[];
+  isPremiumOfficial?: boolean;
   isFeatured: boolean;
   isNew: boolean;
   isTop: boolean;

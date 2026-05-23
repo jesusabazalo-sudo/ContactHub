@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
 
 export type UnlockedFolder = {
   id: string;
@@ -7,6 +8,8 @@ export type UnlockedFolder = {
   description: string;
   shortDescription: string;
   contactsCount: number;
+  sortOrder?: number | null;
+  icon?: string | null;
 };
 
 export type UnlockedContact = {
@@ -43,7 +46,7 @@ export async function getMyContactsData(userId: string): Promise<MyContactsData>
 
   const categoryIds = accesses.map((a) => a.category_id);
   const [catsRes, contactsRes] = await Promise.all([
-    supabase.from('categories').select('id, name, icon, slug, description, short_description').in('id', categoryIds),
+    supabase.from('categories').select('id, name, icon, slug, description, short_description, sort_order, tags').in('id', categoryIds),
     supabase.from('contact_unlocked_secure').select('*').in('category_id', categoryIds).limit(1000),
   ]);
 
@@ -65,14 +68,19 @@ export async function getMyContactsData(userId: string): Promise<MyContactsData>
   const countByCategory = new Map<string, number>();
   for (const contact of contacts) countByCategory.set(contact.categoryId, (countByCategory.get(contact.categoryId) ?? 0) + 1);
 
-  const folders = (catsRes.data ?? []).map((category) => ({
-    id: category.id,
-    name: category.name,
-    slug: category.slug,
-    description: category.description ?? category.short_description ?? '',
-    shortDescription: category.short_description ?? '',
-    contactsCount: countByCategory.get(category.id) ?? 0,
-  }));
+  const folders = sortByOfficialOrder(catsRes.data ?? []).map((category) => {
+    const official = applyOfficialCategoryDisplay(category) as any;
+    return {
+      id: category.id,
+      name: official.name,
+      slug: category.slug,
+      icon: official.icon,
+      sortOrder: official.sortOrder,
+      description: official.description ?? official.shortDescription ?? '',
+      shortDescription: official.shortDescription ?? '',
+      contactsCount: countByCategory.get(category.id) ?? 0,
+    };
+  });
 
   return {
     folders,

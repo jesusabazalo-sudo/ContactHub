@@ -5,18 +5,18 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 const mainLinks = [
-  { label: '🏠 Dashboard', to: '/admin', icon: Home },
-  { label: '👥 Usuarios', to: '/admin/usuarios', icon: UsersRound },
-  { label: '🔑 Accesos', to: '/admin/accesos', icon: KeyRound },
-  { label: '📋 Contactos', to: '/admin/contactos', icon: ListChecks },
-  { label: '📂 Categorías', to: '/admin/categorias', icon: FolderKanban },
-  { label: '📥 Importar', to: '/admin/importar', icon: UploadCloud },
+  { label: 'Dashboard', to: '/admin', icon: Home },
+  { label: 'Usuarios', to: '/admin/usuarios', icon: UsersRound },
+  { label: 'Accesos', to: '/admin/accesos', icon: KeyRound },
+  { label: 'Contactos', to: '/admin/contactos', icon: ListChecks },
+  { label: 'Categorías', to: '/admin/categorias', icon: FolderKanban },
+  { label: 'Importar', to: '/admin/importar', icon: UploadCloud },
 ];
 
 const managementLinks = [
-  { label: '💬 Soporte', to: '/admin/soporte', icon: MessageCircle, badge: true },
-  { label: '🎁 Recompensas', to: '/admin/recompensas', icon: Gift },
-  { label: '👤 CRM', to: '/admin/clientes', icon: UserRoundCog },
+  { label: 'Soporte', to: '/admin/soporte', icon: MessageCircle, badge: true },
+  { label: 'Recompensas', to: '/admin/recompensas', icon: Gift },
+  { label: 'CRM', to: '/admin/clientes', icon: UserRoundCog },
 ];
 
 function AdminLink({ link, unreadSupport = 0 }: { link: (typeof mainLinks)[number] | (typeof managementLinks)[number]; unreadSupport?: number }) {
@@ -62,7 +62,7 @@ export default function AdminShell({ children }: PropsWithChildren) {
             <p className="text-sm font-semibold uppercase text-brand-400">Panel Admin</p>
             <h1 className="mt-3 font-display text-3xl font-bold text-white sm:text-4xl">ContactHub interno</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400">
-              Gestión protegida por Supabase, user_roles y RLS. Nada de admins hardcodeados en frontend.
+              Gestión protegida por Supabase, user_roles y RLS. Desde aquí revisas usuarios, accesos, contactos, soporte y recompensas.
             </p>
           </div>
           {user?.email ? <span className="inline-flex w-fit rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-sm font-semibold text-brand-400">Admin: {user.email}</span> : null}

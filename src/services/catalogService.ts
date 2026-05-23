@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
 import type { Category } from '../types';
 
 export type CatalogContact = {
@@ -21,16 +22,19 @@ export type CatalogContact = {
 };
 
 function mapCategory(row: any, contactsCount = 0): Category {
+  const official = applyOfficialCategoryDisplay(row);
   return {
-    id: row.id,
-    name: row.name ?? '',
-    slug: row.slug ?? '',
-    icon: row.icon ?? 'Folder',
-    description: row.description ?? '',
-    shortDescription: row.short_description ?? '',
+    id: official.id,
+    name: official.name ?? '',
+    slug: official.slug ?? row.slug ?? '',
+    icon: official.icon ?? 'Folder',
+    description: official.description ?? '',
+    shortDescription: official.shortDescription ?? official.short_description ?? '',
     contactsCount,
-    sortOrder: row.sort_order ?? null,
-    tags: row.tags ?? [],
+    sortOrder: official.sortOrder ?? official.sort_order ?? null,
+    tags: official.tags ?? [],
+    whatYouCanFind: official.whatYouCanFind ?? [],
+    isPremiumOfficial: Boolean(official.isPremiumOfficial),
     isFeatured: Boolean(row.is_featured),
     isNew: Boolean(row.is_new),
     isTop: Boolean(row.is_top),
@@ -70,13 +74,13 @@ export async function getCatalogCategories() {
     return [];
   }
   const withCounts = await Promise.all(
-    (data ?? []).map(async (cat) => {
+    sortByOfficialOrder(data ?? []).map(async (cat) => {
       const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
       if (countError) console.error('getCatalogCategories count:', countError.message);
       return mapCategory(cat, count ?? 0);
     }),
   );
-  return withCounts;
+  return sortByOfficialOrder(withCounts);
 }
 
 export async function getCategoryBySlug(slug: string) {

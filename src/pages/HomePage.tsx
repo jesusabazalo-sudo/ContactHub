@@ -9,8 +9,9 @@ import Hero from '../components/landing/Hero';
 import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
 import PromoSection from '../components/landing/PromoSection';
+import MissionsSection from '../components/missions/MissionsSection';
 import PublicReviews from '../components/reviews/PublicReviews';
-import { formatCategoryOptionLabel } from '../data/officialCategories';
+import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../data/officialCategories';
 import { useAuth } from '../features/auth/AuthProvider';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import { maskPhone } from '../utils/phone';
@@ -53,6 +54,7 @@ export default function HomePage() {
       <Benefits />
       <CategoryPreview />
       <HowItWorks />
+      <MissionsSection />
       <PromoSection />
       <PricingPreview />
       <FAQPreview />
@@ -92,7 +94,7 @@ function TrialModal({ onClose }: { onClose: () => void }) {
           : categoriesWithSort;
         const { data, error: categoriesError } = categoriesResult;
         if (categoriesError) throw categoriesError;
-        setCategories(data ?? []);
+        setCategories(sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))));
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la prueba.');
       } finally {

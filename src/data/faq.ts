@@ -1,38 +1,38 @@
 export const faqs = [
   {
-    question: '¿Qué recibo al comprar?',
-    answer: 'Recibes acceso a una o varias carpetas organizadas con contactos útiles según el plan que elijas.',
+    question: '¿Puedo registrarme sin comprar?',
+    answer: 'Sí. Puedes crear tu cuenta gratis, explorar el catálogo y ver qué tipo de contactos u oportunidades existen.',
   },
   {
-    question: '¿Los contactos se ven completos?',
-    answer: 'Solo cuando tienes acceso desbloqueado. Antes de comprar verás una muestra limitada y números ocultos.',
+    question: '¿Los teléfonos se ven completos?',
+    answer: 'No para usuarios gratis. Verás teléfonos ocultos hasta tener acceso, prueba gratuita o una recompensa aprobada.',
+  },
+  {
+    question: '¿Qué recibo al desbloquear?',
+    answer: 'Recibes acceso a una o varias carpetas organizadas según tu meta: aprender, vender, conseguir proveedores, encontrar servicios o explorar oportunidades.',
   },
   {
     question: '¿Cómo recibo el acceso?',
-    answer: 'Te registras, coordinas tu pago por el chat de ContactHub y el acceso se activa desde el panel interno.',
+    answer: 'Te registras, coordinas por el chat y el admin activa tu acceso desde el panel interno después de validar el pago o la recompensa.',
   },
   {
-    question: '¿El acceso es inmediato?',
-    answer: 'El proceso es rápido. Después de confirmar el pago, se activa el acceso correspondiente.',
+    question: '¿Puedo ganar contactos gratis?',
+    answer: 'Sí. Puedes completar misiones simples como compartir ContactHub, invitar a alguien o dejar un testimonio. El admin revisa la evidencia.',
   },
   {
     question: '¿Cuánto cuesta?',
-    answer: 'Los accesos empiezan desde S/20.',
+    answer: 'Los accesos empiezan desde S/20 por carpeta y también hay planes para varias carpetas o acceso total.',
   },
   {
     question: '¿Puedo probar antes?',
-    answer: 'Sí. Puedes reclamar 3 contactos gratis para ver si ContactHub te sirve.',
+    answer: 'Sí. Puedes reclamar 3 contactos gratis para validar si ContactHub te sirve.',
   },
   {
-    question: '¿Puedo comprar varias carpetas?',
-    answer: 'Sí. Hay planes para 1, 4, 7, 10 carpetas o acceso total.',
-  },
-  {
-    question: '¿Qué pasa si una carpeta no es para mí?',
-    answer: 'Por eso existen categorías y previews. La idea es que elijas solo lo que realmente necesitas.',
+    question: '¿Qué pasa si no sé qué carpeta elegir?',
+    answer: 'Usa el chat. Cuéntanos tu meta y te orientamos hacia las categorías más cercanas.',
   },
   {
     question: '¿Hay soporte?',
-    answer: 'Sí. Si tienes una duda, usa la burbuja de chat de ContactHub.',
+    answer: 'Sí. La burbuja de chat de ContactHub es el canal principal para dudas, pagos, accesos y orientación.',
   },
 ];

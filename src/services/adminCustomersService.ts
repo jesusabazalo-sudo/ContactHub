@@ -1,5 +1,6 @@
 import { sanitizeText } from '../lib/sanitize';
 import { supabase } from '../lib/supabaseClient';
+import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
 
 export type CustomerStatus = 'nuevo' | 'pendiente' | 'activo' | 'vip' | 'bloqueado';
 export type CustomerStatusFilter = 'todos' | CustomerStatus;
@@ -203,7 +204,7 @@ export async function getCustomerDetail(userId: string): Promise<CustomerDetail>
     getCustomerNotes(userId),
     getCustomerRewards(userId),
     supabase.from('customer_feedback').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-    supabase.from('categories').select('id,name').eq('is_active', true).order('name'),
+    supabase.from('categories').select('id,name,icon,slug,sort_order').eq('is_active', true).order('sort_order', { ascending: true }),
     supabase.from('user_category_access').select('id,category_id,status,created_at,updated_at').eq('user_id', userId),
     supabase.from('purchases').select('id,status,notes,created_at,granted_at,category_id,plan_id').eq('user_id', userId),
     supabase.from('chat_messages').select('id,message,session_id,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(20),
@@ -217,7 +218,7 @@ export async function getCustomerDetail(userId: string): Promise<CustomerDetail>
   if (messageRes.error) console.error('getCustomerDetail messages:', messageRes.error.message);
 
   const categories = categoriesRes.data ?? [];
-  const categoryById = new Map(categories.map((category) => [category.id, category.name]));
+  const categoryById = new Map(sortByOfficialOrder(categories.map((category) => applyOfficialCategoryDisplay(category))).map((category) => [category.id, category.name]));
   const accesses = accessRes.data ?? [];
 
   return {

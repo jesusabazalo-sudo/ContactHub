@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
-import { formatCategoryOptionLabel } from '../../data/officialCategories';
+import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
@@ -97,7 +97,7 @@ export default function AdminImportarPage() {
         setError(categoriesResult.error.message);
         return;
       }
-      const nextCategories = categoriesResult.data ?? [];
+      const nextCategories = sortByOfficialOrder((categoriesResult.data ?? []).map((category) => applyOfficialCategoryDisplay(category)));
       setCategories(nextCategories);
       setCategoryId((current) => current || nextCategories[0]?.id || '');
     } catch (loadError) {

@@ -6,7 +6,7 @@ export default function FAQPreview() {
   return (
     <section className="section-pad bg-ink-900">
       <div className="container-shell">
-        <SectionHeading align="center" eyebrow="Preguntas" title="Antes de decidir, mira lo básico claro" />
+        <SectionHeading align="center" eyebrow="Preguntas" title="Lo básico, claro y sin vueltas" />
         <div className="mx-auto mt-10 grid max-w-4xl gap-3">
           {faqs.slice(0, 5).map((faq) => (
             <article key={faq.question} className="rounded-lg border border-line bg-panel p-5">
