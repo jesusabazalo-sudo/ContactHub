@@ -1,4 +1,4 @@
-import { MessageCircle, Send, X } from 'lucide-react';
+import { Copy, MessageCircle, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { sanitizeText } from '../../lib/sanitize';
@@ -15,6 +15,7 @@ type ChatMessage = {
 };
 
 type ChatFlow = 'main' | 'prices' | 'promos' | 'folders' | 'folderDetail' | 'payment' | 'paid' | 'help' | 'missions' | 'human';
+
 type ChatAction = {
   label: string;
   type:
@@ -32,6 +33,7 @@ type ChatAction = {
     | 'catalog'
     | 'human'
     | 'whatsapp'
+    | 'uploadReceipt'
     | 'plan';
   value?: string;
 };
@@ -54,49 +56,35 @@ type ChatCategory = {
   price?: string;
 };
 
+type PaymentMethod = {
+  id: 'yape' | 'plin';
+  title: string;
+  number: string;
+  qrUrl: string;
+};
+
+type ReceiptPreview = {
+  fileName: string;
+  fileType: string;
+  previewUrl: string | null;
+  status: 'ready' | 'uploaded' | 'fallback';
+};
+
+function dynamicSupabase() {
+  return supabase as unknown as {
+    from: (table: string) => any;
+    storage: any;
+  };
+}
+
 const welcomeMessage = 'Hola 👋 Soy el asistente de ContactHub. Antes de avanzar, dime qué necesitas.';
 
 const plans: ChatPlan[] = [
-  {
-    id: 'individual',
-    label: 'S/20 — 1 carpeta',
-    name: 'Carpeta individual',
-    price: 'S/20',
-    folderText: '1 carpeta',
-    description: 'Ideal si tienes una meta concreta y quieres empezar por una carpeta específica.',
-  },
-  {
-    id: 'starter',
-    label: 'S/65 — 4 carpetas',
-    name: 'Starter',
-    price: 'S/65',
-    folderText: '4 carpetas',
-    description: 'Una base práctica para comparar opciones sin ir directo al acceso total.',
-  },
-  {
-    id: 'fast-track',
-    label: 'S/99 — 7 carpetas',
-    name: 'Fast Track',
-    price: 'S/99',
-    folderText: '7 carpetas',
-    description: 'Para avanzar más rápido con varias carpetas relacionadas a tu objetivo.',
-  },
-  {
-    id: 'power',
-    label: 'S/150 — 10 carpetas',
-    name: 'Power',
-    price: 'S/150',
-    folderText: '10 carpetas',
-    description: 'Más alternativas para negocio, aprendizaje, proveedores o servicios.',
-  },
-  {
-    id: 'elite-total',
-    label: 'S/360 — Acceso total',
-    name: 'Elite Total',
-    price: 'S/360',
-    folderText: 'acceso total',
-    description: 'Para quienes quieren desbloquear todo ContactHub y explorar la plataforma completa.',
-  },
+  { id: 'individual', label: 'S/20 — 1 carpeta', name: 'Carpeta individual', price: 'S/20', folderText: '1 carpeta', description: 'Ideal si tienes una meta concreta y quieres empezar por una carpeta específica.' },
+  { id: 'starter', label: 'S/65 — 4 carpetas', name: 'Starter', price: 'S/65', folderText: '4 carpetas', description: 'Una base práctica para comparar opciones sin ir directo al acceso total.' },
+  { id: 'fast-track', label: 'S/99 — 7 carpetas', name: 'Fast Track', price: 'S/99', folderText: '7 carpetas', description: 'Para avanzar más rápido con varias carpetas relacionadas a tu objetivo.' },
+  { id: 'power', label: 'S/150 — 10 carpetas', name: 'Power', price: 'S/150', folderText: '10 carpetas', description: 'Más alternativas para negocio, aprendizaje, proveedores o servicios.' },
+  { id: 'elite-total', label: 'S/360 — Acceso total', name: 'Elite Total', price: 'S/360', folderText: 'acceso total', description: 'Para quienes quieren desbloquear todo ContactHub y explorar la plataforma completa.' },
 ];
 
 const folderCategories: ChatCategory[] = [
@@ -131,6 +119,7 @@ const mainActions: ChatAction[] = [
   { label: 'Ver precios y promos', type: 'prices' },
   { label: 'Quiero una carpeta', type: 'folders' },
   { label: 'Cómo pago', type: 'payment' },
+  { label: 'Subir comprobante', type: 'uploadReceipt' },
   { label: 'No entiendo algo', type: 'help' },
   { label: 'Ganar contacto gratis', type: 'missions' },
   { label: 'Hablar con Jesús', type: 'human' },
@@ -141,7 +130,8 @@ const helpTopics: Record<string, string> = {
   receive: 'Recibes acceso a la carpeta o pack que elijas. Los teléfonos completos solo se muestran cuando tu acceso está activo.',
   trial: 'Puedes elegir una carpeta para ver una muestra limitada de contactos reales. La prueba se usa una sola vez.',
   unlock: 'Después del pago o recompensa aprobada, activamos tu acceso. Desde ese momento puedes ver los contactos completos de la carpeta correspondiente.',
-  pay: 'Puedes pagar por Yape o Plin. Cuando termines, envías tu comprobante y activamos tu acceso manualmente.',
+  pay: 'Puedes pagar por Yape. Escanea el QR o copia el número si está disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.',
+  trust: 'El acceso se activa de forma manual y verificada. No mostramos teléfonos completos hasta confirmar pago, prueba o recompensa aprobada.',
   free: 'Sí. Puedes registrarte, explorar el catálogo y ganar contactos extra completando misiones como compartir ContactHub y enviar evidencia.',
 };
 
@@ -172,22 +162,21 @@ function cleanEnv(value?: string) {
   return (value ?? '').trim();
 }
 
+function getPaymentMethods(): PaymentMethod[] {
+  const yapeNumber = cleanEnv(import.meta.env.NEXT_PUBLIC_YAPE_NUMBER as string | undefined);
+  const yapeQrUrl = cleanEnv(import.meta.env.NEXT_PUBLIC_YAPE_QR_URL as string | undefined);
+  const plinNumber = cleanEnv(import.meta.env.NEXT_PUBLIC_PLIN_NUMBER as string | undefined);
+  const plinQrUrl = cleanEnv(import.meta.env.NEXT_PUBLIC_PLIN_QR_URL as string | undefined);
+  const methods: PaymentMethod[] = [];
+
+  if (yapeNumber || yapeQrUrl) methods.push({ id: 'yape', title: 'Pago por Yape', number: yapeNumber, qrUrl: yapeQrUrl });
+  if (plinNumber || plinQrUrl) methods.push({ id: 'plin', title: 'Pago por Plin', number: plinNumber, qrUrl: plinQrUrl });
+
+  return methods;
+}
+
 function paymentInfoMessage() {
-  const yape = cleanEnv(import.meta.env.NEXT_PUBLIC_YAPE_NUMBER as string | undefined);
-  const plin = cleanEnv(import.meta.env.NEXT_PUBLIC_PLIN_NUMBER as string | undefined);
-  const paymentName = cleanEnv(import.meta.env.NEXT_PUBLIC_PAYMENT_NAME as string | undefined);
-
-  if (!yape && !plin && !paymentName) {
-    return 'Puedes pagar por Yape o Plin. Configura tus datos de pago en las variables de entorno para mostrarlos aquí.';
-  }
-
-  return [
-    'Puedes pagar por Yape o Plin. Cuando termines el pago, envías tu comprobante y activamos tu acceso manualmente.',
-    yape ? `Yape: ${yape}` : null,
-    plin ? `Plin: ${plin}` : null,
-    paymentName ? `Titular: ${paymentName}` : null,
-    'Luego envía tu captura por el chat o por WhatsApp si necesitas atención directa.',
-  ].filter(Boolean).join('\n');
+  return 'Puedes pagar por Yape. Escanea el QR o usa el número disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.';
 }
 
 function getWhatsAppUrl(message: string) {
@@ -196,12 +185,16 @@ function getWhatsAppUrl(message: string) {
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
+function safeFileName(fileName: string) {
+  return fileName.replace(/[^a-zA-Z0-9.\-_]+/g, '-').slice(0, 90);
+}
+
 function findPlanFromText(text: string) {
-  if (hasAny(text, ['elite total', 'elite', 'acceso total', '360', 's/360', 's360'])) return plans.find((plan) => plan.id === 'elite-total');
-  if (hasAny(text, ['power', '150', 's/150', 's150', '10 carpetas'])) return plans.find((plan) => plan.id === 'power');
-  if (hasAny(text, ['fast track', 'fast', '99', 's/99', 's99', '7 carpetas'])) return plans.find((plan) => plan.id === 'fast-track');
-  if (hasAny(text, ['starter', '65', 's/65', 's65', '4 carpetas'])) return plans.find((plan) => plan.id === 'starter');
-  if (hasAny(text, ['carpeta de 20', 's/20', 's20', '20 soles', '1 carpeta', 'una carpeta'])) return plans.find((plan) => plan.id === 'individual');
+  if (hasAny(text, ['elite total', 'elite', 'acceso total', '360', 's/360', 's360', 'de 360'])) return plans.find((plan) => plan.id === 'elite-total');
+  if (hasAny(text, ['power', '150', 's/150', 's150', 'de 150'])) return plans.find((plan) => plan.id === 'power');
+  if (hasAny(text, ['fast track', 'fast', '99', 's/99', 's99', 'de 99'])) return plans.find((plan) => plan.id === 'fast-track');
+  if (hasAny(text, ['starter', '65', 's/65', 's65', 'de 65'])) return plans.find((plan) => plan.id === 'starter');
+  if (hasAny(text, ['carpeta de 20', 's/20', 's20', '20 soles', 'de 20', '1 carpeta', 'una carpeta'])) return plans.find((plan) => plan.id === 'individual');
   return undefined;
 }
 
@@ -214,6 +207,120 @@ function findCategoryFromText(text: string) {
   });
 }
 
+function PaymentCard({
+  methods,
+  paymentName,
+  canOpenWhatsApp,
+  copiedNumber,
+  receipt,
+  onCopy,
+  onPaid,
+  onUpload,
+  onWhatsApp,
+  onMain,
+}: {
+  methods: PaymentMethod[];
+  paymentName: string;
+  canOpenWhatsApp: boolean;
+  copiedNumber: string | null;
+  receipt: ReceiptPreview | null;
+  onCopy: (number: string) => void;
+  onPaid: () => void;
+  onUpload: () => void;
+  onWhatsApp: () => void;
+  onMain: () => void;
+}) {
+  const primaryMethod = methods.find((method) => method.id === 'yape') ?? methods[0];
+  const extraMethods = methods.filter((method) => method.id !== primaryMethod?.id);
+
+  if (!primaryMethod) {
+    return (
+      <div className="rounded-2xl border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50">
+        Los datos de pago todavía no están configurados. Puedes continuar por el chat.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl border border-brand-400/25 bg-white/[0.04] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">{primaryMethod.title}</p>
+          <p className="mt-1 text-sm font-semibold text-white">{paymentName || 'Titular no configurado'}</p>
+        </div>
+        <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-200">Manual verificado</span>
+      </div>
+
+      {primaryMethod.qrUrl ? (
+        <>
+          <p className="mt-4 text-xs leading-5 text-gray-400">Escanea este QR para pagar por Yape.</p>
+          <div className="mt-2 flex justify-center rounded-2xl border border-white/10 bg-white p-3">
+            <img src={primaryMethod.qrUrl} alt="QR de Yape para ContactHub" className="max-h-[260px] w-full max-w-[240px] rounded-xl object-contain" />
+          </div>
+        </>
+      ) : (
+        <p className="mt-4 rounded-2xl border border-line bg-ink-950/60 p-3 text-xs text-gray-300">QR no configurado todavía.</p>
+      )}
+
+      {primaryMethod.number ? (
+        <div className="mt-4 rounded-2xl border border-line bg-ink-950/60 p-3">
+          <p className="text-xs font-semibold text-gray-400">Número {primaryMethod.id === 'yape' ? 'Yape' : 'Plin'}</p>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <span className="font-mono text-sm font-bold text-white">{primaryMethod.number}</span>
+            <button type="button" onClick={() => onCopy(primaryMethod.number)} className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-200 transition hover:bg-brand-400/15">
+              <Copy className="h-3.5 w-3.5" />
+              {copiedNumber === primaryMethod.number ? 'Copiado' : 'Copiar número'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {extraMethods.length ? (
+        <div className="mt-3 grid gap-2">
+          {extraMethods.map((method) => (
+            <div key={method.id} className="rounded-2xl border border-line bg-ink-950/50 p-3">
+              <p className="text-xs font-bold text-gray-300">{method.title}</p>
+              {method.number ? <p className="mt-1 font-mono text-xs text-white">{method.number}</p> : null}
+              {method.qrUrl ? <img src={method.qrUrl} alt={`QR de ${method.title}`} className="mt-2 max-h-36 rounded-lg bg-white object-contain p-2" /> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {receipt ? (
+        <div className="mt-4 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-3">
+          <p className="text-xs font-bold text-brand-200">Comprobante recibido</p>
+          <p className="mt-1 break-all text-xs text-gray-300">{receipt.fileName}</p>
+          {receipt.previewUrl ? <img src={receipt.previewUrl} alt="Vista previa del comprobante" className="mt-3 max-h-40 rounded-xl border border-line object-contain" /> : null}
+          <p className="mt-2 text-xs leading-5 text-gray-300">
+            {receipt.status === 'uploaded'
+              ? 'Lo revisaremos para activar tu acceso.'
+              : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.'}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-2">
+        <button type="button" onClick={onUpload} className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2.5 text-sm font-bold text-brand-200 transition hover:bg-brand-400/15">
+          <UploadCloud className="h-4 w-4" />
+          Subir comprobante
+        </button>
+        <button type="button" onClick={onPaid} className="rounded-full bg-brand-400 px-4 py-2.5 text-sm font-bold text-ink-950 transition hover:bg-white">
+          Ya pagué
+        </button>
+        {canOpenWhatsApp ? (
+          <button type="button" onClick={onWhatsApp} className="rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2.5 text-sm font-bold text-brand-200 transition hover:bg-brand-400/15">
+            Enviar comprobante por WhatsApp
+          </button>
+        ) : null}
+        <button type="button" onClick={onMain} className="rounded-full border border-line bg-white/5 px-4 py-2.5 text-sm font-semibold text-gray-200 transition hover:border-brand-400/40">
+          Volver al inicio
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ChatWidget() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -223,8 +330,16 @@ export default function ChatWidget() {
   const [currentFlow, setCurrentFlow] = useState<ChatFlow>('main');
   const [selectedPlan, setSelectedPlan] = useState<ChatPlan | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<ChatCategory | null>(null);
+  const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<ReceiptPreview | null>(null);
+  const [whatsappNoticeShown, setWhatsappNoticeShown] = useState(false);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const receiptInputRef = useRef<HTMLInputElement | null>(null);
+
+  const paymentMethods = useMemo(() => getPaymentMethods(), []);
+  const paymentName = cleanEnv(import.meta.env.NEXT_PUBLIC_PAYMENT_NAME as string | undefined);
+  const hasWhatsApp = Boolean(cleanEnv(import.meta.env.NEXT_PUBLIC_WHATSAPP_NUMBER as string | undefined));
 
   const quickActions = useMemo<ChatAction[]>(() => {
     if (currentFlow === 'prices') {
@@ -239,16 +354,12 @@ export default function ChatWidget() {
         { label: 'Recomiéndame un plan', type: 'helpTopic', value: 'recommend' },
         { label: 'Quiero pagar', type: 'payment' },
         { label: 'Volver a precios', type: 'prices' },
-        { label: 'Hablar con Jesús', type: 'human' },
+        ...(hasWhatsApp ? [{ label: 'Hablar con Jesús', type: 'human' as const }] : []),
       ];
     }
     if (currentFlow === 'folders') {
       return [
-        ...folderCategories.map((category) => ({
-          label: `${String(category.index).padStart(2, '0')}. ${category.shortName}`,
-          type: 'folder' as const,
-          value: String(category.index),
-        })),
+        ...folderCategories.map((category) => ({ label: `${String(category.index).padStart(2, '0')}. ${category.shortName}`, type: 'folder' as const, value: String(category.index) })),
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
@@ -257,40 +368,35 @@ export default function ChatWidget() {
         { label: 'Elegir esta carpeta', type: 'plan', value: selectedFolder?.index === 25 ? 'elite-total' : 'individual' },
         { label: 'Ver otra carpeta', type: 'folders' },
         { label: 'Cómo pago', type: 'payment' },
+        { label: 'Subir comprobante', type: 'uploadReceipt' },
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
     if (currentFlow === 'payment') {
-      return selectedPlan
-        ? [
-            { label: 'Cómo pago', type: 'payment' },
-            { label: 'Ya pagué', type: 'paid' },
-            { label: 'Ver qué incluye', type: 'helpTopic', value: 'planIncludes' },
-            { label: 'Hablar con Jesús', type: 'human' },
-          ]
-        : [
-            { label: 'Ya pagué', type: 'paid' },
-            { label: 'Quiero elegir plan', type: 'prices' },
-            { label: 'Hablar con Jesús por WhatsApp', type: 'whatsapp' },
-            { label: 'Volver al inicio', type: 'main' },
-          ];
+      return [
+        { label: 'Ver QR Yape', type: 'payment' },
+        { label: 'Subir comprobante', type: 'uploadReceipt' },
+        { label: 'Ya pagué', type: 'paid' },
+        ...(selectedPlan ? [{ label: 'Ver qué incluye', type: 'helpTopic' as const, value: 'planIncludes' }] : []),
+        { label: 'Volver al inicio', type: 'main' },
+      ];
     }
     if (currentFlow === 'paid') {
       return [
-        { label: 'Enviar por chat', type: 'helpTopic', value: 'receiptChat' },
-        { label: 'Hablar con Jesús por WhatsApp', type: 'whatsapp', value: 'receipt' },
+        { label: 'Subir comprobante', type: 'uploadReceipt' },
+        ...(hasWhatsApp ? [{ label: 'Enviar comprobante por WhatsApp', type: 'whatsapp' as const, value: 'receipt' }] : []),
         { label: 'Ver mis accesos', type: 'catalog', value: '/mis-contactos' },
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
     if (currentFlow === 'help') {
       return [
-        { label: '¿Qué es ContactHub?', type: 'helpTopic', value: 'what' },
-        { label: '¿Qué recibo al pagar?', type: 'helpTopic', value: 'receive' },
-        { label: '¿Cómo funciona la prueba gratis?', type: 'helpTopic', value: 'trial' },
-        { label: '¿Cómo se desbloquean los contactos?', type: 'helpTopic', value: 'unlock' },
-        { label: '¿Cómo pago?', type: 'helpTopic', value: 'pay' },
-        { label: '¿Puedo usarlo gratis?', type: 'helpTopic', value: 'free' },
+        { label: 'Qué es ContactHub', type: 'helpTopic', value: 'what' },
+        { label: 'Qué recibo al pagar', type: 'helpTopic', value: 'receive' },
+        { label: 'Cómo funciona la prueba gratis', type: 'helpTopic', value: 'trial' },
+        { label: 'Cómo se desbloquean contactos', type: 'helpTopic', value: 'unlock' },
+        { label: 'Cómo pago', type: 'payment' },
+        { label: 'Puedo usarlo gratis', type: 'helpTopic', value: 'free' },
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
@@ -298,29 +404,23 @@ export default function ChatWidget() {
       return [
         { label: 'Quiero hacer una misión', type: 'helpTopic', value: 'missionStart' },
         { label: 'Enviar evidencia', type: 'missionEvidence' },
-        { label: 'Enviar evidencia por WhatsApp', type: 'whatsapp', value: 'evidence' },
+        ...(hasWhatsApp ? [{ label: 'Enviar evidencia por WhatsApp', type: 'whatsapp' as const, value: 'evidence' }] : []),
         { label: 'Ver catálogo gratis', type: 'catalog', value: '/catalogo' },
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
     if (currentFlow === 'human') {
       return [
-        { label: 'Abrir WhatsApp', type: 'whatsapp' },
+        ...(hasWhatsApp ? [{ label: 'Abrir WhatsApp', type: 'whatsapp' as const }] : []),
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
     return mainActions;
-  }, [currentFlow, selectedFolder?.index]);
+  }, [currentFlow, hasWhatsApp, selectedFolder?.index, selectedPlan]);
 
   async function persistMessage(message: string, sender: 'user' | 'admin', read = false) {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
-    await supabase.from('chat_messages').insert({
-      user_id: user.id,
-      session_id: user.id,
-      sender,
-      read,
-      message,
-    });
+    await supabase.from('chat_messages').insert({ user_id: user.id, session_id: user.id, sender, read, message });
   }
 
   async function addAssistantMessage(message: string, nextFlow?: ChatFlow) {
@@ -336,37 +436,101 @@ export default function ChatWidget() {
 
   function renderPlanMessage(plan: ChatPlan) {
     if (plan.id === 'elite-total') {
-      return 'Perfecto 🔥 Elegiste Elite Total. Este acceso es para quienes quieren desbloquear todo ContactHub. El precio es S/360. Puedes pagar por Yape o Plin y luego enviar tu comprobante para activar tu acceso.';
+      return 'Perfecto 🔥 Elegiste Elite Total. Este acceso desbloquea todo ContactHub. El precio es S/360. Puedes pagar por Yape y luego enviar tu comprobante para activar tu acceso.';
     }
-    return `Perfecto. Elegiste ${plan.name}. Incluye ${plan.folderText} por ${plan.price}. ${plan.description} Puedes pagar por Yape o Plin y luego enviar tu comprobante para activar tu acceso.`;
+    return `Perfecto. Elegiste ${plan.name}. Incluye ${plan.folderText} por ${plan.price}. ${plan.description} Puedes pagar por Yape y luego enviar tu comprobante para activar tu acceso.`;
   }
 
   function renderFolderMessage(folder: ChatCategory) {
-    return [
-      `Elegiste ${folder.name}.`,
-      folder.description,
-      `Qué puedes encontrar: ${folder.finds.join(', ')}.`,
-      folder.price ? `Precio referencial: ${folder.price}.` : 'Esta carpeta tiene tratamiento especial y requiere revisión.',
-      'No mostramos teléfonos completos hasta que tengas acceso activo.',
-    ].join('\n');
+    return [`Elegiste ${folder.name}.`, folder.description, `Qué puedes encontrar: ${folder.finds.join(', ')}.`, folder.price ? `Precio referencial: ${folder.price}.` : 'Esta carpeta tiene tratamiento especial y requiere revisión.', 'No mostramos teléfonos completos hasta que tengas acceso activo.'].join('\n');
+  }
+
+  function openWhatsApp(value?: string) {
+    const whatsappMessage =
+      value === 'receipt'
+        ? 'Hola Jesús, vengo desde ContactHub. Ya realicé el pago por Yape y quiero enviar mi comprobante para activar mi acceso.'
+        : value === 'evidence'
+          ? 'Hola Jesús, vengo de ContactHub. Quiero enviar evidencia para ganar un contacto extra.'
+          : 'Hola Jesús, vengo desde ContactHub. Quiero consultar sobre un pago, carpeta o acceso.';
+    const url = getWhatsAppUrl(whatsappMessage);
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (!whatsappNoticeShown) setWhatsappNoticeShown(true);
+  }
+
+  async function copyPaymentNumber(number: string) {
+    try {
+      await navigator.clipboard.writeText(number);
+      setCopiedNumber(number);
+      window.setTimeout(() => setCopiedNumber(null), 1800);
+    } catch {
+      setCopiedNumber(null);
+    }
+  }
+
+  async function uploadReceiptToSupabase(file: File) {
+    if (!user?.id || !supabase || !isSupabaseConfigured) return false;
+    const path = `${user.id}/${Date.now()}-${safeFileName(file.name)}`;
+    const uploadResult = await supabase.storage.from('payment-receipts').upload(path, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
+    if (uploadResult.error) {
+      console.error('payment receipt upload:', uploadResult.error.message);
+      return false;
+    }
+    const publicUrl = supabase.storage.from('payment-receipts').getPublicUrl(path).data.publicUrl;
+    const insertResult = await dynamicSupabase().from('payment_receipts').insert({
+      user_id: user.id,
+      email: user.email ?? null,
+      plan_id: selectedPlan?.id ?? null,
+      plan_name: selectedPlan?.name ?? null,
+      category_name: selectedFolder?.name ?? null,
+      file_url: publicUrl,
+      file_path: path,
+      file_name: file.name,
+      file_type: file.type || 'application/octet-stream',
+      status: 'pending_review',
+      message: 'Comprobante enviado desde el chat flotante.',
+    });
+    if (insertResult.error) {
+      console.error('payment receipt insert:', insertResult.error.message);
+      return false;
+    }
+    return true;
+  }
+
+  async function handleReceiptFile(file?: File | null) {
+    if (!file) return;
+    const allowed = file.type.startsWith('image/') || file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!allowed) {
+      await addAssistantMessage('Puedes subir una imagen o PDF del comprobante.', 'payment');
+      return;
+    }
+    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+    setIsOpen(true);
+    setCurrentFlow('payment');
+    await addUserMessage(`📎 Comprobante adjuntado: ${file.name}`);
+    const uploaded = await uploadReceiptToSupabase(file);
+    setReceipt({ fileName: file.name, fileType: file.type || 'archivo', previewUrl, status: uploaded ? 'uploaded' : 'fallback' });
+    await addAssistantMessage(
+      uploaded
+        ? 'Comprobante recibido. Lo revisaremos para activar tu acceso.'
+        : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.',
+      uploaded ? 'paid' : 'payment',
+    );
   }
 
   async function handleAction(action: ChatAction) {
     setIsOpen(true);
 
-    if (action.type === 'whatsapp') {
-      const whatsappMessage =
-        action.value === 'receipt'
-          ? 'Hola Jesús, vengo desde ContactHub. Ya realicé el pago y quiero enviar mi comprobante para activar mi acceso.'
-          : action.value === 'evidence'
-            ? 'Hola Jesús, vengo de ContactHub. Quiero enviar evidencia para ganar un contacto extra.'
-            : 'Hola Jesús, vengo desde ContactHub. Necesito ayuda con una consulta sobre carpetas, pagos o acceso.';
-      const url = getWhatsAppUrl(whatsappMessage);
-      if (url) window.open(url, '_blank', 'noopener,noreferrer');
-      else await addAssistantMessage('Configura NEXT_PUBLIC_WHATSAPP_NUMBER en las variables de entorno para habilitar WhatsApp.', 'human');
+    if (action.type === 'uploadReceipt') {
+      receiptInputRef.current?.click();
       return;
     }
-
+    if (action.type === 'whatsapp') {
+      openWhatsApp(action.value);
+      return;
+    }
     if (action.type === 'catalog' && action.value) {
       window.location.href = action.value;
       return;
@@ -380,22 +544,18 @@ export default function ChatWidget() {
       await addAssistantMessage(welcomeMessage, 'main');
       return;
     }
-
     if (action.type === 'prices') {
       await addAssistantMessage('Claro. En ContactHub puedes elegir entre carpetas individuales, packs y acceso total. Te muestro las opciones para que elijas según tu meta.', 'prices');
       return;
     }
-
     if (action.type === 'promos') {
       await addAssistantMessage('Por ahora las promos pueden variar. Puedes consultar una recomendación según lo que buscas o hablar con Jesús para una promo disponible.', 'promos');
       return;
     }
-
     if (action.type === 'folders') {
       await addAssistantMessage('Perfecto. Puedes elegir una carpeta según lo que estás buscando lograr. Te muestro las categorías disponibles.', 'folders');
       return;
     }
-
     if (action.type === 'folder') {
       const folder = folderCategories.find((category) => String(category.index) === action.value);
       if (!folder) return;
@@ -404,56 +564,43 @@ export default function ChatWidget() {
       await addAssistantMessage(renderFolderMessage(folder), 'folderDetail');
       return;
     }
-
     if (action.type === 'plan') {
       const plan = plans.find((item) => item.id === action.value) ?? plans[0];
       setSelectedPlan(plan);
       await addAssistantMessage(renderPlanMessage(plan), 'payment');
       return;
     }
-
     if (action.type === 'payment') {
       await addAssistantMessage(paymentInfoMessage(), 'payment');
       return;
     }
-
     if (action.type === 'paid') {
-      await addAssistantMessage('Genial 🙌 Gracias por confiar en ContactHub. Para activar tu acceso, envía la captura del pago y dinos qué plan o carpeta elegiste.', 'paid');
+      await addAssistantMessage('Genial 🙌 Gracias por confiar en ContactHub. Para activar tu acceso, envía tu comprobante y dinos qué plan o carpeta elegiste.', 'paid');
       return;
     }
-
     if (action.type === 'help') {
       await addAssistantMessage('Tranqui, te explico paso a paso. ¿Qué parte no te quedó clara?', 'help');
       return;
     }
-
     if (action.type === 'helpTopic') {
       const responses: Record<string, string> = {
         ...helpTopics,
         recommend: 'Si estás empezando, te recomiendo una carpeta de S/20. Si ya sabes que necesitas varias opciones, Starter o Fast Track suelen ser más prácticos. Si quieres todo desde el inicio, Elite Total es el camino directo.',
-        planIncludes: selectedPlan
-          ? `${selectedPlan.name} incluye ${selectedPlan.folderText}. ${selectedPlan.description} Los teléfonos completos se muestran cuando el acceso queda activo.`
-          : 'Cada plan habilita la cantidad de carpetas indicada. Los teléfonos completos se muestran cuando el acceso queda activo.',
-        receiptChat: 'Escribe aquí el plan o carpeta que pagaste y cualquier detalle del comprobante. Si necesitas enviar imagen, usa WhatsApp como último paso.',
+        planIncludes: selectedPlan ? `${selectedPlan.name} incluye ${selectedPlan.folderText}. ${selectedPlan.description} Los teléfonos completos se muestran cuando el acceso queda activo.` : 'Cada plan habilita la cantidad de carpetas indicada. Los teléfonos completos se muestran cuando el acceso queda activo.',
+        receiptChat: 'Puedes subir tu comprobante aquí mismo con el botón “Subir comprobante”. Si necesitas enviar imagen por WhatsApp, úsalo como último recurso.',
         missionStart: 'Puedes empezar con una misión simple: comparte ContactHub en una historia o estado, invita a alguien a registrarse o deja una opinión. Luego envías evidencia para revisión.',
       };
       await addAssistantMessage(responses[action.value ?? ''] ?? 'Dime qué parte quieres revisar y lo vemos paso a paso.', currentFlow);
       return;
     }
-
     if (action.type === 'missions') {
-      await addAssistantMessage(
-        'Si ahora no puedes pagar, igual puedes empezar. Puedes ganar contactos extra apoyando a ContactHub con misiones simples.\n\nMisiones disponibles:\n- Compartir ContactHub en una historia o estado\n- Invitar a un amigo a registrarse\n- Enviar captura como evidencia\n- Dejar una opinión o testimonio\n- Seguir la red social de ContactHub',
-        'missions',
-      );
+      await addAssistantMessage('Si ahora no puedes pagar, igual puedes empezar. Puedes ganar contactos extra apoyando a ContactHub con misiones simples.\n\nMisiones disponibles:\n- Compartir ContactHub en una historia o estado\n- Invitar a un amigo a registrarse\n- Enviar captura como evidencia\n- Dejar una opinión o testimonio\n- Seguir la red social de ContactHub', 'missions');
       return;
     }
-
     if (action.type === 'missionEvidence') {
       await addAssistantMessage('Perfecto. Envía tu captura para revisión. Si todavía no está habilitada la carga aquí, puedes mandarla por WhatsApp.', 'missions');
       return;
     }
-
     if (action.type === 'human') {
       await addAssistantMessage('Claro. Si necesitas atención directa, puedes escribirle a Jesús por WhatsApp. Úsalo para comprobantes, dudas específicas o ayuda con tu acceso.', 'human');
     }
@@ -467,29 +614,42 @@ export default function ChatWidget() {
       await addAssistantMessage(renderPlanMessage(plan), 'payment');
       return;
     }
-
-    if (hasAny(normalized, ['no tengo dinero', 'no puedo pagar', 'gratis', 'ganar contacto', 'mision', 'misiones'])) {
+    if (hasAny(normalized, ['ya pague', 'te envie pago', 'subir comprobante', 'enviar captura', 'adjuntar yape', 'comprobante'])) {
+      await addAssistantMessage('Genial 🙌 Puedes subir tu comprobante aquí mismo. Si la carga no está conectada, usa WhatsApp como respaldo y adjunta la captura manualmente.', 'paid');
+      return;
+    }
+    if (hasAny(normalized, ['como pago', 'quiero pagar', 'donde pago', 'yape', 'plin', 'pago por yape', 'mandame el qr', 'quiero el qr', 'qr'])) {
+      await addAssistantMessage(paymentInfoMessage(), 'payment');
+      return;
+    }
+    if (hasAny(normalized, ['no tengo dinero', 'no puedo pagar', 'gratis', 'ganar contacto', 'mision', 'misiones', 'puedo ver gratis'])) {
       await addAssistantMessage('Tranqui. Puedes registrarte gratis, explorar el catálogo y ganar contactos extra completando misiones simples.', 'missions');
       return;
     }
-
-    if (hasAny(normalized, ['aprender ingles', 'ingles', 'aprender', 'curso', 'clase', 'libro', 'educacion'])) {
+    if (hasAny(normalized, ['aprender ingles', 'ingles', 'aprender', 'curso', 'cursos', 'clase', 'libro', 'educacion'])) {
       const education = folderCategories[2];
       setSelectedFolder(education);
       await addAssistantMessage('Entiendo. Estás buscando aprender o encontrar contactos relacionados con educación. Te recomiendo revisar EDUCACIÓN, CURSOS & LIBROS. También puedo mostrarte opciones relacionadas.', 'folderDetail');
       return;
     }
-
-    if (hasAny(normalized, ['quiero pagar', 'como pago', 'yape', 'plin', 'pago', 'pagar'])) {
-      await addAssistantMessage(paymentInfoMessage(), 'payment');
-      return;
+    if (hasAny(normalized, ['proveedores', 'proveedor', 'negocios', 'marketing', 'fitness', 'musica', 'tecnologia', 'trabajar', 'vender'])) {
+      const folder =
+        hasAny(normalized, ['marketing']) ? folderCategories[6] :
+        hasAny(normalized, ['fitness']) ? folderCategories[3] :
+        hasAny(normalized, ['musica']) ? folderCategories[14] :
+        hasAny(normalized, ['tecnologia']) ? folderCategories[1] :
+        hasAny(normalized, ['negocios', 'proveedores', 'proveedor', 'vender']) ? folderCategories[0] :
+        null;
+      if (folder) {
+        setSelectedFolder(folder);
+        await addAssistantMessage(renderFolderMessage(folder), 'folderDetail');
+        return;
+      }
     }
-
     if (hasAny(normalized, ['precio', 'precios', 'planes', 'cuesta', 'costo', 'promos', 'promociones'])) {
       await addAssistantMessage('Claro. En ContactHub puedes elegir entre carpetas individuales, packs y acceso total. Te muestro las opciones para que elijas según tu meta.', 'prices');
       return;
     }
-
     if (hasAny(normalized, ['quiero una carpeta', 'carpeta', 'carpetas', 'contactos', 'contacto'])) {
       const folder = findCategoryFromText(normalized);
       if (folder) {
@@ -500,17 +660,14 @@ export default function ChatWidget() {
       }
       return;
     }
-
-    if (hasAny(normalized, ['no entiendo', 'explicame', 'ayuda', 'duda', 'como funciona'])) {
+    if (hasAny(normalized, ['que es esto', 'no entiendo', 'que recibo', 'como funciona', 'es confiable', 'explicame', 'ayuda', 'duda'])) {
       await addAssistantMessage('Tranqui, te explico paso a paso. ¿Qué parte no te quedó clara?', 'help');
       return;
     }
-
     if (hasAny(normalized, ['jesus', 'persona', 'humano', 'whatsapp', 'asesor'])) {
       await addAssistantMessage('Claro. Si necesitas atención directa, puedes escribirle a Jesús por WhatsApp. Úsalo para comprobantes, dudas específicas o ayuda con tu acceso.', 'human');
       return;
     }
-
     await addAssistantMessage('Creo que estás buscando orientación, pero necesito ubicar mejor tu meta. ¿Quieres aprender, trabajar, vender, conseguir servicios, buscar proveedores o explorar oportunidades?', 'main');
   }
 
@@ -534,13 +691,7 @@ export default function ChatWidget() {
       .order('created_at', { ascending: true });
     if (error) return;
     if (!data?.length) {
-      await supabase.from('chat_messages').insert({
-        user_id: user.id,
-        session_id: user.id,
-        sender: 'admin',
-        read: false,
-        message: welcomeMessage,
-      });
+      await supabase.from('chat_messages').insert({ user_id: user.id, session_id: user.id, sender: 'admin', read: false, message: welcomeMessage });
       await loadMessages();
       return;
     }
@@ -576,7 +727,7 @@ export default function ChatWidget() {
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages.length, isOpen]);
+  }, [messages.length, isOpen, currentFlow, receipt?.fileName]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -598,8 +749,9 @@ export default function ChatWidget() {
 
   return (
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
+      <input ref={receiptInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
-        <div className="fixed inset-x-3 bottom-24 flex h-[min(85vh,720px)] flex-col overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0F2027] shadow-2xl sm:static sm:mb-4 sm:h-[700px] sm:w-[460px] sm:max-w-[calc(100vw-2rem)]">
+        <div className="fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0F2027] shadow-2xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
           <div className="flex items-center justify-between border-b border-line bg-white/[0.03] px-5 py-4">
             <div>
               <p className="font-display text-lg font-bold text-white">Asistente ContactHub</p>
@@ -622,6 +774,27 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
+
+            {currentFlow === 'payment' || currentFlow === 'paid' ? (
+              <PaymentCard
+                methods={paymentMethods}
+                paymentName={paymentName}
+                canOpenWhatsApp={hasWhatsApp}
+                copiedNumber={copiedNumber}
+                receipt={receipt}
+                onCopy={(number) => void copyPaymentNumber(number)}
+                onPaid={() => void handleAction({ label: 'Ya pagué', type: 'paid' })}
+                onUpload={() => void handleAction({ label: 'Subir comprobante', type: 'uploadReceipt' })}
+                onWhatsApp={() => openWhatsApp('receipt')}
+                onMain={() => void handleAction({ label: 'Volver al inicio', type: 'main' })}
+              />
+            ) : null}
+
+            {!hasWhatsApp && whatsappNoticeShown ? (
+              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-50">
+                WhatsApp todavía no está configurado. Puedes continuar por el chat.
+              </div>
+            ) : null}
           </div>
 
           <div className="border-t border-line bg-ink-950/40 p-4">
