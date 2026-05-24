@@ -278,27 +278,27 @@ export function getOfficialCategoryByOrder(order?: number | null) {
   return officialCategories.find((category) => category.sortOrder === order);
 }
 
-export function getOfficialCategoryFor(category: { sort_order?: number | null; sortOrder?: number | null; slug?: string | null; name?: string | null }, fallbackIndex = 0) {
-  const order = category.sort_order ?? category.sortOrder ?? fallbackIndex + 1;
+export function getOfficialCategoryFor(category: { sort_order?: number | null; sortOrder?: number | null; slug?: string | null; name?: string | null }, fallbackIndex = -1) {
+  const order = category.sort_order ?? category.sortOrder ?? (fallbackIndex >= 0 ? fallbackIndex + 1 : null);
   return (
-    getOfficialCategoryByOrder(order) ??
     officialCategories.find((item) => item.slug === category.slug) ??
     officialCategories.find((item) => normalize(item.name) === normalize(category.name)) ??
-    officialCategories[fallbackIndex]
+    getOfficialCategoryByOrder(order) ??
+    (fallbackIndex >= 0 ? officialCategories[fallbackIndex] : undefined)
   );
 }
 
-export function formatCategoryOptionLabel(category: { name: string; icon?: string | null; sort_order?: number | null; sortOrder?: number | null; slug?: string | null }, fallbackIndex = 0) {
+export function formatCategoryOptionLabel(category: { name: string; icon?: string | null; sort_order?: number | null; sortOrder?: number | null; slug?: string | null }, fallbackIndex = -1) {
   const official = getOfficialCategoryFor(category, fallbackIndex);
-  const order = official?.sortOrder ?? category.sort_order ?? category.sortOrder ?? fallbackIndex + 1;
+  const order = official?.sortOrder ?? category.sort_order ?? category.sortOrder ?? (fallbackIndex >= 0 ? fallbackIndex + 1 : null);
   const icon = official?.icon ?? category.icon ?? '';
   const name = official?.name ?? category.name;
-  return `${String(order).padStart(2, '0')}. ${icon} ${name}`.trim();
+  return order ? `${String(order).padStart(2, '0')}. ${icon} ${name}`.trim() : `${icon} ${name}`.trim();
 }
 
 export function applyOfficialCategoryDisplay<T extends { sort_order?: number | null; sortOrder?: number | null; slug?: string | null; name?: string | null; icon?: string | null; description?: string | null; short_description?: string | null; shortDescription?: string | null; tags?: string[] | null }>(
   category: T,
-  fallbackIndex = 0,
+  fallbackIndex = -1,
 ) {
   const official = getOfficialCategoryFor(category, fallbackIndex);
   if (!official) return category;

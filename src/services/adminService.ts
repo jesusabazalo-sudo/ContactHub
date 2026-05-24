@@ -113,32 +113,36 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   if (!ready() || !supabase) return [];
   const client = supabase;
-  const { data: cats, error } = await client.from('categories').select('*').order('sort_order', { ascending: true });
+  const { data: cats, error } = await client
+    .from('categories')
+    .select('id,name,slug,icon,short_description,tags,is_active,sort_order')
+    .eq('is_active', true)
+    .order('name', { ascending: true });
   if (error) {
     console.error('getAdminCategories:', error.message);
     return [];
   }
+  console.log('Categories loaded:', cats?.length ?? 0, cats?.[0]);
   const withCounts = await Promise.all(
-    sortByOfficialOrder(cats ?? []).map(async (cat) => {
+    (cats ?? []).map(async (cat) => {
       const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
       if (countError) console.error('getAdminCategories count:', countError.message);
-      const official = applyOfficialCategoryDisplay(cat) as any;
       return {
         id: cat.id,
-        name: official.name,
-        slug: cat.slug,
+        name: cat.name ?? '',
+        slug: cat.slug ?? '',
         contactsCount: count ?? 0,
         isActive: cat.is_active,
-        sortOrder: official.sortOrder,
-        icon: official.icon,
-        shortDescription: official.shortDescription,
-        tags: official.tags,
-        whatYouCanFind: official.whatYouCanFind,
+        sortOrder: cat.sort_order ?? null,
+        icon: cat.icon,
+        shortDescription: cat.short_description ?? '',
+        tags: cat.tags ?? [],
+        whatYouCanFind: [],
         contacts_count: count ?? 0,
       };
     }),
   );
-  return sortByOfficialOrder(withCounts);
+  return withCounts;
 }
 
 export async function getAdminPlans(): Promise<AdminPlan[]> {

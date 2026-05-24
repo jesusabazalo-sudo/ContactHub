@@ -24,7 +24,7 @@ export default function CatalogPage() {
     setError(null);
     try {
       const cats = await getCatalogCategories();
-      console.log('Categorías cargadas:', cats.length);
+      console.log('Categories loaded:', cats.length, cats[0]);
       setCategories(cats);
     } catch (loadError) {
       console.error('CatalogPage error:', loadError);

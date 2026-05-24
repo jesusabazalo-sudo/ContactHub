@@ -5,14 +5,13 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
-import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
 import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ProfileRow = { id: string; email: string | null; full_name: string | null };
-type CategoryRow = { id: string; name: string; icon?: string | null; sort_order?: number | null };
+type CategoryRow = { id: string; name: string; icon?: string | null; slug?: string | null };
 type AccessRow = { user_id: string; category_id: string; status: string };
 type RewardRow = { id: string; user_id: string; quantity: number; reason: string | null; created_at: string };
 type MissionRequestRow = {
@@ -69,7 +68,7 @@ export default function AdminRecompensasPage() {
 
       const [profilesRes, categoriesRes, accessesRes, rewardsRes, requestsRes] = await Promise.all([
         client.from('profiles').select('id,email,full_name').order('email', { ascending: true }),
-        client.from('categories').select('id,name,icon,sort_order').order('sort_order', { ascending: true }).order('name', { ascending: true }),
+        client.from('categories').select('id,name,icon,slug').eq('is_active', true).order('name', { ascending: true }),
         client.from('user_category_access').select('user_id,category_id,status').eq('status', 'active'),
         client.from('customer_rewards').select('id,user_id,quantity,reason,created_at').eq('reward_type', 'folder_gift').order('created_at', { ascending: false }),
         client.from('reward_requests').select('id,user_id,status,admin_note,screenshot_url,created_at,reviewed_at').order('created_at', { ascending: false }),
@@ -86,7 +85,8 @@ export default function AdminRecompensasPage() {
       if (requestsRes.error) console.error('AdminRecompensas mission requests:', requestsRes.error.message);
 
       setProfiles(profilesRes.data ?? []);
-      setCategories(sortByOfficialOrder((categoriesRes.data ?? []).map((category: CategoryRow) => applyOfficialCategoryDisplay(category) as CategoryRow)));
+      console.log('Categories loaded:', categoriesRes.data?.length ?? 0, categoriesRes.data?.[0]);
+      setCategories(categoriesRes.data ?? []);
       setAccesses(accessesRes.data ?? []);
       setRewards(rewardsRes.data ?? []);
       setMissionRequests(requestsRes.data ?? []);
@@ -269,11 +269,11 @@ export default function AdminRecompensasPage() {
               </div>
 
               <div className="mt-5 grid max-h-[360px] gap-2 overflow-auto sm:grid-cols-2">
-                {categories.map((category, index) => (
+                {categories.map((category) => (
                   <label key={category.id} className="flex items-start gap-3 rounded-xl border border-line bg-white/5 p-3 text-sm text-white">
                     <input type="checkbox" checked={selectedCategoryIds.includes(category.id)} onChange={() => toggleCategory(category.id)} />
                     <span>
-                      {formatCategoryOptionLabel(category, index)}
+                      {category.icon ?? '📁'} {category.name}
                       {currentCategoryIds.has(category.id) ? <span className="ml-2 text-xs text-brand-400">(ya tiene)</span> : null}
                     </span>
                   </label>

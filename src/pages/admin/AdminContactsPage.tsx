@@ -80,6 +80,7 @@ export default function AdminContactsPage() {
       return;
     }
 
+    console.log('Categories loaded:', data?.length ?? 0, data?.[0]);
     setCategories(data ?? []);
   };
 

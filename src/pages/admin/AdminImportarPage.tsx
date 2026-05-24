@@ -4,12 +4,11 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
-import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
-type CategoryOption = { id: string; name: string; slug: string | null; icon?: string | null; sort_order?: number | null };
+type CategoryOption = { id: string; name: string; slug: string | null; icon?: string | null };
 type ParsedLine = { raw: string; name: string; phone: string; valid: boolean; error?: string };
 
 const phoneRegex = /(\+?[\d][\d\s\-\(\)]{6,18}[\d])/;
@@ -80,16 +79,11 @@ export default function AdminImportarPage() {
         setError('Falta conectar Supabase. Revisa tu archivo .env.local.');
         return;
       }
-      const sortedResult = await client
+      const categoriesResult = await client
         .from('categories')
-        .select('id,name,slug,icon,sort_order')
+        .select('id, name, icon, slug')
         .eq('is_active', true)
-        .order('sort_order', { ascending: true })
         .order('name', { ascending: true });
-
-      const categoriesResult = sortedResult.error?.message.toLowerCase().includes('sort_order')
-        ? await client.from('categories').select('id,name,slug,icon').eq('is_active', true).order('name', { ascending: true })
-        : sortedResult;
 
       if (categoriesResult.error) {
         console.error('AdminImportarPage categories:', categoriesResult.error.message);
@@ -97,7 +91,8 @@ export default function AdminImportarPage() {
         setError(categoriesResult.error.message);
         return;
       }
-      const nextCategories = sortByOfficialOrder((categoriesResult.data ?? []).map((category) => applyOfficialCategoryDisplay(category)));
+      const nextCategories = categoriesResult.data ?? [];
+      console.log('Categories loaded:', nextCategories.length, nextCategories[0]);
       setCategories(nextCategories);
       setCategoryId((current) => current || nextCategories[0]?.id || '');
     } catch (loadError) {
@@ -260,9 +255,10 @@ export default function AdminImportarPage() {
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-gray-300">Categoría destino</span>
               <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="focus-ring h-12 rounded-full border border-line bg-ink-950/70 px-4 text-white">
-                {categories.map((category, index) => (
+                <option value="">Selecciona categoría</option>
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {formatCategoryOptionLabel(category, index)}
+                    {category.icon ?? '📁'} {category.name}
                   </option>
                 ))}
               </select>
