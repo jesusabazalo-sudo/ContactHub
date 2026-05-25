@@ -1,5 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
-import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
+import { applyOfficialCategoryDisplay, officialCategories, sortByOfficialOrder } from '../data/officialCategories';
 
 export type AdminProfile = {
   id: string;
@@ -113,36 +113,92 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   if (!ready() || !supabase) return [];
   const client = supabase;
-  const { data: cats, error } = await client
+  let categoriesResult: any = await client
     .from('categories')
     .select('id,name,slug,icon,short_description,tags,is_active,sort_order')
     .eq('is_active', true)
+    .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
+
+  if (categoriesResult.error?.message?.toLowerCase().includes('sort_order')) {
+    console.error('getAdminCategories sort_order missing:', categoriesResult.error.message);
+    categoriesResult = await client
+      .from('categories')
+      .select('id,name,slug,icon,short_description,tags,is_active')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+  }
+
+  const { data: cats, error } = categoriesResult;
   if (error) {
     console.error('getAdminCategories:', error.message);
     return [];
   }
   console.log('Categories loaded:', cats?.length ?? 0, cats?.[0]);
   const withCounts = await Promise.all(
-    (cats ?? []).map(async (cat) => {
+    (cats ?? []).map(async (cat: any) => {
       const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
       if (countError) console.error('getAdminCategories count:', countError.message);
+      const official = applyOfficialCategoryDisplay(cat) as any;
       return {
         id: cat.id,
-        name: cat.name ?? '',
+        name: official.name ?? cat.name ?? '',
         slug: cat.slug ?? '',
         contactsCount: count ?? 0,
         isActive: cat.is_active,
-        sortOrder: cat.sort_order ?? null,
-        icon: cat.icon,
-        shortDescription: cat.short_description ?? '',
-        tags: cat.tags ?? [],
-        whatYouCanFind: [],
+        sortOrder: official.sortOrder ?? cat.sort_order ?? null,
+        icon: official.icon ?? cat.icon,
+        shortDescription: official.shortDescription ?? cat.short_description ?? '',
+        tags: official.tags ?? cat.tags ?? [],
+        whatYouCanFind: official.whatYouCanFind ?? [],
         contacts_count: count ?? 0,
       };
     }),
   );
-  return withCounts;
+  return sortByOfficialOrder(withCounts);
+}
+
+export async function seedOfficialCategories(): Promise<{ ok: boolean; created: number; updated: number; error?: string }> {
+  if (!ready() || !supabase) return { ok: false, created: 0, updated: 0, error: 'Supabase no está conectado.' };
+
+  const { data: currentRows, error: readError } = await supabase.from('categories').select('id,slug,sort_order,name');
+  if (readError) {
+    console.error('seedOfficialCategories read:', readError.message);
+    return { ok: false, created: 0, updated: 0, error: readError.message };
+  }
+
+  const current = currentRows ?? [];
+  let created = 0;
+  let updated = 0;
+
+  for (const category of officialCategories) {
+    const existing = current.find((row) => row.slug === category.slug || row.sort_order === category.sortOrder);
+    const values = {
+      name: category.name,
+      slug: category.slug,
+      icon: category.icon,
+      short_description: category.shortDescription,
+      description: category.description,
+      tags: category.tags,
+      sort_order: category.sortOrder,
+      is_active: true,
+      updated_at: new Date().toISOString(),
+    };
+
+    const result = existing
+      ? await supabase.from('categories').update(values).eq('id', existing.id)
+      : await supabase.from('categories').insert(values);
+
+    if (result.error) {
+      console.error('seedOfficialCategories write:', result.error.message, { category });
+      return { ok: false, created, updated, error: result.error.message };
+    }
+
+    if (existing) updated += 1;
+    else created += 1;
+  }
+
+  return { ok: true, created, updated };
 }
 
 export async function getAdminPlans(): Promise<AdminPlan[]> {
@@ -220,7 +276,7 @@ export async function searchAdminUserByEmail(email: string): Promise<AdminFoundU
     createdAt: profile.created_at,
     activeAccesses: (accesses ?? []).map((access) => ({
       categoryId: access.category_id,
-      categoryName: categoryById.get(access.category_id) ?? 'Carpeta sin nombre',
+      categoryName: categoryById.get(access.category_id) ?? 'Carpeta pendiente de vincular',
       status: access.status,
       createdAt: access.created_at,
       updatedAt: access.updated_at,

@@ -1,6 +1,7 @@
 import { Copy, MessageCircle, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { APP_CONFIG } from '../../config/app';
+import { officialCategories } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { sanitizeText } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
@@ -90,7 +91,7 @@ const plans: ChatPlan[] = [
   { id: 'elite-total', label: 'S/360 — Acceso total', name: 'Elite Total', price: 'S/360', folderText: 'acceso total', description: 'Para quienes quieren desbloquear todo ContactHub y explorar la plataforma completa.' },
 ];
 
-const folderCategories: ChatCategory[] = [
+const legacyChatFolderCategories: ChatCategory[] = [
   { index: 1, name: 'CORPORATE & NEGOCIOS', shortName: 'CORPORATE & NEGOCIOS', description: 'Contactos y oportunidades vinculadas al mundo empresarial, servicios corporativos y crecimiento comercial.', finds: ['proveedores', 'servicios corporativos', 'contactos de negocio', 'oportunidades comerciales'], price: 'S/20' },
   { index: 2, name: 'INTELIGENCIA ARTIFICIAL & TECH', shortName: 'IA & TECH', description: 'Recursos y contactos orientados a automatización, tecnología, IA y herramientas digitales.', finds: ['herramientas IA', 'automatización', 'productividad digital', 'recursos tech'], price: 'S/20' },
   { index: 3, name: 'EDUCACIÓN, CURSOS & LIBROS', shortName: 'EDUCACIÓN, CURSOS & LIBROS', description: 'Opciones vinculadas a aprendizaje, clases, cursos, libros y formación.', finds: ['cursos', 'tutorías', 'libros y recursos', 'formación profesional'], price: 'S/20' },
@@ -117,6 +118,15 @@ const folderCategories: ChatCategory[] = [
   { index: 24, name: 'BONUS TRACK & TESOROS OCULTOS', shortName: 'BONUS TRACK', description: 'Recursos especiales, contactos bonus y oportunidades valiosas que no encajan en una sola categoría.', finds: ['contactos bonus', 'recursos especiales', 'oportunidades ocultas', 'ideas poco comunes'], price: 'S/20' },
   { index: 25, name: 'ACCESO TOTAL', shortName: 'ACCESO TOTAL', description: 'Opción premium para quienes quieren una vista amplia de ContactHub y acceso estratégico a todas las oportunidades disponibles.', finds: ['todas las carpetas', 'contactos estratégicos', 'visión completa', 'soporte de orientación'], price: 'S/360' },
 ];
+
+const officialChatFolderCategories: ChatCategory[] = officialCategories.map((category) => ({
+  index: category.sortOrder,
+  name: category.name,
+  shortName: category.shortDescription,
+  description: category.description,
+  finds: category.whatYouCanFind,
+  price: 'S/20',
+}));
 
 const mainActions: ChatAction[] = [
   { label: 'Ver precios y promos', type: 'prices' },
@@ -193,6 +203,12 @@ function safeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9.\-_]+/g, '-').slice(0, 90);
 }
 
+function getPlanAmount(plan: ChatPlan | null) {
+  if (!plan) return null;
+  const amount = Number(plan.price.replace(/[^\d.]/g, ''));
+  return Number.isFinite(amount) ? amount : null;
+}
+
 function findPlanFromText(text: string) {
   if (hasAny(text, ['elite total', 'elite', 'acceso total', '360', 's/360', 's360', 'de 360'])) return plans.find((plan) => plan.id === 'elite-total');
   if (hasAny(text, ['power', '150', 's/150', 's150', 'de 150'])) return plans.find((plan) => plan.id === 'power');
@@ -204,8 +220,8 @@ function findPlanFromText(text: string) {
 
 function findCategoryFromText(text: string) {
   const numberMatch = text.match(/\b([1-9]|1[0-9]|2[0-5])\b/);
-  if (numberMatch) return folderCategories.find((category) => category.index === Number(numberMatch[1]));
-  return folderCategories.find((category) => {
+  if (numberMatch) return officialChatFolderCategories.find((category) => category.index === Number(numberMatch[1]));
+  return officialChatFolderCategories.find((category) => {
     const haystack = normalizeText(`${category.name} ${category.shortName} ${category.finds.join(' ')}`);
     return category.name !== 'PROHIBIDO' && haystack.split(/\s+/).some((word) => word.length > 4 && text.includes(word));
   });
@@ -384,7 +400,7 @@ export default function ChatWidget() {
     }
     if (currentFlow === 'folders') {
       return [
-        ...folderCategories.map((category) => ({ label: `${String(category.index).padStart(2, '0')}. ${category.shortName}`, type: 'folder' as const, value: String(category.index) })),
+        ...officialChatFolderCategories.map((category) => ({ label: `${String(category.index).padStart(2, '0')}. ${category.shortName}`, type: 'folder' as const, value: String(category.index) })),
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
@@ -524,19 +540,21 @@ export default function ChatWidget() {
       console.error('payment receipt upload:', uploadResult.error.message);
       return false;
     }
-    const publicUrl = supabase.storage.from('payment-receipts').getPublicUrl(path).data.publicUrl;
+    const userName = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null;
     const insertResult = await dynamicSupabase().from('payment_receipts').insert({
       user_id: user.id,
-      email: user.email ?? null,
-      plan_id: selectedPlan?.id ?? null,
-      plan_name: selectedPlan?.name ?? null,
-      category_name: selectedFolder?.name ?? null,
-      file_url: publicUrl,
-      file_path: path,
-      file_name: file.name,
-      file_type: file.type || 'application/octet-stream',
+      user_email: user.email ?? 'sin-email@contacthub.local',
+      user_name: userName,
+      payment_method: 'yape',
+      amount: getPlanAmount(selectedPlan),
+      plan_key: selectedPlan?.id ?? null,
+      plan_label: selectedPlan?.name ?? null,
+      folder_label: selectedFolder?.name ?? null,
+      receipt_file_path: path,
+      receipt_file_name: file.name,
+      receipt_mime_type: file.type || 'application/octet-stream',
       status: 'pending_review',
-      message: 'Comprobante enviado desde el chat flotante.',
+      customer_message: 'Comprobante enviado desde el chat flotante.',
     });
     if (insertResult.error) {
       console.error('payment receipt insert:', insertResult.error.message);
@@ -547,6 +565,11 @@ export default function ChatWidget() {
 
   async function handleReceiptFile(file?: File | null) {
     if (!file) return;
+    if (!user?.id) {
+      setIsOpen(true);
+      await addAssistantMessage('Para subir tu comprobante, primero inicia sesión o crea una cuenta. Así podemos vincular el pago con tu acceso.', 'payment');
+      return;
+    }
     const allowed = file.type.startsWith('image/') || file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (!allowed) {
       await addAssistantMessage('Puedes subir una imagen o PDF del comprobante.', 'payment');
@@ -603,7 +626,7 @@ export default function ChatWidget() {
       return;
     }
     if (action.type === 'folder') {
-      const folder = folderCategories.find((category) => String(category.index) === action.value);
+      const folder = officialChatFolderCategories.find((category) => String(category.index) === action.value);
       if (!folder) return;
       setSelectedFolder(folder);
       setSelectedPlan(null);
@@ -677,18 +700,18 @@ export default function ChatWidget() {
       return;
     }
     if (hasAny(normalized, ['aprender ingles', 'ingles', 'aprender', 'curso', 'cursos', 'clase', 'libro', 'educacion'])) {
-      const education = folderCategories[2];
+      const education = officialChatFolderCategories[2];
       setSelectedFolder(education);
       await addAssistantMessage('Entiendo. Estás buscando aprender o encontrar contactos relacionados con educación. Te recomiendo revisar EDUCACIÓN, CURSOS & LIBROS. También puedo mostrarte opciones relacionadas.', 'folderDetail');
       return;
     }
     if (hasAny(normalized, ['proveedores', 'proveedor', 'negocios', 'marketing', 'fitness', 'musica', 'tecnologia', 'trabajar', 'vender'])) {
       const folder =
-        hasAny(normalized, ['marketing']) ? folderCategories[6] :
-        hasAny(normalized, ['fitness']) ? folderCategories[3] :
-        hasAny(normalized, ['musica']) ? folderCategories[14] :
-        hasAny(normalized, ['tecnologia']) ? folderCategories[1] :
-        hasAny(normalized, ['negocios', 'proveedores', 'proveedor', 'vender']) ? folderCategories[0] :
+        hasAny(normalized, ['marketing']) ? officialChatFolderCategories[6] :
+        hasAny(normalized, ['fitness']) ? officialChatFolderCategories[3] :
+        hasAny(normalized, ['musica']) ? officialChatFolderCategories[14] :
+        hasAny(normalized, ['tecnologia']) ? officialChatFolderCategories[1] :
+        hasAny(normalized, ['negocios', 'proveedores', 'proveedor', 'vender']) ? officialChatFolderCategories[0] :
         null;
       if (folder) {
         setSelectedFolder(folder);

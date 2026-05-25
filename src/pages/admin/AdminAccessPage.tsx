@@ -15,6 +15,7 @@ import {
   getPendingPurchases,
   grantCategoryAccessesByEmail,
   searchAdminUserByEmail,
+  seedOfficialCategories,
   type AdminCategory,
   type AdminFoundUser,
   type PendingPurchase,
@@ -40,6 +41,7 @@ export default function AdminAccessPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSeedingCategories, setIsSeedingCategories] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [activationError, setActivationError] = useState<string | null>(null);
@@ -221,6 +223,28 @@ export default function AdminAccessPage() {
     }
   }
 
+  async function handleSeedOfficialCategories() {
+    setIsSeedingCategories(true);
+    setActivationError(null);
+    try {
+      const result = await seedOfficialCategories();
+      if (!result.ok) {
+        const message = result.error ?? 'No se pudieron crear las carpetas oficiales.';
+        setActivationError(message);
+        toast.error(message);
+        return;
+      }
+      toast.success(`Carpetas oficiales listas. ${result.created} creadas, ${result.updated} actualizadas.`);
+      await loadAccessData();
+    } catch (seedError) {
+      const message = seedError instanceof Error ? seedError.message : 'No se pudieron crear las carpetas oficiales.';
+      setActivationError(message);
+      toast.error(message);
+    } finally {
+      setIsSeedingCategories(false);
+    }
+  }
+
   async function copyActivationMessage() {
     if (!activationResult) return;
 
@@ -335,7 +359,9 @@ export default function AdminAccessPage() {
                     return (
                       <label
                         key={category.id}
-                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-line bg-ink-950/50 p-3 transition hover:border-brand-400/35"
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition hover:border-brand-400/50 ${
+                          checked ? 'border-brand-400/45 bg-brand-400/10' : 'border-line bg-ink-950/50'
+                        }`}
                       >
                         <input
                           type="checkbox"
@@ -343,14 +369,18 @@ export default function AdminAccessPage() {
                           onChange={() => toggleCategory(category.id)}
                           className="h-4 w-4 rounded border-line bg-ink-950 text-brand-400"
                         />
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-brand-400/25 bg-brand-400/10 text-lg">
+                          {category.icon ?? '📁'}
+                        </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-white">
-                            {category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : ''}
-                            {category.icon ? `${category.icon} ` : ''}
-                            {category.name}
+                          <span className="flex items-center gap-2">
+                            <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-xs font-bold text-brand-200">
+                              {String(category.sortOrder ?? 0).padStart(2, '0')}
+                            </span>
+                            <span className="block truncate text-sm font-semibold text-white">{category.name}</span>
                           </span>
                           {category.shortDescription ? <span className="block truncate text-xs text-gray-500">{category.shortDescription}</span> : null}
-                          <span className="block text-xs text-gray-500">{category.contactsCount} contactos</span>
+                          <span className="mt-1 block text-xs text-gray-500">{category.contactsCount} contactos · activo</span>
                         </span>
                         {alreadyActive ? (
                           <span className="rounded-full border border-brand-400/25 px-2 py-1 text-xs font-semibold text-brand-200">
@@ -362,10 +392,24 @@ export default function AdminAccessPage() {
                   })
                 ) : (
                   <p className="rounded-lg border border-line bg-ink-950/50 p-5 text-sm leading-6 text-gray-400">
-                    No hay categorías activas disponibles en Supabase.
+                    No se encontraron categorías activas. Ejecuta el seed de carpetas oficiales.
                   </p>
                 )}
               </div>
+              {!categories.length ? (
+                <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-6 text-amber-100">
+                  <p className="font-semibold text-white">No se encontraron categorías activas.</p>
+                  <p className="mt-1 text-amber-100/80">Ejecuta el seed de carpetas oficiales para crear o reactivar las 24 carpetas de ContactHub.</p>
+                  <button
+                    type="button"
+                    disabled={isSeedingCategories}
+                    onClick={() => void handleSeedOfficialCategories()}
+                    className="focus-ring mt-4 rounded-full bg-brand-400 px-4 py-2 text-xs font-bold text-ink-950 disabled:opacity-60"
+                  >
+                    {isSeedingCategories ? 'Creando carpetas...' : 'Crear carpetas oficiales'}
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <label className="grid gap-2">

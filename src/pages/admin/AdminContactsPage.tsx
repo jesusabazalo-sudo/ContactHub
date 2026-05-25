@@ -19,7 +19,7 @@ type ContactRow = {
   category_id: string;
   name: string;
   description: string | null;
-  phone: string;
+  phone: string | null;
   phone_masked: string | null;
   tags: string[] | null;
   status: ContactStatus;
@@ -30,6 +30,28 @@ type ContactRow = {
 };
 
 const pageSize = 50;
+const adminContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level';
+const fallbackContactSelect = 'id, name, phone_masked, status, created_at, category_id, description, tags, risk_level';
+
+type SupabaseDebugError = {
+  message?: string;
+  details?: string | null;
+  code?: string | null;
+  hint?: string | null;
+};
+
+function logSupabaseError(context: string, error: SupabaseDebugError) {
+  console.error(context, {
+    message: error.message,
+    details: error.details,
+    code: error.code,
+    hint: error.hint,
+  });
+}
+
+function getSupabaseErrorMessage(error: SupabaseDebugError) {
+  return [error.message, error.details, error.code ? `code: ${error.code}` : null, error.hint ? `hint: ${error.hint}` : null].filter(Boolean).join(' | ');
+}
 
 export function parseContactLine(line: string) {
   let cleanLine = line.trim();
@@ -97,8 +119,8 @@ export default function AdminContactsPage() {
       setError(null);
 
       let query = supabase
-        .from('contacts')
-        .select('id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level')
+        .from('admin_contacts_secure')
+        .select(adminContactSelect)
         .order('created_at', { ascending: false })
         .range(currentPage * 50, (currentPage + 1) * 50 - 1);
 
@@ -114,40 +136,83 @@ export default function AdminContactsPage() {
       }
 
       const { data: contactsData, error: contactsError } = await query;
-      if (contactsError) throw contactsError;
+      let rows: Array<Partial<ContactRow>> = contactsData ?? [];
+      let contactsSource: 'admin_contacts_secure' | 'contacts' = 'admin_contacts_secure';
+
+      if (contactsError) {
+        logSupabaseError('AdminContactsPage admin_contacts_secure query failed:', contactsError);
+        contactsSource = 'contacts';
+
+        let fallbackQuery = supabase
+          .from('contacts')
+          .select(fallbackContactSelect)
+          .order('created_at', { ascending: false })
+          .range(currentPage * 50, (currentPage + 1) * 50 - 1);
+
+        if (searchTerm) {
+          fallbackQuery = fallbackQuery.or(`name.ilike.%${searchTerm}%,phone_masked.ilike.%${searchTerm}%`);
+        }
+        if (selectedCategory && selectedCategory !== 'all') {
+          fallbackQuery = fallbackQuery.eq('category_id', selectedCategory);
+        }
+        if (selectedStatus && selectedStatus !== 'all') {
+          fallbackQuery = fallbackQuery.eq('status', selectedStatus);
+        }
+
+        const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+        if (fallbackError) {
+          logSupabaseError('AdminContactsPage contacts fallback query failed:', fallbackError);
+          throw new Error(`Error al cargar contactos. Revisa consola o configuración de Supabase. ${getSupabaseErrorMessage(fallbackError)}`);
+        }
+
+        rows = (fallbackData ?? []).map((contact) => ({ ...contact, phone: null }));
+      }
 
       const { data: catsData, error: catsError } = await supabase.from('categories').select('id, name, icon');
-      if (catsError) console.error('loadContacts categories error:', catsError);
+      if (catsError) logSupabaseError('AdminContactsPage categories query failed:', catsError);
       const catsMap = new Map((catsData ?? []).map((category) => [category.id, category]));
 
-      const enriched = (contactsData ?? []).map((contact) => ({
+      const enriched = rows.map((contact) => ({
         ...contact,
+        id: contact.id ?? '',
+        category_id: contact.category_id ?? '',
+        name: contact.name ?? 'Contacto sin nombre',
+        phone: contact.phone ?? null,
+        phone_masked: contact.phone_masked ?? null,
+        status: (contact.status ?? 'active') as ContactStatus,
+        created_at: contact.created_at ?? '',
         description: contact.description ?? '',
         tags: contact.tags ?? [],
         risk_level: contact.risk_level ?? 'safe',
-        category_name: catsMap.get(contact.category_id)?.name ?? 'Sin categoría',
-        category_icon: catsMap.get(contact.category_id)?.icon ?? '📁',
+        category_name: catsMap.get(contact.category_id ?? '')?.name ?? 'Sin categoría',
+        category_icon: catsMap.get(contact.category_id ?? '')?.icon ?? '📁',
       })) as ContactRow[];
 
       setContacts(enriched);
       setSelectedIds([]);
 
-      let countQuery = supabase.from('contacts').select('id', { count: 'exact', head: true });
+      let countQuery =
+        contactsSource === 'admin_contacts_secure'
+          ? supabase.from('admin_contacts_secure').select('id', { count: 'exact', head: true })
+          : supabase.from('contacts').select('id', { count: 'exact', head: true });
       if (searchTerm) {
-        countQuery = countQuery.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+        countQuery =
+          contactsSource === 'admin_contacts_secure'
+            ? countQuery.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
+            : countQuery.or(`name.ilike.%${searchTerm}%,phone_masked.ilike.%${searchTerm}%`);
       }
-      if (selectedCategory && selectedCategory !== 'all') {
-        countQuery = countQuery.eq('category_id', selectedCategory);
-      }
-      if (selectedStatus && selectedStatus !== 'all') {
-        countQuery = countQuery.eq('status', selectedStatus);
-      }
+      if (selectedCategory && selectedCategory !== 'all') countQuery = countQuery.eq('category_id', selectedCategory);
+      if (selectedStatus && selectedStatus !== 'all') countQuery = countQuery.eq('status', selectedStatus);
       const { count, error: countError } = await countQuery;
-      if (countError) console.error('loadContacts count error:', countError);
-      setTotalCount(count ?? 0);
+      if (countError) {
+        logSupabaseError(`AdminContactsPage ${contactsSource} count query failed:`, countError);
+        setTotalCount(enriched.length);
+      } else {
+        setTotalCount(count ?? 0);
+      }
     } catch (err) {
       console.error('loadContacts error:', err);
-      setError('Error al cargar contactos.');
+      setError(err instanceof Error ? err.message : 'Error al cargar contactos. Revisa consola o configuración de Supabase.');
     } finally {
       setLoading(false);
     }
@@ -310,7 +375,7 @@ export default function AdminContactsPage() {
   }
 
   if (loading) return <LoadingState title="Cargando contactos" message="Leyendo contactos reales desde Supabase." />;
-  if (error) return <FriendlyErrorState message={error} onRetry={() => window.location.reload()} />;
+  if (error) return <FriendlyErrorState title="Error al cargar contactos." message={error} onRetry={reloadCurrentPage} />;
 
   return (
     <AdminShell>
@@ -453,7 +518,14 @@ export default function AdminContactsPage() {
                 </tr>
               ))}
               {!contacts.length ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400">No encontramos resultados con ese filtro.</td></tr>
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                    <p>No hay contactos registrados todavía o no encontramos resultados con ese filtro.</p>
+                    <Link to="/admin/importar" className="mt-4 inline-flex rounded-full bg-brand-400 px-4 py-2 text-sm font-bold text-ink-950">
+                      Importar contactos
+                    </Link>
+                  </td>
+                </tr>
               ) : null}
             </tbody>
           </table>
@@ -481,7 +553,7 @@ export default function AdminContactsPage() {
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Nombre</span><input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono</span><input value={editing.phone} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono</span><input value={editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.map((category) => <option key={category.id} value={category.id}>{category.icon ?? '📁'} {category.name}</option>)}</select></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Estado</span><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="active">active</option><option value="inactive">inactive</option><option value="review">review</option><option value="rejected">rejected</option></select></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Descripción</span><textarea value={editing.description ?? ''} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>

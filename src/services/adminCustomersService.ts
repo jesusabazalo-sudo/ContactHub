@@ -235,7 +235,7 @@ export async function getCustomerDetail(userId: string): Promise<CustomerDetail>
     accesses: accesses.map((access) => ({
       id: access.id,
       categoryId: access.category_id,
-      categoryName: categoryById.get(access.category_id) ?? 'Carpeta sin nombre',
+      categoryName: categoryById.get(access.category_id) ?? 'Carpeta pendiente de vincular',
       status: access.status,
       planName: null,
       grantedAt: access.updated_at ?? access.created_at,
