@@ -8,6 +8,7 @@ type ContactCardContact = {
   description?: string | null;
   phone?: string | null;
   phoneMasked?: string | null;
+  phone_masked?: string | null;
   countryFlag?: string | null;
   country_flag?: string | null;
   tags?: string[] | null;
@@ -24,6 +25,12 @@ type ContactCardProps = {
   onDeactivate?: () => void;
 };
 
+function displayPhone(contact: ContactCardContact, canSeeFullPhone: boolean) {
+  if (canSeeFullPhone) return formatPhone(contact.phone);
+  const maskedPhone = contact.phoneMasked ?? contact.phone_masked;
+  return maskPhone(maskedPhone?.trim().startsWith('+') ? maskedPhone : contact.phone ?? maskedPhone);
+}
+
 export default function ContactCard({
   contact,
   canSeeFullPhone,
@@ -35,7 +42,7 @@ export default function ContactCard({
   onDeactivate,
 }: ContactCardProps) {
   const tags = contact.tags ?? [];
-  const visiblePhone = canSeeFullPhone ? formatPhone(contact.phone) : maskPhone(contact.phone ?? contact.phoneMasked);
+  const visiblePhone = displayPhone(contact, canSeeFullPhone);
   const countryFlag = contact.countryFlag ?? contact.country_flag ?? '';
 
   async function copyPhone() {
@@ -52,7 +59,6 @@ export default function ContactCard({
             <h3 className="text-lg font-bold leading-snug text-white">{contact.name}</h3>
             {isTrialUnlocked ? <span className="rounded-full bg-brand-400 px-2 py-1 text-[10px] font-black text-ink-950">PRUEBA GRATIS</span> : null}
             {isRewardUnlocked ? <span className="rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black text-ink-950">RECOMPENSA</span> : null}
-            {isAdmin ? <span className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-black text-gray-300">ADMIN</span> : null}
           </div>
           {contact.description ? <p className="mt-2 text-sm leading-6 text-gray-400">{contact.description}</p> : null}
         </div>
@@ -73,10 +79,14 @@ export default function ContactCard({
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Teléfono</p>
-            <p className="mt-1 font-mono text-base font-bold text-white">
-              {countryFlag ? `${countryFlag} ` : ''}
-              {visiblePhone}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span className="font-mono text-base font-bold text-white">
+                {countryFlag ? `${countryFlag} ` : ''}
+                {visiblePhone}
+              </span>
+              {isAdmin ? <span className="rounded-full border border-brand-400/30 bg-brand-400/15 px-2 py-1 text-[10px] font-black text-brand-200">ADMIN</span> : null}
+              {!canSeeFullPhone ? <span className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-black text-gray-400">🔒 Bloqueado</span> : null}
+            </div>
             {!canSeeFullPhone ? <p className="mt-1 text-xs text-gray-500">Número completo disponible al desbloquear.</p> : null}
           </div>
 

@@ -1,5 +1,6 @@
 import { LockKeyhole } from 'lucide-react';
 import type { PreviewContact } from '../../types';
+import { maskPhone } from '../../utils/phone';
 
 type ContactPreviewCardProps = {
   contact: PreviewContact;
@@ -16,7 +17,7 @@ export default function ContactPreviewCard({ contact }: ContactPreviewCardProps)
         <LockKeyhole className="h-5 w-5 flex-none text-brand-400" />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-sm font-semibold text-gray-300">{contact.phoneMasked}</span>
+        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-sm font-semibold text-gray-300">{maskPhone(contact.phoneMasked)}</span>
         {contact.tags.map((tag) => (
           <span key={tag} className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-400">
             {tag}
