@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
+import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type RewardRow = {
@@ -17,12 +18,43 @@ type RewardRow = {
   created_at: string;
 };
 
-type CategoryRow = { id: string; name: string; icon?: string | null; slug?: string | null };
+type CategoryRow = {
+  id: string;
+  name: string;
+  icon?: string | null;
+  slug?: string | null;
+  sort_order?: number | null;
+  short_description?: string | null;
+} & OfficialCategoryDisplay;
 type ContactRow = { id: string; name: string; category_id: string };
 
 function clientAny() {
   if (!supabase || !isSupabaseConfigured) return null;
   return supabase as unknown as { from: (table: string) => any };
+}
+
+async function loadRewardCategories(client: { from: (table: string) => any }) {
+  let result = await client
+    .from('categories')
+    .select('id,name,icon,slug,sort_order,short_description')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (result.error) {
+    console.error('AdminRewardsPage categories:', result.error.message);
+    result = await client
+      .from('categories')
+      .select('id,name,icon,slug,short_description')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+  }
+
+  if (result.error) {
+    console.error('AdminRewardsPage categories fallback:', result.error.message);
+    return [];
+  }
+
+  return normalizeOfficialCategoryRows((result.data ?? []) as CategoryRow[]) as CategoryRow[];
 }
 
 export default function AdminRewardsPage() {
@@ -49,7 +81,7 @@ export default function AdminRewardsPage() {
       }
       const [requestsResult, categoriesResult, contactsResult] = await Promise.all([
         client.from('reward_requests').select('id,user_id,review_id,screenshot_url,status,bonus_contact_ids,admin_note,created_at').order('created_at', { ascending: false }),
-        client.from('categories').select('id,name,icon,slug').eq('is_active', true).order('name', { ascending: true }),
+        loadRewardCategories(client),
         client.from('contacts').select('id,name,category_id').or('status.eq.active,status.is.null').order('created_at', { ascending: false }).limit(500),
       ]);
 
@@ -59,18 +91,14 @@ export default function AdminRewardsPage() {
         setError(requestsResult.error.message);
         return;
       }
-      if (categoriesResult.error) {
-        console.error('AdminRewardsPage categories:', categoriesResult.error.message);
-        setCategories([]);
-      }
       if (contactsResult.error) {
         console.error('AdminRewardsPage contacts:', contactsResult.error.message);
         setContacts([]);
       }
 
       setRequests(requestsResult.data ?? []);
-      console.log('Categories loaded:', categoriesResult.data?.length ?? 0, categoriesResult.data?.[0]);
-      setCategories(categoriesResult.data ?? []);
+      console.log('Categories loaded:', categoriesResult.length, categoriesResult[0]);
+      setCategories(categoriesResult);
       setContacts(contactsResult.data ?? []);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar recompensas.';
@@ -218,7 +246,7 @@ export default function AdminRewardsPage() {
               <option value="all">Todas las categorías</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.icon ?? '📁'} {category.name}
+                  {category.displayLabel}
                 </option>
               ))}
             </select>

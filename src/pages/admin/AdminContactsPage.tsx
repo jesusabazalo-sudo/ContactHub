@@ -6,13 +6,14 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
+import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { formatDate } from '../../lib/format';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { deleteContact, deleteContactsBulk, getCountryCode, getFlag, updateContact } from '../../services/adminContactsService';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
-type CategoryOption = { id: string; name: string; icon?: string | null };
+type CategoryOption = { id: string; name: string; icon?: string | null; slug?: string | null; sort_order?: number | null; short_description?: string | null } & OfficialCategoryDisplay;
 type ContactStatus = 'active' | 'inactive' | 'review' | 'rejected';
 type ContactRow = {
   id: string;
@@ -92,9 +93,9 @@ export default function AdminContactsPage() {
 
     const { data, error: categoriesError } = await supabase
       .from('categories')
-      .select('id, name, icon')
+      .select('id, name, icon, slug, sort_order, short_description')
       .eq('is_active', true)
-      .order('name', { ascending: true });
+      .order('sort_order', { ascending: true });
 
     if (categoriesError) {
       console.error('loadCategories error:', categoriesError);
@@ -102,8 +103,9 @@ export default function AdminContactsPage() {
       return;
     }
 
-    console.log('Categories loaded:', data?.length ?? 0, data?.[0]);
-    setCategories(data ?? []);
+    const normalizedCategories = normalizeOfficialCategoryRows((data ?? []) as CategoryOption[]);
+    console.log('Categories loaded:', normalizedCategories.length, normalizedCategories[0]);
+    setCategories(normalizedCategories as CategoryOption[]);
   };
 
   const loadContacts = async () => {
@@ -427,7 +429,7 @@ export default function AdminContactsPage() {
             <option value="all">Todas las categorías</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.icon ?? '📁'} {category.name}
+                {category.displayLabel}
               </option>
             ))}
           </select>
@@ -554,7 +556,7 @@ export default function AdminContactsPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Nombre</span><input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono</span><input value={editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.map((category) => <option key={category.id} value={category.id}>{category.icon ?? '📁'} {category.name}</option>)}</select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.map((category) => <option key={category.id} value={category.id}>{category.displayLabel}</option>)}</select></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Estado</span><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="active">active</option><option value="inactive">inactive</option><option value="review">review</option><option value="rejected">rejected</option></select></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Descripción</span><textarea value={editing.description ?? ''} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Tags separados por coma</span><input value={editTags} onChange={(event) => setEditTags(event.target.value)} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
@@ -587,7 +589,7 @@ export default function AdminContactsPage() {
                 <span className="text-sm font-semibold text-gray-300">Categoría</span>
                 <select value={newContact.category_id} onChange={(event) => setNewContact({ ...newContact, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">
                   <option value="">Selecciona categoría</option>
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.icon ?? '📁'} {category.name}</option>)}
+                  {categories.map((category) => <option key={category.id} value={category.id}>{category.displayLabel}</option>)}
                 </select>
               </label>
             </div>

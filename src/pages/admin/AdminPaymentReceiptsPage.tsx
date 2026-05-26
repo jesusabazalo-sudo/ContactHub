@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
+import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatCurrency, formatDate } from '../../lib/format';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
@@ -39,7 +40,9 @@ type AdminCategory = {
   name: string;
   icon: string | null;
   sort_order: number | null;
-};
+  slug?: string | null;
+  short_description?: string | null;
+} & OfficialCategoryDisplay;
 
 function dynamicSupabase() {
   return supabase as unknown as {
@@ -107,7 +110,7 @@ export default function AdminPaymentReceiptsPage() {
           .limit(200),
         supabase
           .from('categories')
-          .select('id,name,icon,sort_order')
+          .select('id,name,icon,slug,sort_order,short_description')
           .eq('is_active', true)
           .order('sort_order', { ascending: true }),
       ]);
@@ -135,7 +138,7 @@ export default function AdminPaymentReceiptsPage() {
 
       const nextReceipts = (receiptsRes.data ?? []) as PaymentReceipt[];
       setReceipts(nextReceipts);
-      setCategories((categoriesRes.data ?? []) as AdminCategory[]);
+      setCategories(normalizeOfficialCategoryRows((categoriesRes.data ?? []) as AdminCategory[]) as AdminCategory[]);
       setSelectedCategoryByReceipt((current) => {
         const next = { ...current };
         nextReceipts.forEach((receipt) => {
@@ -367,7 +370,7 @@ export default function AdminPaymentReceiptsPage() {
                         <option value="">Elegir carpeta para activar</option>
                         {categories.map((category) => (
                           <option key={category.id} value={category.id}>
-                            {String(category.sort_order ?? 0).padStart(2, '0')}. {category.icon ?? '📁'} {category.name}
+                            {category.displayLabel}
                           </option>
                         ))}
                       </select>

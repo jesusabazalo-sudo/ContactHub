@@ -168,7 +168,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 

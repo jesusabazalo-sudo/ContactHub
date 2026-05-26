@@ -315,3 +315,73 @@ export function sortByOfficialOrder<T extends { sort_order?: number | null; sort
     return orderA - orderB || (a.name ?? '').localeCompare(b.name ?? '');
   });
 }
+
+export type OfficialCategoryDisplay = {
+  displayOrder: number;
+  displayIcon: string;
+  displayTitle: string;
+  displaySubtitle: string;
+  displayLabel: string;
+  officialSlug?: string;
+};
+
+function splitOfficialName(name: string, fallbackSubtitle = '') {
+  const [title = name, ...subtitleParts] = name.split(/\s+[–-]\s+/);
+  return {
+    title: title.trim(),
+    subtitle: (subtitleParts.join(' – ') || fallbackSubtitle).trim(),
+  };
+}
+
+export function getOfficialCategoryDisplayParts(
+  category: { sort_order?: number | null; sortOrder?: number | null; slug?: string | null; name?: string | null; icon?: string | null; short_description?: string | null; shortDescription?: string | null },
+  fallbackIndex = -1,
+): OfficialCategoryDisplay {
+  const official = getOfficialCategoryFor(category, fallbackIndex);
+  const order = official?.sortOrder ?? category.sort_order ?? category.sortOrder ?? (fallbackIndex >= 0 ? fallbackIndex + 1 : 999);
+  const icon = official?.icon ?? category.icon ?? '📁';
+  const officialName = official?.name ?? category.name ?? 'Carpeta';
+  const { title, subtitle } = splitOfficialName(officialName, official?.shortDescription ?? category.shortDescription ?? category.short_description ?? '');
+
+  return {
+    displayOrder: order,
+    displayIcon: icon,
+    displayTitle: title,
+    displaySubtitle: subtitle,
+    displayLabel: `${icon} ${String(order).padStart(2, '0')}. ${title}${subtitle ? ` – ${subtitle}` : ''}`,
+    officialSlug: official?.slug,
+  };
+}
+
+export function normalizeOfficialCategoryRows<
+  T extends {
+    id?: string;
+    sort_order?: number | null;
+    sortOrder?: number | null;
+    slug?: string | null;
+    name?: string | null;
+    icon?: string | null;
+    description?: string | null;
+    short_description?: string | null;
+    shortDescription?: string | null;
+    tags?: string[] | null;
+  },
+>(items: T[]) {
+  const byOfficialKey = new Map<string, T & ReturnType<typeof applyOfficialCategoryDisplay> & OfficialCategoryDisplay>();
+
+  items.forEach((item, index) => {
+    const applied = applyOfficialCategoryDisplay(item, index) as T & ReturnType<typeof applyOfficialCategoryDisplay>;
+    const display = getOfficialCategoryDisplayParts(applied, index);
+    const key = display.officialSlug ?? applied.slug ?? item.slug ?? item.id ?? `${display.displayOrder}-${display.displayTitle}`;
+    const normalized = { ...applied, ...display };
+    const current = byOfficialKey.get(key);
+    const normalizedHasOfficialSlug = Boolean(display.officialSlug && (item.slug === display.officialSlug || applied.slug === display.officialSlug));
+    const currentHasOfficialSlug = Boolean(current?.officialSlug && current.slug === current.officialSlug);
+
+    if (!current || (normalizedHasOfficialSlug && !currentHasOfficialSlug)) {
+      byOfficialKey.set(key, normalized);
+    }
+  });
+
+  return [...byOfficialKey.values()].sort((a, b) => a.displayOrder - b.displayOrder || a.displayTitle.localeCompare(b.displayTitle));
+}

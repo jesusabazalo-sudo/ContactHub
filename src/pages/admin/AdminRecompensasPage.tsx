@@ -5,13 +5,21 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
+import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
 import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ProfileRow = { id: string; email: string | null; full_name: string | null };
-type CategoryRow = { id: string; name: string; icon?: string | null; slug?: string | null };
+type CategoryRow = {
+  id: string;
+  name: string;
+  icon?: string | null;
+  slug?: string | null;
+  sort_order?: number | null;
+  short_description?: string | null;
+} & OfficialCategoryDisplay;
 type AccessRow = { user_id: string; category_id: string; status: string };
 type RewardRow = { id: string; user_id: string; quantity: number; reason: string | null; created_at: string };
 type MissionRequestRow = {
@@ -33,6 +41,30 @@ function statusBadgeClass(status: MissionRequestRow['status']) {
   if (status === 'approved') return 'border-brand-400/25 bg-brand-400/10 text-brand-100';
   if (status === 'rejected') return 'border-red-400/25 bg-red-400/10 text-red-100';
   return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
+}
+
+async function loadRewardCategories(client: { from: (table: string) => any }) {
+  let result = await client
+    .from('categories')
+    .select('id,name,icon,slug,sort_order,short_description')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (result.error) {
+    console.error('AdminRecompensas categories:', result.error.message);
+    result = await client
+      .from('categories')
+      .select('id,name,icon,slug,short_description')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+  }
+
+  if (result.error) {
+    console.error('AdminRecompensas categories fallback:', result.error.message);
+    return [];
+  }
+
+  return normalizeOfficialCategoryRows((result.data ?? []) as CategoryRow[]) as CategoryRow[];
 }
 
 export default function AdminRecompensasPage() {
@@ -68,7 +100,7 @@ export default function AdminRecompensasPage() {
 
       const [profilesRes, categoriesRes, accessesRes, rewardsRes, requestsRes] = await Promise.all([
         client.from('profiles').select('id,email,full_name').order('email', { ascending: true }),
-        client.from('categories').select('id,name,icon,slug').eq('is_active', true).order('name', { ascending: true }),
+        loadRewardCategories(client),
         client.from('user_category_access').select('user_id,category_id,status').eq('status', 'active'),
         client.from('customer_rewards').select('id,user_id,quantity,reason,created_at').eq('reward_type', 'folder_gift').order('created_at', { ascending: false }),
         client.from('reward_requests').select('id,user_id,status,admin_note,screenshot_url,created_at,reviewed_at').order('created_at', { ascending: false }),
@@ -79,14 +111,13 @@ export default function AdminRecompensasPage() {
         setError(profilesRes.error.message);
         return;
       }
-      if (categoriesRes.error) console.error('AdminRecompensas categories:', categoriesRes.error.message);
       if (accessesRes.error) console.error('AdminRecompensas accesses:', accessesRes.error.message);
       if (rewardsRes.error) console.error('AdminRecompensas rewards:', rewardsRes.error.message);
       if (requestsRes.error) console.error('AdminRecompensas mission requests:', requestsRes.error.message);
 
       setProfiles(profilesRes.data ?? []);
-      console.log('Categories loaded:', categoriesRes.data?.length ?? 0, categoriesRes.data?.[0]);
-      setCategories(categoriesRes.data ?? []);
+      console.log('Categories loaded:', categoriesRes.length, categoriesRes[0]);
+      setCategories(categoriesRes);
       setAccesses(accessesRes.data ?? []);
       setRewards(rewardsRes.data ?? []);
       setMissionRequests(requestsRes.data ?? []);
@@ -173,7 +204,7 @@ export default function AdminRecompensasPage() {
         return;
       }
 
-      const folderNames = selectedCategories.map((category) => category.name).join(', ');
+      const folderNames = selectedCategories.map((category) => category.displayLabel).join(', ');
       const message = `¡Hola! Te acabo de regalar acceso a ${folderNames} 🎁\nEspero que te sea muy útil. Cualquier cosa me avisas.`;
       const { error: chatError } = await client.from('chat_messages').insert({
         user_id: selectedUser.id,
@@ -261,7 +292,7 @@ export default function AdminRecompensasPage() {
                 <div className="mt-2 flex flex-wrap gap-2">
                   {currentAccesses.map((access) => (
                     <span key={access.category_id} className="rounded-full bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-300">
-                      {categoryById.get(access.category_id)?.name ?? access.category_id}
+                      {categoryById.get(access.category_id)?.displayLabel ?? access.category_id}
                     </span>
                   ))}
                   {!currentAccesses.length ? <span className="text-sm text-gray-500">Sin carpetas activas.</span> : null}
@@ -269,15 +300,33 @@ export default function AdminRecompensasPage() {
               </div>
 
               <div className="mt-5 grid max-h-[360px] gap-2 overflow-auto sm:grid-cols-2">
-                {categories.map((category) => (
-                  <label key={category.id} className="flex items-start gap-3 rounded-xl border border-line bg-white/5 p-3 text-sm text-white">
-                    <input type="checkbox" checked={selectedCategoryIds.includes(category.id)} onChange={() => toggleCategory(category.id)} />
-                    <span>
-                      {category.icon ?? '📁'} {category.name}
-                      {currentCategoryIds.has(category.id) ? <span className="ml-2 text-xs text-brand-400">(ya tiene)</span> : null}
-                    </span>
-                  </label>
-                ))}
+                {categories.map((category) => {
+                  const checked = selectedCategoryIds.includes(category.id);
+                  const alreadyActive = currentCategoryIds.has(category.id);
+                  return (
+                    <label
+                      key={category.id}
+                      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition hover:border-brand-400/45 ${
+                        checked ? 'border-brand-400/50 bg-brand-400/10' : 'border-line bg-white/5'
+                      }`}
+                    >
+                      <input type="checkbox" checked={checked} onChange={() => toggleCategory(category.id)} className="mt-1" />
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-brand-400/20 bg-brand-400/10 text-lg">
+                        {category.displayIcon}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-xs font-bold text-brand-200">
+                            {String(category.displayOrder).padStart(2, '0')}
+                          </span>
+                          <span className="truncate font-semibold text-white">{category.displayTitle}</span>
+                        </span>
+                        <span className="mt-1 block text-xs text-gray-400">{category.displaySubtitle}</span>
+                        {alreadyActive ? <span className="mt-1 inline-flex text-xs font-semibold text-brand-400">Ya tiene acceso</span> : null}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
 
               <label className="mt-5 grid gap-2">

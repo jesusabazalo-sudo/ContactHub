@@ -4,11 +4,12 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
+import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
-type CategoryOption = { id: string; name: string; slug: string | null; icon?: string | null };
+type CategoryOption = { id: string; name: string; slug: string | null; icon?: string | null; sort_order?: number | null; short_description?: string | null } & OfficialCategoryDisplay;
 type ParsedLine = { raw: string; name: string; phone: string; valid: boolean; error?: string };
 
 const phoneRegex = /(\+?[\d][\d\s\-\(\)]{6,18}[\d])/;
@@ -81,9 +82,9 @@ export default function AdminImportarPage() {
       }
       const categoriesResult = await client
         .from('categories')
-        .select('id, name, icon, slug')
+        .select('id, name, icon, slug, sort_order, short_description')
         .eq('is_active', true)
-        .order('name', { ascending: true });
+        .order('sort_order', { ascending: true });
 
       if (categoriesResult.error) {
         console.error('AdminImportarPage categories:', categoriesResult.error.message);
@@ -91,9 +92,9 @@ export default function AdminImportarPage() {
         setError(categoriesResult.error.message);
         return;
       }
-      const nextCategories = categoriesResult.data ?? [];
+      const nextCategories = normalizeOfficialCategoryRows((categoriesResult.data ?? []) as CategoryOption[]);
       console.log('Categories loaded:', nextCategories.length, nextCategories[0]);
-      setCategories(nextCategories);
+      setCategories(nextCategories as CategoryOption[]);
       setCategoryId((current) => current || nextCategories[0]?.id || '');
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar categorías.';
@@ -258,7 +259,7 @@ export default function AdminImportarPage() {
                 <option value="">Selecciona categoría</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.icon ?? '📁'} {category.name}
+                    {category.displayLabel}
                   </option>
                 ))}
               </select>

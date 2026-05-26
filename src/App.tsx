@@ -3,6 +3,7 @@ import AdminGuard from './components/auth/AdminGuard';
 import AuthGuard from './components/auth/AuthGuard';
 import ChatWidget from './components/chat/ChatWidget';
 import PublicLayout from './layouts/PublicLayout';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import AuthPage from './pages/AuthPage';
 import CatalogPage from './pages/CatalogPage';
 import CategoryDetailPage from './pages/CategoryDetailPage';
@@ -29,6 +30,7 @@ export default function App() {
   return (
     <>
       <Routes>
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/catalogo" element={<CatalogPage />} />
