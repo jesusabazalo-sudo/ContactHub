@@ -138,6 +138,7 @@ export default function AdminRecompensasPage() {
   const selectedUser = selectedUserId ? profileById.get(selectedUserId) ?? null : null;
   const currentAccesses = accesses.filter((access) => access.user_id === selectedUserId);
   const currentCategoryIds = new Set(currentAccesses.map((access) => access.category_id));
+  const allSelected = categories.length > 0 && selectedCategoryIds.length === categories.length;
 
   const filteredProfiles = useMemo(() => {
     const normalized = sanitizeText(query, 80).toLowerCase();
@@ -147,6 +148,10 @@ export default function AdminRecompensasPage() {
 
   function toggleCategory(categoryId: string) {
     setSelectedCategoryIds((current) => (current.includes(categoryId) ? current.filter((id) => id !== categoryId) : [...current, categoryId]));
+  }
+
+  function toggleAllCategories() {
+    setSelectedCategoryIds(allSelected ? [] : categories.map((category) => category.id));
   }
 
   function prepareGiftFromMission(request: MissionRequestRow) {
@@ -299,18 +304,41 @@ export default function AdminRecompensasPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid max-h-[360px] gap-2 overflow-auto sm:grid-cols-2">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-semibold text-gray-300">{selectedCategoryIds.length} carpetas seleccionadas</p>
+                <button
+                  type="button"
+                  onClick={toggleAllCategories}
+                  disabled={!categories.length}
+                  className={`focus-ring rounded-lg px-4 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    allSelected ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-brand-400 text-ink-950 hover:bg-white'
+                  }`}
+                >
+                  {allSelected ? '☐ Deseleccionar todas' : '☑ Seleccionar todas'}
+                </button>
+              </div>
+
+              <div className="mt-3 grid max-h-[360px] gap-2 overflow-auto sm:grid-cols-2">
                 {categories.map((category) => {
                   const checked = selectedCategoryIds.includes(category.id);
                   const alreadyActive = currentCategoryIds.has(category.id);
                   return (
-                    <label
+                    <div
                       key={category.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleCategory(category.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          toggleCategory(category.id);
+                        }
+                      }}
                       className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition hover:border-brand-400/45 ${
-                        checked ? 'border-brand-400/50 bg-brand-400/10' : 'border-line bg-white/5'
+                        checked ? 'border-brand-400/70 bg-brand-400/15 shadow-[0_0_0_1px_rgba(29,180,122,0.12)]' : 'border-line bg-white/5'
                       }`}
                     >
-                      <input type="checkbox" checked={checked} onChange={() => toggleCategory(category.id)} className="mt-1" />
+                      <input type="checkbox" checked={checked} readOnly className="pointer-events-none mt-1" />
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-brand-400/20 bg-brand-400/10 text-lg">
                         {category.displayIcon}
                       </span>
@@ -324,7 +352,7 @@ export default function AdminRecompensasPage() {
                         <span className="mt-1 block text-xs text-gray-400">{category.displaySubtitle}</span>
                         {alreadyActive ? <span className="mt-1 inline-flex text-xs font-semibold text-brand-400">Ya tiene acceso</span> : null}
                       </span>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
@@ -336,7 +364,7 @@ export default function AdminRecompensasPage() {
 
               <button
                 type="button"
-                disabled={isSaving || !selectedCategoryIds.length}
+                disabled={isSaving || !selectedUser || !selectedCategoryIds.length}
                 onClick={() => void sendGift()}
                 className="focus-ring btn-primary-glow mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 disabled:opacity-50"
               >
