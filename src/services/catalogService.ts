@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
 import { applyOfficialCategoryDisplay } from '../data/officialCategories';
-import type { Category } from '../types';
+import type { Category, PreviewContact } from '../types';
 
 export type CatalogContact = {
   id: string;
@@ -43,6 +43,18 @@ function mapCategory(row: any, contactsCount = 0): Category {
     isActive: Boolean(row.is_active),
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
+  };
+}
+
+function mapPreviewContact(row: any): PreviewContact {
+  return {
+    id: row.id,
+    name: row.name ?? '',
+    description: row.description ?? '',
+    phone: row.phone ?? null,
+    phoneMasked: row.phone_masked ?? '',
+    countryFlag: row.country_flag ?? null,
+    tags: row.tags ?? [],
   };
 }
 
@@ -102,12 +114,23 @@ export async function getCategoryBySlug(slug: string) {
   return data ? mapCategory(data, 0) : null;
 }
 
-export async function getCategoryContacts(categoryId: string, hasAccess: boolean) {
+export async function getCategoryContacts(categoryId: string, hasAccess: boolean, isRegistered = false) {
   if (!supabase) return [];
   if (hasAccess) {
     const { data, error } = await supabase.from('contact_unlocked_secure').select('*').eq('category_id', categoryId).limit(200);
     if (!error && data) return data.map((row) => mapContact(row, true));
     if (error) console.error('getCategoryContacts unlocked:', error.message);
+  }
+
+  if (isRegistered) {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('id, name, phone, phone_masked, description, category_id, country_flag, country_code, tags, status, created_at')
+      .eq('category_id', categoryId)
+      .eq('status', 'active')
+      .limit(200);
+    if (!error && data) return data.map((row) => mapContact(row, false));
+    if (error) console.error('getCategoryContacts registered preview:', error.message);
   }
 
   const { data: preview, error: previewError } = await supabase.from('contact_public_preview').select('*').eq('category_id', categoryId).limit(200);
@@ -147,6 +170,41 @@ export async function getCategoryDetail(params: { slug: string; userId?: string;
   if (!category) return null;
   const totalAccess = params.userId ? await checkUserTotalAccess(params.userId) : false;
   const hasAccess = params.isAdmin || totalAccess || (await checkUserCategoryAccess(params.userId, category.id, params.isAdmin));
-  const contacts = await getCategoryContacts(category.id, hasAccess);
+  const contacts = await getCategoryContacts(category.id, hasAccess, Boolean(params.userId));
   return { category: { ...category, contactsCount: contacts.length }, contacts, hasAccess };
+}
+
+export async function getCatalogCategoryPreviews(params: { categoryIds: string[]; isRegistered: boolean; fullAccessCategoryIds: Set<string> }) {
+  if (!supabase || !params.categoryIds.length) return new Map<string, PreviewContact[]>();
+  const client = supabase;
+
+  const entries: Array<readonly [string, PreviewContact[]]> = await Promise.all(
+    params.categoryIds.map(async (categoryId) => {
+      const canReadFull = params.fullAccessCategoryIds.has(categoryId);
+
+      if (canReadFull || params.isRegistered) {
+        const { data, error } = await client
+          .from('contacts')
+          .select('id, name, phone, phone_masked, description, category_id, country_flag, tags')
+          .eq('category_id', categoryId)
+          .eq('status', 'active')
+          .limit(3);
+        if (!error && data) return [categoryId, data.map(mapPreviewContact)] as const;
+        if (error) console.error('getCatalogCategoryPreviews contacts:', error.message);
+      }
+
+      const { data, error } = await client
+        .from('contact_public_preview')
+        .select('id, name, phone_masked, description, category_id, country_flag, tags')
+        .eq('category_id', categoryId)
+        .limit(3);
+      if (error) {
+        console.error('getCatalogCategoryPreviews public:', error.message);
+        return [categoryId, [] as PreviewContact[]] as const;
+      }
+      return [categoryId, (data ?? []).map(mapPreviewContact)] as const;
+    }),
+  );
+
+  return new Map(entries);
 }

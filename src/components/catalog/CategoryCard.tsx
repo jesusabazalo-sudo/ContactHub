@@ -1,10 +1,12 @@
 import { ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Category } from '../../types';
+import { getPhoneDisplay } from '../../utils/phone';
 import Badge from '../ui/Badge';
 
 type CategoryCardProps = {
   category: Category;
+  accessLevel?: 0 | 1 | 2;
 };
 
 function statusLabel(category: Category) {
@@ -14,11 +16,12 @@ function statusLabel(category: Category) {
   return category.contactsCount > 0 ? 'Disponible' : 'Preparando';
 }
 
-export default function CategoryCard({ category }: CategoryCardProps) {
+export default function CategoryCard({ category, accessLevel = 0 }: CategoryCardProps) {
   const order = category.sortOrder ?? 0;
   const orderLabel = order ? String(order).padStart(2, '0') : '--';
   const items = (category.whatYouCanFind?.length ? category.whatYouCanFind : category.tags).slice(0, 4);
   const isPremium = category.isPremiumOfficial || category.sortOrder === 25;
+  const previewContacts = (category.previewContacts ?? []).slice(0, 3);
 
   return (
     <article
@@ -58,6 +61,23 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           ))}
         </div>
       </div>
+
+      {previewContacts.length ? (
+        <div className="relative mt-4 rounded-xl border border-line bg-white/[0.03] p-3">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Muestra de contactos</p>
+          <div className="grid gap-2">
+            {previewContacts.map((contact) => (
+              <div key={contact.id} className="flex items-center justify-between gap-3 rounded-lg bg-ink-950/35 px-3 py-2">
+                <span className="min-w-0 truncate text-xs font-semibold text-gray-200">{contact.name}</span>
+                <span className="shrink-0 font-mono text-[11px] text-gray-500">
+                  {contact.countryFlag ? `${contact.countryFlag} ` : ''}
+                  {getPhoneDisplay(contact.phone ?? contact.phoneMasked, accessLevel)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="relative mt-5 flex items-center justify-between gap-4 border-t border-line pt-4">
         <div>

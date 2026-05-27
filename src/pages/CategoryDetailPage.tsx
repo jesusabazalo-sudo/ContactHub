@@ -174,6 +174,7 @@ export default function CategoryDetailPage() {
 
   const { category, contacts, hasAccess, phonesByContactId, rewardContactIds, trialContactIds } = detail;
   const canViewFullCategory = Boolean(isAdmin || hasAccess);
+  const accessLevel: 0 | 1 | 2 = canViewFullCategory ? 2 : user ? 1 : 0;
 
   return (
     <section className="section-pad bg-ink-950">
@@ -250,13 +251,14 @@ export default function CategoryDetailPage() {
                 const unlockedPhone = phonesByContactId.get(contact.id);
                 const isTrialUnlocked = trialContactIds.includes(contact.id) && Boolean(unlockedPhone);
                 const isRewardUnlocked = rewardContactIds.includes(contact.id) && Boolean(unlockedPhone);
-                const canSeeFullPhone = Boolean(isAdmin || hasAccess || isTrialUnlocked || isRewardUnlocked);
+                const canSeeFullPhone = accessLevel === 2;
                 return (
                   <ContactCard
                     key={contact.id}
                     contact={{ ...contact, phone: unlockedPhone ?? contact.phone }}
                     canSeeFullPhone={canSeeFullPhone}
-                    canContactDirect={canViewFullCategory}
+                    canContactDirect={accessLevel === 2}
+                    accessLevel={accessLevel}
                     isAdmin={isAdmin}
                     isTrialUnlocked={isTrialUnlocked}
                     isRewardUnlocked={isRewardUnlocked}

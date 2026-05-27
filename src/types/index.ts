@@ -16,6 +16,7 @@ export type Category = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  previewContacts?: PreviewContact[];
 };
 
 export type PricingPlan = {
@@ -34,6 +35,8 @@ export type PreviewContact = {
   id: string;
   name: string;
   description: string;
+  phone?: string | null;
   phoneMasked: string;
+  countryFlag?: string | null;
   tags: string[];
 };

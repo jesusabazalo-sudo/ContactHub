@@ -3,9 +3,10 @@ import CategoryCard from './CategoryCard';
 
 type CatalogGridProps = {
   categories: Category[];
+  getAccessLevel?: (category: Category) => 0 | 1 | 2;
 };
 
-export default function CatalogGrid({ categories }: CatalogGridProps) {
+export default function CatalogGrid({ categories, getAccessLevel }: CatalogGridProps) {
   if (categories.length === 0) {
     return (
       <div className="rounded-2xl border border-line bg-panel p-10 text-center">
@@ -25,12 +26,12 @@ export default function CatalogGrid({ categories }: CatalogGridProps) {
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {regularCategories.map((category) => (
-          <CategoryCard key={category.id} category={category} />
+          <CategoryCard key={category.id} category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
         ))}
       </div>
       {premiumCategory ? (
         <div className="pt-2">
-          <CategoryCard category={premiumCategory} />
+          <CategoryCard category={premiumCategory} accessLevel={getAccessLevel?.(premiumCategory) ?? 0} />
         </div>
       ) : null}
     </div>

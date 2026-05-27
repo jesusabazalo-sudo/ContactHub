@@ -7,11 +7,11 @@ import SectionHeading from '../components/ui/SectionHeading';
 import { APP_CONFIG } from '../config/app';
 import { useAuth } from '../features/auth/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
-import { getCatalogCategories } from '../services/catalogService';
+import { getCatalogCategories, getCatalogCategoryPreviews } from '../services/catalogService';
 import type { Category } from '../types';
 
 export default function CatalogPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [purchasedCategoryIds, setPurchasedCategoryIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
@@ -58,6 +58,31 @@ export default function CatalogPage() {
     void loadPurchasedCategories();
   }, [user?.id]);
 
+  const categoryIdsKey = useMemo(() => categories.map((category) => category.id).join('|'), [categories]);
+  const purchasedIdsKey = useMemo(() => Array.from(purchasedCategoryIds).sort().join('|'), [purchasedCategoryIds]);
+
+  useEffect(() => {
+    async function loadPreviews() {
+      if (!categories.length) return;
+
+      const fullAccessCategoryIds = new Set(isAdmin ? categories.map((category) => category.id) : Array.from(purchasedCategoryIds));
+      const previewsByCategory = await getCatalogCategoryPreviews({
+        categoryIds: categories.map((category) => category.id),
+        isRegistered: Boolean(user),
+        fullAccessCategoryIds,
+      });
+
+      setCategories((current) =>
+        current.map((category) => ({
+          ...category,
+          previewContacts: previewsByCategory.get(category.id) ?? [],
+        })),
+      );
+    }
+
+    void loadPreviews();
+  }, [categoryIdsKey, isAdmin, purchasedIdsKey, user]);
+
   const filteredCategories = useMemo(() => {
     const searchLower = search.toLowerCase();
 
@@ -103,7 +128,10 @@ export default function CatalogPage() {
           </div>
         ) : null}
         <div className="mt-8">
-          <CatalogGrid categories={filteredCategories} />
+          <CatalogGrid
+            categories={filteredCategories}
+            getAccessLevel={(category) => (isAdmin || purchasedCategoryIds.has(category.id) ? 2 : user ? 1 : 0)}
+          />
         </div>
       </div>
     </section>

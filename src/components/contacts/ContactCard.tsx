@@ -1,7 +1,7 @@
 import { Clipboard, LockKeyhole, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { formatPhone, maskPhone, phoneToWhatsapp } from '../../utils/phone';
+import { getPhoneDisplay, phoneToWhatsapp } from '../../utils/phone';
 
 type ContactCardContact = {
   id: string;
@@ -19,6 +19,7 @@ type ContactCardProps = {
   contact: ContactCardContact;
   canSeeFullPhone: boolean;
   canContactDirect?: boolean;
+  accessLevel?: 0 | 1 | 2;
   isAdmin?: boolean;
   isTrialUnlocked?: boolean;
   isRewardUnlocked?: boolean;
@@ -27,10 +28,10 @@ type ContactCardProps = {
   onDeactivate?: () => void;
 };
 
-function displayPhone(contact: ContactCardContact, canSeeFullPhone: boolean) {
-  if (canSeeFullPhone) return formatPhone(contact.phone);
+function displayPhone(contact: ContactCardContact, accessLevel: 0 | 1 | 2) {
   const maskedPhone = contact.phoneMasked ?? contact.phone_masked;
-  return maskPhone(maskedPhone?.trim().startsWith('+') ? maskedPhone : contact.phone ?? maskedPhone);
+  const sourcePhone = contact.phone ?? maskedPhone;
+  return getPhoneDisplay(sourcePhone, accessLevel);
 }
 
 function getWhatsAppMessage(contactName: string) {
@@ -63,6 +64,7 @@ export default function ContactCard({
   contact,
   canSeeFullPhone,
   canContactDirect,
+  accessLevel,
   isAdmin = false,
   isTrialUnlocked = false,
   isRewardUnlocked = false,
@@ -72,9 +74,10 @@ export default function ContactCard({
 }: ContactCardProps) {
   const navigate = useNavigate();
   const tags = contact.tags ?? [];
-  const visiblePhone = displayPhone(contact, canSeeFullPhone);
+  const resolvedAccessLevel: 0 | 1 | 2 = accessLevel ?? (canSeeFullPhone ? 2 : 1);
+  const visiblePhone = displayPhone(contact, resolvedAccessLevel);
   const countryFlag = contact.countryFlag ?? contact.country_flag ?? '';
-  const showDirectActions = Boolean(canContactDirect ?? canSeeFullPhone);
+  const showDirectActions = Boolean(canContactDirect ?? resolvedAccessLevel === 2);
 
   async function copyPhone() {
     if (!showDirectActions || !contact.phone) return;
@@ -143,10 +146,14 @@ export default function ContactCard({
           ) : (
             <button
               type="button"
-              onClick={() => navigate('/precios')}
-              className="focus-ring inline-flex w-full items-center justify-center rounded-lg border border-brand-400/30 bg-brand-400/15 px-4 py-3 text-xs font-bold text-brand-300 transition hover:bg-brand-400/20"
+              onClick={() => navigate(resolvedAccessLevel === 0 ? '/auth' : '/precios')}
+              className={`focus-ring inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-xs font-bold transition ${
+                resolvedAccessLevel === 0
+                  ? 'border border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white'
+                  : 'border border-brand-400/30 bg-brand-400/15 text-brand-300 hover:bg-brand-400/20'
+              }`}
             >
-              🔒 Desbloquear para contactar
+              {resolvedAccessLevel === 0 ? '👤 Regístrate gratis para ver más' : '🔒 Desbloquea esta carpeta para contactar'}
             </button>
           )}
 
