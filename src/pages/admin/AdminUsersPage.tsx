@@ -183,7 +183,7 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-left text-sm">
+            <table className="w-full min-w-[1240px] text-left text-sm">
               <thead className="text-xs uppercase text-gray-500">
                 <tr className="border-b border-line">
                   <th className="py-3 pr-4">Email</th>
@@ -191,6 +191,7 @@ export default function AdminUsersPage() {
                   <th className="py-3 pr-4">Estado</th>
                   <th className="py-3 pr-4">Carpetas activas</th>
                   <th className="py-3 pr-4">Prueba usada</th>
+                  <th className="py-3 pr-4">Onboarding</th>
                   <th className="py-3 pr-4">Último acceso</th>
                   <th className="py-3 pr-4">Acciones</th>
                 </tr>
@@ -208,6 +209,11 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="py-4 pr-4 text-gray-300">{item.activeAccessCount}</td>
                     <td className="py-4 pr-4 text-gray-300">{item.usedTrial ? 'Sí' : 'No'}</td>
+                    <td className="py-4 pr-4 text-xs text-gray-400">
+                      <p>Busca: {item.onboardingAnswers?.busca ?? 'Pendiente'}</p>
+                      <p className="mt-1">Uso: {item.onboardingAnswers?.uso ?? 'Pendiente'}</p>
+                      <p className="mt-1">Contacto preferido: {item.onboardingAnswers?.contacto ?? 'Pendiente'}</p>
+                    </td>
                     <td className="py-4 pr-4 text-gray-400">{formatDate(item.updatedAt)}</td>
                     <td className="py-4 pr-4">
                       <div className="flex flex-wrap gap-2">

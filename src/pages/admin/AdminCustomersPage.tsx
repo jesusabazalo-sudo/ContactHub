@@ -14,6 +14,11 @@ type ProfileRow = {
   phone: string | null;
   created_at: string;
   updated_at: string;
+  onboarding_answers?: {
+    busca?: string;
+    uso?: string;
+    contacto?: string;
+  } | null;
 };
 
 type PurchaseRow = {
@@ -44,8 +49,9 @@ export default function AdminCustomersPage() {
         setError('Falta conectar Supabase. Revisa tu archivo .env.local.');
         return;
       }
+      const profileClient = client as unknown as { from: (table: string) => any };
       const [profilesResult, purchasesResult] = await Promise.all([
-        client.from('profiles').select('id,email,full_name,phone,created_at,updated_at').order('created_at', { ascending: false }).limit(500),
+        profileClient.from('profiles').select('id,email,full_name,phone,created_at,updated_at,onboarding_answers').order('created_at', { ascending: false }).limit(500),
         client.from('purchases').select('user_id,status').limit(2000),
       ]);
 
@@ -60,7 +66,7 @@ export default function AdminCustomersPage() {
         setPurchases([]);
       }
 
-      setProfiles(profilesResult.data ?? []);
+      setProfiles((profilesResult.data ?? []) as ProfileRow[]);
       setPurchases(purchasesResult.data ?? []);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar clientes.';
@@ -130,7 +136,7 @@ export default function AdminCustomersPage() {
         </label>
 
         <div className="mt-6 overflow-x-auto rounded-xl border border-line">
-          <table className="w-full min-w-[860px] text-left text-sm">
+          <table className="w-full min-w-[1060px] text-left text-sm">
             <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-3">Cliente</th>
@@ -138,6 +144,7 @@ export default function AdminCustomersPage() {
                 <th className="px-4 py-3">Registro</th>
                 <th className="px-4 py-3">Última actualización</th>
                 <th className="px-4 py-3">Compras</th>
+                <th className="px-4 py-3">Onboarding</th>
               </tr>
             </thead>
             <tbody>
@@ -155,12 +162,17 @@ export default function AdminCustomersPage() {
                     <td className="px-4 py-3 text-gray-300">
                       {counts.active} activas · {counts.pending} pendientes · {counts.revoked} revocadas
                     </td>
+                    <td className="px-4 py-3 text-xs text-gray-400">
+                      <p>Busca: {profile.onboarding_answers?.busca ?? 'Pendiente'}</p>
+                      <p className="mt-1">Uso: {profile.onboarding_answers?.uso ?? 'Pendiente'}</p>
+                      <p className="mt-1">Contacto preferido: {profile.onboarding_answers?.contacto ?? 'Pendiente'}</p>
+                    </td>
                   </tr>
                 );
               })}
               {!filteredProfiles.length ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
                     No hay clientes con ese filtro.
                   </td>
                 </tr>

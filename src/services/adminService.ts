@@ -12,6 +12,11 @@ export type AdminProfile = {
   activeAccessCount: number;
   customerStatus: 'nuevo' | 'pendiente' | 'activo' | 'vip' | 'bloqueado';
   usedTrial: boolean;
+  onboardingAnswers?: {
+    busca?: string;
+    uso?: string;
+    contacto?: string;
+  };
 };
 
 export type AdminCategory = { id: string; name: string; slug: string; contactsCount: number; isActive: boolean; sortOrder?: number | null; icon?: string | null; shortDescription?: string; tags?: string[]; whatYouCanFind?: string[] };
@@ -81,8 +86,9 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
 export async function getAdminUsers(): Promise<AdminProfile[]> {
   if (!ready() || !supabase) return [];
+  const client = supabase as unknown as { from: (table: string) => any };
   const [profilesResult, rolesResult, accessesResult, trialResult] = await Promise.all([
-    supabase.from('profiles').select('id,email,full_name,phone,created_at,updated_at').order('created_at', { ascending: false }).limit(500),
+    client.from('profiles').select('id,email,full_name,phone,created_at,updated_at,onboarding_answers').order('created_at', { ascending: false }).limit(500),
     supabase.from('user_roles').select('user_id,role'),
     supabase.from('user_category_access').select('user_id,status').eq('status', 'active'),
     supabase.from('trial_claims').select('user_id'),
@@ -96,7 +102,7 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
   const trialUsers = new Set((trialResult.data ?? []).map((trial) => trial.user_id));
   const accessCounts = new Map<string, number>();
   for (const access of accessesResult.data ?? []) accessCounts.set(access.user_id, (accessCounts.get(access.user_id) ?? 0) + 1);
-  return (profilesResult.data ?? []).map((profile) => ({
+  return (profilesResult.data ?? []).map((profile: any) => ({
     id: profile.id,
     email: profile.email,
     fullName: profile.full_name,
@@ -107,6 +113,7 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
     activeAccessCount: accessCounts.get(profile.id) ?? 0,
     customerStatus: (accessCounts.get(profile.id) ?? 0) > 0 ? 'activo' : trialUsers.has(profile.id) ? 'pendiente' : 'nuevo',
     usedTrial: trialUsers.has(profile.id),
+    onboardingAnswers: (profile.onboarding_answers ?? {}) as AdminProfile['onboardingAnswers'],
   }));
 }
 
