@@ -1,6 +1,7 @@
-import { Clipboard, LockKeyhole } from 'lucide-react';
+import { Clipboard, LockKeyhole, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { formatPhone, maskPhone } from '../../utils/phone';
+import { formatPhone, maskPhone, phoneToWhatsapp } from '../../utils/phone';
 
 type ContactCardContact = {
   id: string;
@@ -17,6 +18,7 @@ type ContactCardContact = {
 type ContactCardProps = {
   contact: ContactCardContact;
   canSeeFullPhone: boolean;
+  canContactDirect?: boolean;
   isAdmin?: boolean;
   isTrialUnlocked?: boolean;
   isRewardUnlocked?: boolean;
@@ -31,9 +33,36 @@ function displayPhone(contact: ContactCardContact, canSeeFullPhone: boolean) {
   return maskPhone(maskedPhone?.trim().startsWith('+') ? maskedPhone : contact.phone ?? maskedPhone);
 }
 
+function getWhatsAppMessage(contactName: string) {
+  const messages = [
+    `Hola, vi tu oferta de "${contactName}" y me interesa saber más. ¿Podrías darme los detalles?`,
+    `Buenas, estaba buscando algo como lo que ofreces en "${contactName}". ¿Cuánto cuesta y cómo funciona?`,
+    `Hola! Me apareció tu oferta de "${contactName}" y quería consultarte algo. ¿Tienes un momento?`,
+    `Hola, vi que ofreces "${contactName}". ¿Aún está disponible? ¿Cómo puedo obtenerlo?`,
+    `Buenas! Tengo interés en "${contactName}". ¿Me puedes dar más información?`,
+    `Hola, encontré tu contacto y me interesa lo que ofreces: "${contactName}". ¿Cómo trabajamos?`,
+    `Hola! Quería preguntarte sobre "${contactName}". ¿Sigue disponible y cuál es el precio?`,
+  ];
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
+function openWhatsApp(phone: string | null | undefined, contactName: string) {
+  const cleanPhone = phoneToWhatsapp(phone);
+  if (!cleanPhone) {
+    toast.error('Este contacto no tiene un número válido.');
+    return;
+  }
+
+  const message = encodeURIComponent(getWhatsAppMessage(contactName));
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const url = isMobile ? `whatsapp://send?phone=${cleanPhone}&text=${message}` : `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${message}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 export default function ContactCard({
   contact,
   canSeeFullPhone,
+  canContactDirect,
   isAdmin = false,
   isTrialUnlocked = false,
   isRewardUnlocked = false,
@@ -41,14 +70,16 @@ export default function ContactCard({
   onDelete,
   onDeactivate,
 }: ContactCardProps) {
+  const navigate = useNavigate();
   const tags = contact.tags ?? [];
   const visiblePhone = displayPhone(contact, canSeeFullPhone);
   const countryFlag = contact.countryFlag ?? contact.country_flag ?? '';
+  const showDirectActions = Boolean(canContactDirect ?? canSeeFullPhone);
 
   async function copyPhone() {
-    if (!canSeeFullPhone || !contact.phone) return;
-    await navigator.clipboard.writeText(formatPhone(contact.phone));
-    toast.success('Número copiado.');
+    if (!showDirectActions || !contact.phone) return;
+    await navigator.clipboard.writeText(contact.phone);
+    toast.success('Número copiado');
   }
 
   return (
@@ -62,7 +93,7 @@ export default function ContactCard({
           </div>
           {contact.description ? <p className="mt-2 text-sm leading-6 text-gray-400">{contact.description}</p> : null}
         </div>
-        {!canSeeFullPhone ? <LockKeyhole className="mt-1 h-5 w-5 flex-none text-brand-400" /> : null}
+        {!showDirectActions ? <LockKeyhole className="mt-1 h-5 w-5 flex-none text-brand-400" /> : null}
       </div>
 
       {tags.length ? (
@@ -85,23 +116,39 @@ export default function ContactCard({
                 {visiblePhone}
               </span>
               {isAdmin ? <span className="rounded-full border border-brand-400/30 bg-brand-400/15 px-2 py-1 text-[10px] font-black text-brand-200">ADMIN</span> : null}
-              {!canSeeFullPhone ? <span className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-black text-gray-400">🔒 Bloqueado</span> : null}
+              {!showDirectActions ? <span className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-black text-gray-400">🔒 Bloqueado</span> : null}
             </div>
-            {!canSeeFullPhone ? <p className="mt-1 text-xs text-gray-500">Número completo disponible al desbloquear.</p> : null}
+            {!showDirectActions ? <p className="mt-1 text-xs text-gray-500">Número completo disponible al desbloquear.</p> : null}
           </div>
 
-          {canSeeFullPhone ? (
-            <div className="flex flex-wrap gap-2">
+          {showDirectActions ? (
+            <div className="grid gap-2">
+              <button
+                type="button"
+                onClick={() => openWhatsApp(contact.phone, contact.name)}
+                className="focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white transition duration-200 hover:bg-[#1db857] active:scale-[0.98]"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Escribir por WhatsApp
+              </button>
               <button
                 type="button"
                 onClick={() => void copyPhone()}
-                className="focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-4 text-xs font-bold text-white transition duration-150 hover:scale-[1.02] hover:border-brand-400/35 active:scale-95"
+                className="focus-ring inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-white/20 bg-transparent px-4 text-xs font-semibold text-white/70 transition duration-150 hover:border-brand-400/35 hover:text-white active:scale-[0.98]"
               >
                 <Clipboard className="h-4 w-4" />
-                Copiar
+                Copiar número
               </button>
             </div>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/precios')}
+              className="focus-ring inline-flex w-full items-center justify-center rounded-lg border border-brand-400/30 bg-brand-400/15 px-4 py-3 text-xs font-bold text-brand-300 transition hover:bg-brand-400/20"
+            >
+              🔒 Desbloquear para contactar
+            </button>
+          )}
 
           {isAdmin && (onEdit || onDeactivate || onDelete) ? (
             <div className="flex flex-wrap gap-2 pt-1">

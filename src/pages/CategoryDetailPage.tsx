@@ -256,6 +256,7 @@ export default function CategoryDetailPage() {
                     key={contact.id}
                     contact={{ ...contact, phone: unlockedPhone ?? contact.phone }}
                     canSeeFullPhone={canSeeFullPhone}
+                    canContactDirect={canViewFullCategory}
                     isAdmin={isAdmin}
                     isTrialUnlocked={isTrialUnlocked}
                     isRewardUnlocked={isRewardUnlocked}
