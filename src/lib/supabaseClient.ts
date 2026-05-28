@@ -304,6 +304,11 @@ export type Database = {
           sender: 'user' | 'admin';
           read: boolean;
           created_at: string;
+          expires_at?: string | null;
+          has_attachment?: boolean | null;
+          attachment_url?: string | null;
+          attachment_type?: string | null;
+          comprobante_status?: 'pendiente' | 'verificado' | 'rechazado' | null;
         };
         Insert: {
           id?: string;
@@ -313,12 +318,22 @@ export type Database = {
           sender?: 'user' | 'admin';
           read?: boolean;
           created_at?: string;
+          expires_at?: string | null;
+          has_attachment?: boolean | null;
+          attachment_url?: string | null;
+          attachment_type?: string | null;
+          comprobante_status?: 'pendiente' | 'verificado' | 'rechazado' | null;
         };
         Update: {
           message?: string;
           session_id?: string;
           sender?: 'user' | 'admin';
           read?: boolean;
+          expires_at?: string | null;
+          has_attachment?: boolean | null;
+          attachment_url?: string | null;
+          attachment_type?: string | null;
+          comprobante_status?: 'pendiente' | 'verificado' | 'rechazado' | null;
         };
         Relationships: [];
       };

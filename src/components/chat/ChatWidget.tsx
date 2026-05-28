@@ -1,4 +1,4 @@
-import { Copy, MessageCircle, Send, UploadCloud, X } from 'lucide-react';
+import { Copy, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { APP_CONFIG } from '../../config/app';
 import { officialCategories } from '../../data/officialCategories';
@@ -15,6 +15,10 @@ type ChatMessage = {
   read: boolean;
   created_at: string;
   kind?: 'text' | 'yapeQr';
+  has_attachment?: boolean | null;
+  attachment_url?: string | null;
+  attachment_type?: string | null;
+  comprobante_status?: 'pendiente' | 'verificado' | 'rechazado' | null;
 };
 
 type ChatFlow = 'main' | 'prices' | 'promos' | 'folders' | 'folderDetail' | 'payment' | 'paid' | 'qr' | 'help' | 'missions' | 'human';
@@ -77,11 +81,18 @@ type ReceiptPreview = {
 function dynamicSupabase() {
   return supabase as unknown as {
     from: (table: string) => any;
-    storage: any;
+    storage: {
+      from: (bucket: string) => {
+        upload: (path: string, file: File, options?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+        createSignedUrl: (path: string, expiresIn: number) => Promise<{ data: { signedUrl: string } | null; error: { message: string } | null }>;
+      };
+    };
   };
 }
 
 const welcomeMessage = 'Hola 👋 Soy el asistente de ContactHub. Antes de avanzar, dime qué necesitas.';
+const renewedMessage = '¡Hola! 👋 Chat renovado. ¿En qué puedo ayudarte hoy?';
+const chatRetentionNote = '💬 El chat se renueva cada 24h. Los comprobantes se guardan.';
 
 const plans: ChatPlan[] = [
   { id: 'individual', label: 'S/20 — 1 carpeta', name: 'Carpeta individual', price: 'S/20', folderText: '1 carpeta', description: 'Ideal si tienes una meta concreta y quieres empezar por una carpeta específica.' },
@@ -148,6 +159,57 @@ const helpTopics: Record<string, string> = {
   free: 'Sí. Puedes registrarte, explorar el catálogo y ganar contactos extra completando misiones como compartir ContactHub y enviar evidencia.',
 };
 
+const autoResponses = [
+  {
+    keywords: ['precio', 'cuanto', 'cuánto', 'costo', 'vale', 'cobras'],
+    response: `💰 Los precios son:
+- 1 carpeta: S/20
+- Pack Starter (4 carpetas): S/65
+- Pack Power (10 carpetas): S/150
+- Acceso Total (24 carpetas): S/360
+
+🎁 ¡Con regalo incluido! Compra 1 y llévate 2 más gratis.
+¿Cuál te interesa?`,
+    flow: 'prices' as ChatFlow,
+  },
+  {
+    keywords: ['pagar', 'pago', 'yape', 'plin', 'transferencia', 'comprar'],
+    response: '💜 Puedes pagar por Yape. Escanea el QR o usa el número disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.',
+    flow: 'payment' as ChatFlow,
+  },
+  {
+    keywords: ['acceso', 'activar', 'cuando', 'cuándo', 'tiempo'],
+    response: `⚡ Tu acceso se activa en minutos después de verificar tu pago.
+Recibirás una notificación aquí mismo en el chat.
+El proceso es rápido: normalmente menos de 5 minutos. 🚀`,
+    flow: 'paid' as ChatFlow,
+  },
+  {
+    keywords: ['que hay', 'qué hay', 'que tiene', 'carpeta', 'categoria', 'categoría'],
+    response: `📂 Tenemos 24 carpetas organizadas: IA, educación, negocios, gaming, diseño, fitness, música y más.
+
+En total hay más de 800 contactos. ¿Qué tipo de oportunidad quieres explorar?`,
+    flow: 'folders' as ChatFlow,
+  },
+  {
+    keywords: ['garantia', 'garantía', 'seguro', 'confiable', 'funciona'],
+    response: '✅ Puedes explorar antes de decidir. Los contactos completos solo se muestran cuando tu acceso está activo, y también puedes probar 3 contactos gratis.',
+    flow: 'help' as ChatFlow,
+  },
+  {
+    keywords: ['gratis', 'prueba', 'probar', 'free'],
+    response: '🎁 Sí. Puedes registrarte gratis, explorar el catálogo y usar una prueba limitada de contactos reales.',
+    flow: 'missions' as ChatFlow,
+  },
+  {
+    keywords: ['hola', 'buenas', 'buenos', 'hey', 'hi'],
+    response: `¡Hola! 👋 Bienvenido a ContactHub.
+Tenemos más de 800 contactos directos organizados en 24 categorías.
+¿Qué estás buscando? Cuéntame y te ayudo a encontrarlo. 😊`,
+    flow: 'main' as ChatFlow,
+  },
+];
+
 function normalizeText(value: string) {
   return value
     .toLowerCase()
@@ -159,7 +221,11 @@ function hasAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word));
 }
 
-function localMessage(message: string, sender: 'user' | 'admin', kind: ChatMessage['kind'] = 'text'): ChatMessage {
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function localMessage(message: string, sender: 'user' | 'admin', kind: ChatMessage['kind'] = 'text', extras: Partial<ChatMessage> = {}): ChatMessage {
   return {
     id: `${sender}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     user_id: null,
@@ -169,6 +235,11 @@ function localMessage(message: string, sender: 'user' | 'admin', kind: ChatMessa
     message,
     created_at: new Date().toISOString(),
     kind,
+    has_attachment: false,
+    attachment_url: null,
+    attachment_type: null,
+    comprobante_status: 'pendiente',
+    ...extras,
   };
 }
 
@@ -374,6 +445,8 @@ export default function ChatWidget() {
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<ReceiptPreview | null>(null);
   const [whatsappNoticeShown, setWhatsappNoticeShown] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const receiptInputRef = useRef<HTMLInputElement | null>(null);
@@ -466,13 +539,24 @@ export default function ChatWidget() {
     return mainActions;
   }, [currentFlow, hasWhatsApp, selectedFolder?.index, selectedPlan]);
 
-  async function persistMessage(message: string, sender: 'user' | 'admin', read = false) {
+  async function persistMessage(message: string, sender: 'user' | 'admin', read = false, extras: Partial<ChatMessage> = {}) {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
-    await supabase.from('chat_messages').insert({ user_id: user.id, session_id: user.id, sender, read, message });
+    await dynamicSupabase().from('chat_messages').insert({
+      user_id: user.id,
+      session_id: user.id,
+      sender,
+      read,
+      message,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      has_attachment: extras.has_attachment ?? false,
+      attachment_url: extras.attachment_url ?? null,
+      attachment_type: extras.attachment_type ?? null,
+      comprobante_status: extras.comprobante_status ?? 'pendiente',
+    });
   }
 
-  async function addAssistantMessage(message: string, nextFlow?: ChatFlow) {
-    setMessages((current) => [...current, localMessage(message, 'admin')]);
+  async function addAssistantMessage(message: string, nextFlow?: ChatFlow, kind: ChatMessage['kind'] = 'text') {
+    setMessages((current) => [...current, localMessage(message, 'admin', kind)]);
     if (nextFlow) setCurrentFlow(nextFlow);
     await persistMessage(message, 'admin', false);
   }
@@ -482,9 +566,11 @@ export default function ChatWidget() {
     setCurrentFlow('qr');
   }
 
-  async function addUserMessage(message: string) {
-    setMessages((current) => [...current, localMessage(message, 'user')]);
-    await persistMessage(message, 'user', false);
+  async function addUserMessage(message: string, extras: Partial<ChatMessage> = {}) {
+    const nextMessage = localMessage(message, 'user', 'text', extras);
+    setMessages((current) => [...current, nextMessage]);
+    await persistMessage(message, 'user', false, extras);
+    return nextMessage.id;
   }
 
   function renderPlanMessage(plan: ChatPlan) {
@@ -532,35 +618,26 @@ export default function ChatWidget() {
     }
   }
 
+  async function signAttachmentUrl(path: string) {
+    if (!path || path.startsWith('blob:') || path.startsWith('http')) return path;
+    if (!supabase || !isSupabaseConfigured) return '';
+    const { data, error } = await dynamicSupabase().storage.from('comprobantes').createSignedUrl(path, 60 * 60);
+    if (error) {
+      console.error('comprobante signed url:', error.message);
+      return '';
+    }
+    return data?.signedUrl ?? '';
+  }
+
   async function uploadReceiptToSupabase(file: File) {
-    if (!user?.id || !supabase || !isSupabaseConfigured) return false;
+    if (!user?.id || !supabase || !isSupabaseConfigured) return null;
     const path = `${user.id}/${Date.now()}-${safeFileName(file.name)}`;
-    const uploadResult = await supabase.storage.from('payment-receipts').upload(path, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
+    const uploadResult = await dynamicSupabase().storage.from('comprobantes').upload(path, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
     if (uploadResult.error) {
       console.error('payment receipt upload:', uploadResult.error.message);
-      return false;
+      return null;
     }
-    const userName = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null;
-    const insertResult = await dynamicSupabase().from('payment_receipts').insert({
-      user_id: user.id,
-      user_email: user.email ?? 'sin-email@contacthub.local',
-      user_name: userName,
-      payment_method: 'yape',
-      amount: getPlanAmount(selectedPlan),
-      plan_key: selectedPlan?.id ?? null,
-      plan_label: selectedPlan?.name ?? null,
-      folder_label: selectedFolder?.name ?? null,
-      receipt_file_path: path,
-      receipt_file_name: file.name,
-      receipt_mime_type: file.type || 'application/octet-stream',
-      status: 'pending_review',
-      customer_message: 'Comprobante enviado desde el chat flotante.',
-    });
-    if (insertResult.error) {
-      console.error('payment receipt insert:', insertResult.error.message);
-      return false;
-    }
-    return true;
+    return { path, signedUrl: await signAttachmentUrl(path) };
   }
 
   async function handleReceiptFile(file?: File | null) {
@@ -570,20 +647,33 @@ export default function ChatWidget() {
       await addAssistantMessage('Para subir tu comprobante, primero inicia sesión o crea una cuenta. Así podemos vincular el pago con tu acceso.', 'payment');
       return;
     }
-    const allowed = file.type.startsWith('image/') || file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
     if (!allowed) {
-      await addAssistantMessage('Puedes subir una imagen o PDF del comprobante.', 'payment');
+      await addAssistantMessage('Puedes subir una imagen JPG, PNG o WEBP del comprobante.', 'payment');
       return;
     }
-    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+    if (file.size > 5 * 1024 * 1024) {
+      await addAssistantMessage('El comprobante debe pesar máximo 5MB.', 'payment');
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
     setIsOpen(true);
     setCurrentFlow('payment');
-    await addUserMessage(`📎 Comprobante adjuntado: ${file.name}`);
     const uploaded = await uploadReceiptToSupabase(file);
-    setReceipt({ fileName: file.name, fileType: file.type || 'archivo', previewUrl, status: uploaded ? 'uploaded' : 'fallback' });
+    const localAttachmentId = await addUserMessage(`📎 Comprobante adjuntado: ${file.name}`, {
+      has_attachment: Boolean(uploaded),
+      attachment_url: uploaded?.path ?? previewUrl,
+      attachment_type: file.type,
+      comprobante_status: 'pendiente',
+    });
+    setAttachmentUrls((current) => ({ ...current, [localAttachmentId]: previewUrl }));
+    setReceipt({ fileName: file.name, fileType: file.type || 'imagen', previewUrl, status: uploaded ? 'uploaded' : 'fallback' });
+    setIsTyping(true);
+    await delay(2000);
+    setIsTyping(false);
     await addAssistantMessage(
       uploaded
-        ? 'Comprobante recibido. Lo revisaremos para activar tu acceso.'
+        ? '✅ ¡Recibido! Tu comprobante fue registrado.\nVerificaremos tu pago y activaremos tu acceso en los próximos minutos. Si tienes alguna duda escríbenos aquí mismo. 🙏'
         : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.',
       uploaded ? 'paid' : 'payment',
     );
@@ -680,6 +770,9 @@ export default function ChatWidget() {
   }
 
   async function handleTextIntent(message: string) {
+    setIsTyping(true);
+    await delay(1500);
+    setIsTyping(false);
     const normalized = normalizeText(message);
     const plan = findPlanFromText(normalized);
     if (plan) {
@@ -691,7 +784,11 @@ export default function ChatWidget() {
       await addAssistantMessage('Genial 🙌 Puedes subir tu comprobante aquí mismo. Si la carga no está conectada, usa WhatsApp como respaldo y adjunta la captura manualmente.', 'paid');
       return;
     }
-    if (hasAny(normalized, ['como pago', 'quiero pagar', 'donde pago', 'yape', 'plin', 'pago por yape', 'mandame el qr', 'quiero el qr', 'qr'])) {
+    if (hasAny(normalized, ['mandame el qr', 'quiero el qr', 'ver qr', 'codigo qr', 'qr'])) {
+      addYapeQrMessage();
+      return;
+    }
+    if (hasAny(normalized, ['como pago', 'quiero pagar', 'donde pago', 'yape', 'plin', 'pago por yape'])) {
       await addAssistantMessage(paymentInfoMessage(), 'payment');
       return;
     }
@@ -757,18 +854,36 @@ export default function ChatWidget() {
 
   async function loadMessages() {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from('chat_messages')
-      .select('id,user_id,message,session_id,sender,read,created_at')
+      .select('id,user_id,message,session_id,sender,read,created_at,has_attachment,attachment_url,attachment_type,comprobante_status')
       .eq('user_id', user.id)
+      .gte('created_at', oneDayAgo)
       .order('created_at', { ascending: true });
     if (error) return;
     if (!data?.length) {
-      await supabase.from('chat_messages').insert({ user_id: user.id, session_id: user.id, sender: 'admin', read: false, message: welcomeMessage });
+      await dynamicSupabase().from('chat_messages').insert({
+        user_id: user.id,
+        session_id: user.id,
+        sender: 'admin',
+        read: false,
+        message: renewedMessage,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
       await loadMessages();
       return;
     }
-    setMessages(data);
+    const nextMessages = data as ChatMessage[];
+    const signed: Record<string, string> = {};
+    await Promise.all(nextMessages.map(async (message) => {
+      if (message.has_attachment && message.attachment_url) {
+        const signedUrl = await signAttachmentUrl(message.attachment_url);
+        if (signedUrl) signed[message.id] = signedUrl;
+      }
+    }));
+    setAttachmentUrls(signed);
+    setMessages(nextMessages);
     setUnread(data.filter((message) => message.sender === 'admin' && !message.read).length);
   }
 
@@ -800,7 +915,7 @@ export default function ChatWidget() {
 
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages.length, isOpen, currentFlow, receipt?.fileName]);
+  }, [messages.length, isOpen, currentFlow, receipt?.fileName, isTyping]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -822,12 +937,12 @@ export default function ChatWidget() {
 
   return (
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
-      <input ref={receiptInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
+      <input ref={receiptInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
         <div className="fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0F2027] shadow-2xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
           <div className="flex items-center justify-between border-b border-line bg-white/[0.03] px-5 py-4">
             <div>
-              <p className="font-display text-lg font-bold text-white">Asistente ContactHub</p>
+              <p className="font-display text-lg font-bold text-white">Jesús - ContactHub</p>
               <p className="mt-1 flex items-center gap-2 text-xs text-brand-400">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400" />
                 Guía de precios, carpetas, pagos y acceso
@@ -839,14 +954,28 @@ export default function ChatWidget() {
           </div>
 
           <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
+            <p className="rounded-2xl border border-line bg-white/[0.03] px-3 py-2 text-center text-[11px] leading-5 text-gray-500">{chatRetentionNote}</p>
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md bg-brand-500 text-ink-950' : 'rounded-bl-md bg-white/10 text-white'}`}>
+                <div className={`max-w-[88%] rounded-2xl border px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md border-brand-400/25 bg-[#1a4a32] text-white' : 'rounded-bl-md border-brand-400/15 bg-[#0d2a1f] text-white'}`}>
+                  {message.has_attachment && (attachmentUrls[message.id] || message.attachment_url) ? (
+                    <div className="mb-2">
+                      <img src={attachmentUrls[message.id] ?? message.attachment_url ?? ''} alt="Comprobante enviado" className="max-h-48 max-w-[220px] rounded-xl border border-brand-400/25 object-contain" />
+                      <div className="mt-2 text-[11px] text-white/50">📎 Comprobante enviado</div>
+                    </div>
+                  ) : null}
                   {message.kind === 'yapeQr' ? <YapeQrMessage paymentName={paymentName} /> : <p className="whitespace-pre-wrap">{message.message}</p>}
                   <p className="mt-2 text-[10px] opacity-65">{new Date(message.created_at).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
             ))}
+            {isTyping ? (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-md border border-brand-400/15 bg-[#0d2a1f] px-4 py-3 text-sm text-gray-300">
+                  Jesús está escribiendo<span className="animate-pulse">...</span>
+                </div>
+              </div>
+            ) : null}
 
             {currentFlow === 'payment' || currentFlow === 'paid' ? (
               <PaymentCard
@@ -892,6 +1021,9 @@ export default function ChatWidget() {
             </div>
 
             <div className="flex items-end gap-2 rounded-2xl border border-line bg-ink-950/70 p-2">
+              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-line bg-white/5 text-gray-200 transition hover:border-brand-400/40 hover:text-brand-200">
+                <Paperclip className="h-4 w-4" />
+              </button>
               <textarea
                 ref={textareaRef}
                 value={text}
