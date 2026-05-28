@@ -86,15 +86,38 @@ export default function ContactCard({
   }
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-line bg-panel p-5 transition duration-200 hover:-translate-y-0.5 hover:border-brand-400/35">
+    <article
+      style={{
+        background: 'rgba(29,180,122,0.05)',
+        border: '0.5px solid rgba(29,180,122,0.15)',
+        borderRadius: '12px',
+        padding: '16px',
+        transition: 'all 0.2s',
+      }}
+      onMouseEnter={(event) => {
+        event.currentTarget.style.borderColor = 'rgba(29,180,122,0.5)';
+        event.currentTarget.style.transform = 'translateY(-2px)';
+        event.currentTarget.style.boxShadow = '0 4px 16px rgba(29,180,122,0.1)';
+      }}
+      onMouseLeave={(event) => {
+        event.currentTarget.style.borderColor = 'rgba(29,180,122,0.15)';
+        event.currentTarget.style.transform = 'translateY(0)';
+        event.currentTarget.style.boxShadow = 'none';
+      }}
+      className="flex h-full flex-col"
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-bold leading-snug text-white">{contact.name}</h3>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '4px', lineHeight: '1.3' }}>{contact.name}</h3>
             {isTrialUnlocked ? <span className="rounded-full bg-brand-400 px-2 py-1 text-[10px] font-black text-ink-950">PRUEBA GRATIS</span> : null}
             {isRewardUnlocked ? <span className="rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black text-ink-950">RECOMPENSA</span> : null}
           </div>
-          {contact.description ? <p className="mt-2 text-sm leading-6 text-gray-400">{contact.description}</p> : null}
+          {contact.description ? (
+            <p style={{ fontSize: '12px', fontStyle: 'italic', fontWeight: 600, color: '#1DB47A', marginBottom: '10px', lineHeight: '1.4', borderLeft: '2px solid #1DB47A', paddingLeft: '8px' }}>
+              {contact.description}
+            </p>
+          ) : null}
         </div>
         {!showDirectActions ? <LockKeyhole className="mt-1 h-5 w-5 flex-none text-brand-400" /> : null}
       </div>
@@ -114,10 +137,11 @@ export default function ContactCard({
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Teléfono</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="font-mono text-base font-bold text-white">
+              <span style={{ fontSize: '13px', fontFamily: 'monospace', color: showDirectActions ? '#fff' : 'rgba(255,255,255,0.4)', letterSpacing: '1px' }}>
                 {countryFlag ? `${countryFlag} ` : ''}
                 {visiblePhone}
               </span>
+              {showDirectActions ? <span style={{ marginLeft: '8px', fontSize: '10px', background: 'rgba(29,180,122,0.2)', color: '#1DB47A', padding: '2px 6px', borderRadius: '4px', fontStyle: 'normal' }}>DESBLOQUEADO</span> : null}
               {isAdmin ? <span className="rounded-full border border-brand-400/30 bg-brand-400/15 px-2 py-1 text-[10px] font-black text-brand-200">ADMIN</span> : null}
               {!showDirectActions ? <span className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-black text-gray-400">🔒 Bloqueado</span> : null}
             </div>

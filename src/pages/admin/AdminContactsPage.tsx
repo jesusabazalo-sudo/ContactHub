@@ -1,4 +1,4 @@
-import { Edit3, ExternalLink, Plus, RefreshCw, Save, Search, Trash2, X, XCircle } from 'lucide-react';
+import { ExternalLink, Plus, RefreshCw, Save, Search, X, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -22,6 +22,8 @@ type ContactRow = {
   description: string | null;
   phone: string | null;
   phone_masked: string | null;
+  country_flag?: string | null;
+  country_code?: string | null;
   tags: string[] | null;
   status: ContactStatus;
   risk_level: 'safe' | 'review' | 'prohibited';
@@ -31,8 +33,8 @@ type ContactRow = {
 };
 
 const pageSize = 50;
-const adminContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level';
-const fallbackContactSelect = 'id, name, phone_masked, status, created_at, category_id, description, tags, risk_level';
+const adminContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level, country_flag, country_code';
+const fallbackContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level, country_flag, country_code';
 
 type SupabaseDebugError = {
   message?: string;
@@ -68,6 +70,32 @@ export function parseContactLine(line: string) {
   return { name, phone };
 }
 
+const emptyForm = {
+  name: '',
+  phone: '',
+  category_id: '',
+  description: '',
+  country_flag: '🇵🇪',
+  country_code: 'PE',
+};
+
+function detectPhoneCountry(phone: string) {
+  const value = phone.replace(/[\s\-\(\)]/g, '');
+  if (value.startsWith('+591')) return { country_flag: '🇧🇴', country_code: 'BO' };
+  if (value.startsWith('+593')) return { country_flag: '🇪🇨', country_code: 'EC' };
+  if (value.startsWith('+595')) return { country_flag: '🇵🇾', country_code: 'PY' };
+  if (value.startsWith('+51')) return { country_flag: '🇵🇪', country_code: 'PE' };
+  if (value.startsWith('+57')) return { country_flag: '🇨🇴', country_code: 'CO' };
+  if (value.startsWith('+52')) return { country_flag: '🇲🇽', country_code: 'MX' };
+  if (value.startsWith('+54')) return { country_flag: '🇦🇷', country_code: 'AR' };
+  if (value.startsWith('+55')) return { country_flag: '🇧🇷', country_code: 'BR' };
+  if (value.startsWith('+56')) return { country_flag: '🇨🇱', country_code: 'CL' };
+  if (value.startsWith('+1')) return { country_flag: '🇺🇸', country_code: 'US' };
+  if (value.startsWith('+34')) return { country_flag: '🇪🇸', country_code: 'ES' };
+  if (value.startsWith('+86')) return { country_flag: '🇨🇳', country_code: 'CN' };
+  return { country_flag: getFlag(value), country_code: getCountryCode(value) };
+}
+
 export default function AdminContactsPage() {
   const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -80,7 +108,7 @@ export default function AdminContactsPage() {
   const [editing, setEditing] = useState<ContactRow | null>(null);
   const [editTags, setEditTags] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newContact, setNewContact] = useState({ name: '', phone: '', category_id: '' });
+  const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +195,7 @@ export default function AdminContactsPage() {
           throw new Error(`Error al cargar contactos. Revisa consola o configuración de Supabase. ${getSupabaseErrorMessage(fallbackError)}`);
         }
 
-        rows = (fallbackData ?? []).map((contact) => ({ ...contact, phone: null }));
+        rows = fallbackData ?? [];
       }
 
       const { data: catsData, error: catsError } = await supabase.from('categories').select('id, name, icon');
@@ -184,6 +212,8 @@ export default function AdminContactsPage() {
         status: (contact.status ?? 'active') as ContactStatus,
         created_at: contact.created_at ?? '',
         description: contact.description ?? '',
+        country_flag: contact.country_flag ?? null,
+        country_code: contact.country_code ?? null,
         tags: contact.tags ?? [],
         risk_level: contact.risk_level ?? 'safe',
         category_name: catsMap.get(contact.category_id ?? '')?.name ?? 'Sin categoría',
@@ -228,6 +258,16 @@ export default function AdminContactsPage() {
     void loadContacts();
   }, [search, selectedCategory, selectedStatus, currentPage]);
 
+  useEffect(() => {
+    if (!isAddOpen) return undefined;
+    void loadCategories();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeAddModal();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isAddOpen]);
+
   const categoryById = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
   const pageStart = totalCount === 0 ? 0 : currentPage * pageSize + 1;
   const pageEnd = Math.min(totalCount, currentPage * pageSize + contacts.length);
@@ -244,6 +284,21 @@ export default function AdminContactsPage() {
 
   function toggleAll() {
     setSelectedIds(allVisibleSelected ? [] : contacts.map((contact) => contact.id));
+  }
+
+  function closeAddModal() {
+    setIsAddOpen(false);
+    setForm(emptyForm);
+  }
+
+  function handlePhoneInput(value: string) {
+    const detected = detectPhoneCountry(value);
+    setForm((current) => ({
+      ...current,
+      phone: value,
+      country_flag: detected.country_flag,
+      country_code: detected.country_code,
+    }));
   }
 
   async function reloadCurrentPage() {
@@ -281,10 +336,11 @@ export default function AdminContactsPage() {
       toast.error('Falta conectar Supabase.');
       return;
     }
-    const name = sanitizeText(newContact.name, 160);
-    const formattedPhone = formatPhone(newContact.phone);
-    const phone = sanitizePhone(formattedPhone);
-    const categoryId = newContact.category_id;
+    const name = sanitizeText(form.name, 160);
+    const phone = sanitizePhone(form.phone.replace(/[\s\-\(\)]/g, ''));
+    const categoryId = form.category_id;
+    const description = sanitizeText(form.description, 200);
+    const phoneMasked = phone.slice(0, -4) + '••••';
 
     if (!name || !phone || !categoryId) {
       toast.error('Completa nombre, teléfono y categoría.');
@@ -293,16 +349,25 @@ export default function AdminContactsPage() {
 
     setActionLoading(true);
     try {
+      const { data: duplicated, error: duplicateError } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('category_id', categoryId)
+        .eq('phone', phone)
+        .limit(1);
+      if (duplicateError) console.warn('duplicate contact check:', duplicateError.message);
+      if (duplicated?.length) toast.warning('⚠️ Este número ya existe en esta carpeta');
+
       const { data, error: insertError } = await supabase
         .from('contacts')
         .insert({
           name,
           phone,
-          phone_masked: maskPhone(phone),
+          phone_masked: phoneMasked,
           category_id: categoryId,
-          description: '',
-          country_flag: getFlag(phone),
-          country_code: getCountryCode(phone),
+          description,
+          country_flag: form.country_flag,
+          country_code: form.country_code,
           tags: [],
           source: 'manual',
           status: 'active',
@@ -321,9 +386,10 @@ export default function AdminContactsPage() {
         setContacts((current) => [data as ContactRow, ...current].slice(0, pageSize));
         setTotalCount((count) => count + 1);
       }
-      setIsAddOpen(false);
-      setNewContact({ name: '', phone: '', category_id: '' });
-      toast.success('Contacto agregado.');
+      closeAddModal();
+      toast.success('✅ Contacto agregado correctamente');
+      await (supabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<unknown> }).rpc('sync_category_count', { cat_id: categoryId }).catch(() => null);
+      await loadContacts();
     } finally {
       setActionLoading(false);
     }
@@ -481,39 +547,45 @@ export default function AdminContactsPage() {
                 <tr key={contact.id} className="border-t border-line">
                   <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(contact.id)} onChange={() => toggleSelection(contact.id)} /></td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-white">{contact.name}</p>
-                    <p className="mt-1 line-clamp-1 text-xs text-gray-500">{contact.description}</p>
+                    <p style={{ fontWeight: 700, fontSize: '14px', color: '#fff' }}>{contact.name}</p>
+                    {contact.description ? (
+                      <p style={{ fontStyle: 'italic', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '3px', fontWeight: 500 }}>
+                        {contact.description}
+                      </p>
+                    ) : null}
                   </td>
-                  <td className="px-4 py-3 font-mono text-gray-300">{contact.phone_masked ?? maskPhone(contact.phone)}</td>
+                  <td className="px-4 py-3">
+                    <span style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+                      {contact.country_flag ?? '🌎'} {contact.phone ?? contact.phone_masked ?? maskPhone(contact.phone)}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-gray-300">
                     {contact.category_icon ?? categoryById.get(contact.category_id)?.icon ?? '📁'} {contact.category_name ?? categoryById.get(contact.category_id)?.name ?? 'Sin categoría'}
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
-                        contact.status === 'active'
-                          ? 'bg-brand-400/10 text-brand-200'
-                          : contact.status === 'inactive'
-                            ? 'bg-gray-400/10 text-gray-300'
-                            : contact.status === 'review'
-                              ? 'bg-amber-300/10 text-amber-100'
-                              : 'bg-red-400/10 text-red-100'
-                      }`}
+                      style={{
+                        background: contact.status === 'active' ? 'rgba(29,180,122,0.2)' : 'rgba(255,0,0,0.2)',
+                        color: contact.status === 'active' ? '#1DB47A' : '#ff4444',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                      }}
                     >
-                      {contact.status ?? 'sin estado'}
+                      {contact.status === 'active' ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-400">{formatDate(contact.created_at)}</td>
+                  <td className="px-4 py-3" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{new Date(contact.created_at).toLocaleDateString('es-PE')}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button type="button" disabled={actionLoading} onClick={() => openEdit(contact)} className="focus-ring inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">
-                        <Edit3 className="h-3.5 w-3.5" /> Editar
+                      <button type="button" disabled={actionLoading} onClick={() => openEdit(contact)} style={{ background: 'transparent', border: 'none', color: '#1DB47A', cursor: 'pointer', fontSize: '16px' }} title="Editar">
+                        ✏️
                       </button>
                       <button type="button" disabled={actionLoading || contact.status === 'inactive'} onClick={() => void deactivateRow(contact)} className="focus-ring inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">
                         <XCircle className="h-3.5 w-3.5" /> Desactivar
                       </button>
-                      <button type="button" disabled={actionLoading} onClick={() => void deleteRow(contact)} className="focus-ring inline-flex items-center gap-1 rounded-full border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-100 disabled:opacity-50">
-                        <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                      <button type="button" disabled={actionLoading} onClick={() => void deleteRow(contact)} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '16px', marginLeft: '8px' }} title="Eliminar">
+                        🗑️
                       </button>
                     </div>
                   </td>
@@ -574,29 +646,49 @@ export default function AdminContactsPage() {
                 <h3 className="font-display text-2xl font-bold text-white">Agregar contacto</h3>
                 <p className="mt-2 text-sm text-gray-400">Carga rápida manual en Supabase.</p>
               </div>
-              <button type="button" onClick={() => setIsAddOpen(false)} className="rounded-full border border-line p-2 text-white"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={closeAddModal} className="rounded-full border border-line p-2 text-white"><X className="h-4 w-4" /></button>
             </div>
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-gray-300">Nombre</span>
-                <input value={newContact.name} onChange={(event) => setNewContact({ ...newContact, name: sanitizeTextInput(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" />
+                <input value={form.name} placeholder="Ej: Pack de IA mensuales" onChange={(event) => setForm({ ...form, name: sanitizeTextInput(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white placeholder:text-gray-500 focus:border-brand-400" />
               </label>
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-gray-300">Teléfono</span>
-                <input value={newContact.phone} onChange={(event) => setNewContact({ ...newContact, phone: sanitizePhone(event.target.value) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" />
+                <div className="flex items-center gap-2">
+                  <span className="flex h-11 w-12 items-center justify-center rounded-full border border-line bg-ink-950/70 text-xl">{form.country_flag}</span>
+                  <input value={form.phone} placeholder="Ej: +51 963 187 899" onChange={(event) => handlePhoneInput(event.target.value)} className="focus-ring h-11 flex-1 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white placeholder:text-gray-500 focus:border-brand-400" />
+                </div>
               </label>
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-gray-300">Categoría</span>
-                <select value={newContact.category_id} onChange={(event) => setNewContact({ ...newContact, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">
-                  <option value="">Selecciona categoría</option>
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.displayLabel}</option>)}
+                <select value={form.category_id} onChange={(event) => setForm({ ...form, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white focus:border-brand-400">
+                  <option value="">Selecciona una carpeta...</option>
+                  {categories.map((category) => <option key={category.id} value={category.id}>{category.icon} {category.name}</option>)}
                 </select>
               </label>
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-white">Descripción</span>
+                <textarea
+                  value={form.description}
+                  rows={3}
+                  maxLength={200}
+                  placeholder="Breve descripción de lo que ofrece este contacto"
+                  onChange={(event) => setForm({ ...form, description: event.target.value.slice(0, 200) })}
+                  className="focus-ring resize-none rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white placeholder:text-gray-500 focus:border-brand-400"
+                />
+                <span className="text-right text-xs text-gray-500">{form.description.length}/200</span>
+              </label>
             </div>
-            <button type="button" disabled={actionLoading} onClick={() => void saveNewContact()} className="focus-ring btn-primary-glow mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:opacity-60">
-              <Save className="h-4 w-4" />
-              Guardar
-            </button>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={closeAddModal} className="focus-ring inline-flex h-11 items-center justify-center rounded-full border border-line bg-white/5 px-5 text-sm font-bold text-white">
+                Cancelar
+              </button>
+              <button type="button" disabled={actionLoading || !form.name.trim() || !form.phone.trim() || !form.category_id} onClick={() => void saveNewContact()} className="focus-ring btn-primary-glow inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:cursor-not-allowed disabled:opacity-50">
+                <Save className="h-4 w-4" />
+                Guardar contacto
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
