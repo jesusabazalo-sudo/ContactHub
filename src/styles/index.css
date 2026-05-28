@@ -278,6 +278,29 @@ select {
   to { opacity: 0; transform: translateY(-22px) scale(1.04); }
 }
 
+.welcome-progress {
+  animation: welcomeProgress 6s linear forwards;
+}
+
+@keyframes welcomeProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.welcome-particles {
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(29,180,122,0.35) 0 2px, transparent 3px) 12% 22% / 120px 120px,
+    radial-gradient(circle, rgba(29,180,122,0.25) 0 2px, transparent 3px) 76% 34% / 150px 150px,
+    radial-gradient(circle, rgba(9,225,147,0.28) 0 2px, transparent 3px) 42% 78% / 130px 130px;
+  animation: welcomeParticles 7s ease-in-out infinite alternate;
+}
+
+@keyframes welcomeParticles {
+  from { opacity: 0.45; transform: translateY(8px); }
+  to { opacity: 0.9; transform: translateY(-12px); }
+}
+
 @media (max-width: 768px) {
   .geo-shape {
     opacity: 0.12;

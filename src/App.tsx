@@ -1,7 +1,11 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AdminGuard from './components/auth/AdminGuard';
 import AuthGuard from './components/auth/AuthGuard';
 import ChatWidget from './components/chat/ChatWidget';
+import GeometryBackground from './components/system/GeometryBackground';
+import LoadingState from './components/system/LoadingState';
+import WelcomeModal from './components/system/WelcomeModal';
+import { useAuth } from './features/auth/AuthProvider';
 import PublicLayout from './layouts/PublicLayout';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import AuthPage from './pages/AuthPage';
@@ -26,18 +30,31 @@ import AdminRecompensasPage from './pages/admin/AdminRecompensasPage';
 import AdminSoportePage from './pages/admin/AdminSoportePage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) return <LoadingState />;
+  if (!user && location.pathname !== '/auth' && location.pathname !== '/auth/callback') {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  return children;
+}
+
 export default function App() {
   return (
     <>
+      <GeometryBackground />
       <Routes>
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route element={<PublicLayout />}>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route element={<RequireAuth><PublicLayout /></RequireAuth>}>
           <Route path="/" element={<HomePage />} />
           <Route path="/catalogo" element={<CatalogPage />} />
           <Route path="/catalogo/:slug" element={<CategoryDetailPage />} />
           <Route path="/precios" element={<PricingPage />} />
           <Route path="/promos" element={<PromosPage />} />
-          <Route path="/auth" element={<AuthPage />} />
           <Route path="/mis-contactos" element={<AuthGuard><MyContactsPage /></AuthGuard>} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/servicios" element={<ServicesPage />} />
@@ -54,8 +71,9 @@ export default function App() {
           <Route path="/admin/recompensas" element={<AdminGuard><AdminRecompensasPage /></AdminGuard>} />
           <Route path="/admin/soporte" element={<AdminGuard><AdminSoportePage /></AdminGuard>} />
         </Route>
-        <Route path="*" element={<Navigate to="/error" replace />} />
+        <Route path="*" element={<RequireAuth><Navigate to="/error" replace /></RequireAuth>} />
       </Routes>
+      <WelcomeModal />
       <ChatWidget />
     </>
   );

@@ -22,6 +22,19 @@ const statusClasses: Record<AdminProfile['customerStatus'], string> = {
   bloqueado: 'bg-red-400/10 text-red-200',
 };
 
+function getLastSeen(lastSeen?: string | null) {
+  if (!lastSeen) return 'Sin registro';
+  const diff = Date.now() - new Date(lastSeen).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return 'Ahora mismo';
+  if (minutes < 60) return `Hace ${minutes} min`;
+  if (hours < 24) return `Hace ${hours}h`;
+  return `Hace ${days}d`;
+}
+
 export default function AdminUsersPage() {
   const { user: adminUser } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +66,33 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     void loadUsers();
+  }, []);
+
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured) return;
+    const client = supabase;
+    const channel = client
+      .channel('profiles-online')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        const next = payload.new as Record<string, any>;
+        setUsers((current) =>
+          current.map((item) =>
+            item.id === next.id
+              ? {
+                  ...item,
+                  isOnline: Boolean(next.is_online),
+                  lastSeen: next.last_seen ?? item.lastSeen,
+                  sessionCount: Number(next.session_count ?? item.sessionCount ?? 0),
+                }
+              : item,
+          ),
+        );
+      })
+      .subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
   }, []);
 
   const filteredUsers = useMemo(() => {
@@ -183,12 +223,14 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[1240px] text-left text-sm">
+            <table className="w-full min-w-[1320px] text-left text-sm">
               <thead className="text-xs uppercase text-gray-500">
                 <tr className="border-b border-line">
+                  <th className="py-3 pr-4">Estado</th>
                   <th className="py-3 pr-4">Email</th>
                   <th className="py-3 pr-4">Fecha registro</th>
-                  <th className="py-3 pr-4">Estado</th>
+                  <th className="py-3 pr-4">CRM</th>
+                  <th className="py-3 pr-4">Sesiones</th>
                   <th className="py-3 pr-4">Carpetas activas</th>
                   <th className="py-3 pr-4">Prueba usada</th>
                   <th className="py-3 pr-4">Onboarding</th>
@@ -200,6 +242,17 @@ export default function AdminUsersPage() {
                 {filteredUsers.map((item) => (
                   <tr key={item.id} className="border-b border-line last:border-b-0">
                     <td className="py-4 pr-4">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`h-2 w-2 rounded-full ${item.isOnline ? 'animate-pulse bg-brand-400' : 'bg-gray-600'}`}
+                          aria-hidden="true"
+                        />
+                        <span className={`text-xs font-semibold ${item.isOnline ? 'text-brand-400' : 'text-gray-500'}`}>
+                          {item.isOnline ? 'En línea' : getLastSeen(item.lastSeen)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 pr-4">
                       <p className="font-semibold text-white">{item.email ?? 'Sin email'}</p>
                       <p className="mt-1 text-xs text-gray-500">{item.fullName || item.phone || 'Datos pendientes'}</p>
                     </td>
@@ -207,6 +260,7 @@ export default function AdminUsersPage() {
                     <td className="py-4 pr-4">
                       <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusClasses[item.customerStatus]}`}>{item.customerStatus}</span>
                     </td>
+                    <td className="py-4 pr-4 text-gray-300">{item.sessionCount ?? 0}</td>
                     <td className="py-4 pr-4 text-gray-300">{item.activeAccessCount}</td>
                     <td className="py-4 pr-4 text-gray-300">{item.usedTrial ? 'Sí' : 'No'}</td>
                     <td className="py-4 pr-4 text-xs text-gray-400">

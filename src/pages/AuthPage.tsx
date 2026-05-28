@@ -242,13 +242,13 @@ export default function AuthPage() {
       {showSuccessFlash ? <div className="pointer-events-none fixed inset-0 z-[60] animate-auth-flash bg-brand-400" /> : null}
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-[420px] items-center justify-center">
-        <div className="w-full rounded-3xl border border-brand-400/20 bg-panel/90 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-7">
+        <div className="w-full rounded-3xl border border-[rgba(29,180,122,0.3)] bg-[rgba(15,32,39,0.95)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[20px] sm:p-7">
           <div className="text-center">
             <div className="mx-auto grid h-16 w-16 animate-logo-pulse place-items-center rounded-full bg-brand-400 text-xl font-black text-ink-950 shadow-[0_0_28px_rgba(29,180,122,0.42)]">
               CH
             </div>
             <h1 className="mt-4 font-display text-2xl font-bold text-white">ContactHub</h1>
-            <p key={taglineIndex} className="mt-2 animate-tagline-fade text-sm font-medium text-brand-200 sm:text-base">
+            <p key={taglineIndex} className="mt-2 animate-tagline-fade text-sm font-medium text-white sm:text-base">
               {TAGLINES[taglineIndex]}
             </p>
           </div>
@@ -263,7 +263,7 @@ export default function AuthPage() {
           </div>
 
           {isRegisterMode ? (
-            <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-gray-200">
+            <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-[rgba(255,255,255,0.85)]">
               <p className="font-bold text-white">👋 Bienvenido a ContactHub</p>
               <p className="mt-3">
                 Aquí encuentras contactos directos de proveedores, vendedores y oportunidades digitales, organizados en 24 categorías para que llegues directo a lo que buscas.
@@ -278,27 +278,27 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
             {isRegisterMode ? (
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Nombre</span>
+                <span className="text-sm font-semibold text-white/90">Nombre</span>
                 <span className="relative">
                   <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  <input value={fullName} onChange={(event) => setFullName(event.target.value)} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-ink-950/70 pl-11 pr-4 text-[16px] text-white placeholder:text-gray-500" placeholder="Tu nombre" autoComplete="name" />
+                  <input value={fullName} onChange={(event) => setFullName(event.target.value)} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-white/[0.08] pl-11 pr-4 text-[16px] text-white placeholder:text-white/40" placeholder="Tu nombre" autoComplete="name" />
                 </span>
               </label>
             ) : null}
 
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-gray-300">Correo</span>
+              <span className="text-sm font-semibold text-white/90">Correo</span>
               <span className="relative">
                 <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <input required value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-ink-950/70 pl-11 pr-4 text-[16px] text-white placeholder:text-gray-500" placeholder="tu@email.com" autoComplete="email" />
+                <input required value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-white/[0.08] pl-11 pr-4 text-[16px] text-white placeholder:text-white/40" placeholder="tu@email.com" autoComplete="email" />
               </span>
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-gray-300">Contraseña</span>
+              <span className="text-sm font-semibold text-white/90">Contraseña</span>
               <span className="relative">
                 <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <input required value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? 'text' : 'password'} minLength={6} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-ink-950/70 pl-11 pr-12 text-[16px] text-white placeholder:text-gray-500" placeholder="Mínimo 6 caracteres" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+                <input required value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? 'text' : 'password'} minLength={6} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-white/[0.08] pl-11 pr-12 text-[16px] text-white placeholder:text-white/40" placeholder="Mínimo 6 caracteres" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
                 <button type="button" onClick={() => setShowPassword((current) => !current)} className="focus-ring absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-gray-400 hover:text-white" aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

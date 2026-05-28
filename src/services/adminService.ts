@@ -12,6 +12,9 @@ export type AdminProfile = {
   activeAccessCount: number;
   customerStatus: 'nuevo' | 'pendiente' | 'activo' | 'vip' | 'bloqueado';
   usedTrial: boolean;
+  isOnline?: boolean;
+  lastSeen?: string | null;
+  sessionCount?: number;
   onboardingAnswers?: {
     busca?: string;
     uso?: string;
@@ -88,7 +91,7 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
   if (!ready() || !supabase) return [];
   const client = supabase as unknown as { from: (table: string) => any };
   const [profilesResult, rolesResult, accessesResult, trialResult] = await Promise.all([
-    client.from('profiles').select('id,email,full_name,phone,created_at,updated_at,onboarding_answers').order('created_at', { ascending: false }).limit(500),
+    client.from('profiles').select('id,email,full_name,phone,created_at,updated_at,onboarding_answers,is_online,last_seen,session_count').order('created_at', { ascending: false }).limit(500),
     supabase.from('user_roles').select('user_id,role'),
     supabase.from('user_category_access').select('user_id,status').eq('status', 'active'),
     supabase.from('trial_claims').select('user_id'),
@@ -113,6 +116,9 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
     activeAccessCount: accessCounts.get(profile.id) ?? 0,
     customerStatus: (accessCounts.get(profile.id) ?? 0) > 0 ? 'activo' : trialUsers.has(profile.id) ? 'pendiente' : 'nuevo',
     usedTrial: trialUsers.has(profile.id),
+    isOnline: Boolean(profile.is_online),
+    lastSeen: profile.last_seen ?? profile.updated_at,
+    sessionCount: Number(profile.session_count ?? 0),
     onboardingAnswers: (profile.onboarding_answers ?? {}) as AdminProfile['onboardingAnswers'],
   }));
 }

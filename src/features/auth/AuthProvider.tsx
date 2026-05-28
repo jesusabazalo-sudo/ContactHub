@@ -54,6 +54,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const manualSignOutRef = useRef(false);
+  const onlineIncrementedRef = useRef<string | null>(null);
 
   const user = session?.user ?? null;
 
@@ -142,6 +143,58 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, [loadAdminStatus]);
 
+  useEffect(() => {
+    if (!user?.id || !supabase || !isSupabaseConfigured) return;
+    const userId = user.id;
+    const client = supabase as unknown as { from: (table: string) => any };
+    let cancelled = false;
+
+    async function markOnline(incrementSession = false) {
+      try {
+        const updates: Record<string, unknown> = {
+          is_online: true,
+          last_seen: new Date().toISOString(),
+        };
+
+        if (incrementSession) {
+          const { data } = await client.from('profiles').select('session_count').eq('id', userId).maybeSingle();
+          updates.session_count = Number(data?.session_count ?? 0) + 1;
+        }
+
+        if (!cancelled) await client.from('profiles').update(updates).eq('id', userId);
+      } catch (error) {
+        if (import.meta.env.DEV) console.warn('No se pudo marcar usuario online:', error);
+      }
+    }
+
+    async function markOffline() {
+      try {
+        await client
+          .from('profiles')
+          .update({
+            is_online: false,
+            last_seen: new Date().toISOString(),
+          })
+          .eq('id', userId);
+      } catch (error) {
+        if (import.meta.env.DEV) console.warn('No se pudo marcar usuario offline:', error);
+      }
+    }
+
+    const shouldIncrement = onlineIncrementedRef.current !== userId;
+    onlineIncrementedRef.current = userId;
+    void markOnline(shouldIncrement);
+    const interval = window.setInterval(() => void markOnline(false), 60000);
+    window.addEventListener('beforeunload', markOffline);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener('beforeunload', markOffline);
+      void markOffline();
+    };
+  }, [user?.id]);
+
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase || !isSupabaseConfigured) {
       throw new Error('Falta conectar Supabase. Crea un archivo .env.local en la raíz del proyecto con las variables necesarias.');
@@ -200,6 +253,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     manualSignOutRef.current = true;
+    if (user?.id) {
+      const client = supabase as unknown as { from: (table: string) => any };
+      await client.from('profiles').update({ is_online: false, last_seen: new Date().toISOString() }).eq('id', user.id);
+    }
     const { error } = await supabase.auth.signOut();
     if (error) {
       manualSignOutRef.current = false;
@@ -209,7 +266,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setSession(null);
     setIsAdmin(false);
     setSessionExpired(false);
-  }, []);
+    onlineIncrementedRef.current = null;
+  }, [user?.id]);
 
   const refreshAdminStatus = useCallback(async () => {
     await loadAdminStatus(session);
