@@ -34,7 +34,6 @@ type ContactRow = {
 
 const pageSize = 50;
 const adminContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level, country_flag, country_code';
-const fallbackContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level, country_flag, country_code';
 
 type SupabaseDebugError = {
   message?: string;
@@ -149,10 +148,10 @@ export default function AdminContactsPage() {
       setError(null);
 
       let query = supabase
-        .from('admin_contacts_secure')
+        .from('contacts')
         .select(adminContactSelect)
         .order('created_at', { ascending: false })
-        .range(currentPage * 50, (currentPage + 1) * 50 - 1);
+        .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
 
       const searchTerm = search.trim();
       if (searchTerm) {
@@ -167,17 +166,17 @@ export default function AdminContactsPage() {
 
       const { data: contactsData, error: contactsError } = await query;
       let rows: Array<Partial<ContactRow>> = contactsData ?? [];
-      let contactsSource: 'admin_contacts_secure' | 'contacts' = 'admin_contacts_secure';
+      let contactsSource: 'admin_contacts_secure' | 'contacts' = 'contacts';
 
       if (contactsError) {
-        logSupabaseError('AdminContactsPage admin_contacts_secure query failed:', contactsError);
+        logSupabaseError('AdminContactsPage contacts query failed:', contactsError);
         contactsSource = 'contacts';
 
         let fallbackQuery = supabase
           .from('contacts')
-          .select(fallbackContactSelect)
+          .select(adminContactSelect)
           .order('created_at', { ascending: false })
-          .range(currentPage * 50, (currentPage + 1) * 50 - 1);
+          .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
 
         if (searchTerm) {
           fallbackQuery = fallbackQuery.or(`name.ilike.%${searchTerm}%,phone_masked.ilike.%${searchTerm}%`);
@@ -223,15 +222,9 @@ export default function AdminContactsPage() {
       setContacts(enriched);
       setSelectedIds([]);
 
-      let countQuery =
-        contactsSource === 'admin_contacts_secure'
-          ? supabase.from('admin_contacts_secure').select('id', { count: 'exact', head: true })
-          : supabase.from('contacts').select('id', { count: 'exact', head: true });
+      let countQuery = supabase.from('contacts').select('id', { count: 'exact', head: true });
       if (searchTerm) {
-        countQuery =
-          contactsSource === 'admin_contacts_secure'
-            ? countQuery.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
-            : countQuery.or(`name.ilike.%${searchTerm}%,phone_masked.ilike.%${searchTerm}%`);
+        countQuery = countQuery.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
       if (selectedCategory && selectedCategory !== 'all') countQuery = countQuery.eq('category_id', selectedCategory);
       if (selectedStatus && selectedStatus !== 'all') countQuery = countQuery.eq('status', selectedStatus);
@@ -470,7 +463,7 @@ export default function AdminContactsPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_260px_190px]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_190px]">
           <label className="relative block">
             <span className="sr-only">Buscar contactos</span>
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
@@ -484,21 +477,6 @@ export default function AdminContactsPage() {
               className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
             />
           </label>
-          <select
-            value={selectedCategory}
-            onChange={(event) => {
-              setCurrentPage(0);
-              setSelectedCategory(event.target.value);
-            }}
-            className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white"
-          >
-            <option value="all">Todas las categorías</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.displayLabel}
-              </option>
-            ))}
-          </select>
           <select
             value={selectedStatus}
             onChange={(event) => {
@@ -515,9 +493,50 @@ export default function AdminContactsPage() {
           </select>
         </div>
 
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-500">Filtrar por carpeta</p>
+            <span className="text-xs text-gray-500">{categories.length} carpetas</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentPage(0);
+                setSelectedCategory('all');
+              }}
+              className={`focus-ring shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${
+                selectedCategory === 'all'
+                  ? 'border-brand-400 bg-brand-400 text-ink-950'
+                  : 'border-line bg-white/5 text-white hover:border-brand-400/40'
+              }`}
+            >
+              Todas
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => {
+                  setCurrentPage(0);
+                  setSelectedCategory(category.id);
+                }}
+                className={`focus-ring shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${
+                  selectedCategory === category.id
+                    ? 'border-brand-400 bg-brand-400 text-ink-950'
+                    : 'border-line bg-ink-950/70 text-gray-200 hover:border-brand-400/40 hover:text-white'
+                }`}
+              >
+                {category.icon ? `${category.icon} ` : ''}{category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-5 flex flex-col gap-3 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
           <span>
             Mostrando {pageStart}-{pageEnd} de {totalCount} contactos
+            {selectedCategory !== 'all' ? ` en ${categoryById.get(selectedCategory)?.name ?? 'esta carpeta'}` : ''}
           </span>
           <div className="flex gap-2">
             <button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((page) => Math.max(0, page - 1))} className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 font-bold text-white disabled:opacity-40">

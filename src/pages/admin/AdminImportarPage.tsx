@@ -4,12 +4,11 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
-import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
-type CategoryOption = { id: string; name: string; slug: string | null; icon?: string | null; sort_order?: number | null; short_description?: string | null } & OfficialCategoryDisplay;
+type CategoryOption = { id: string; name: string; icon?: string | null };
 type ParsedLine = { raw: string; name: string; phone: string; valid: boolean; error?: string };
 
 const phoneRegex = /(\+?[\d][\d\s\-\(\)]{6,18}[\d])/;
@@ -82,19 +81,19 @@ export default function AdminImportarPage() {
       }
       const categoriesResult = await client
         .from('categories')
-        .select('id, name, icon, slug, sort_order, short_description')
+        .select('id, name, icon')
         .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+        .order('name', { ascending: true });
 
       if (categoriesResult.error) {
-        console.error('AdminImportarPage categories:', categoriesResult.error.message);
+        console.error('Error cargando categorías:', categoriesResult.error);
         setCategories([]);
         setError(categoriesResult.error.message);
         return;
       }
-      const nextCategories = normalizeOfficialCategoryRows((categoriesResult.data ?? []) as CategoryOption[]);
-      console.log('Categories loaded:', nextCategories.length, nextCategories[0]);
-      setCategories(nextCategories as CategoryOption[]);
+      const nextCategories = (categoriesResult.data ?? []) as CategoryOption[];
+      console.log('Categorías cargadas:', nextCategories.length, nextCategories[0]);
+      setCategories(nextCategories);
       setCategoryId((current) => current || nextCategories[0]?.id || '');
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar categorías.';
@@ -250,16 +249,24 @@ export default function AdminImportarPage() {
         </div>
 
         {error ? <div className="mt-5 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">{error}</div> : null}
+        {!error && categories.length === 0 ? (
+          <div className="mt-5 flex flex-col gap-3 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+            <span>No hay categorías activas disponibles. Reintenta la carga desde Supabase.</span>
+            <button type="button" onClick={loadCategories} className="focus-ring rounded-full bg-amber-200 px-4 py-2 text-xs font-bold text-ink-950">
+              Reintentar
+            </button>
+          </div>
+        ) : null}
 
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
           <div className="w-full space-y-4">
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-gray-300">Categoría destino</span>
               <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="focus-ring h-12 rounded-full border border-line bg-ink-950/70 px-4 text-white">
-                <option value="">Selecciona categoría</option>
+                <option value="">Selecciona una carpeta...</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.displayLabel}
+                    {category.icon ? `${category.icon} ` : ''}{category.name}
                   </option>
                 ))}
               </select>
