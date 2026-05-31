@@ -21,7 +21,7 @@ type ChatMessage = {
   comprobante_status?: 'pendiente' | 'verificado' | 'rechazado' | null;
 };
 
-type ChatFlow = 'main' | 'prices' | 'promos' | 'folders' | 'folderDetail' | 'payment' | 'paid' | 'qr' | 'help' | 'missions' | 'human';
+type ChatFlow = 'main' | 'prices' | 'promos' | 'folders' | 'folderDetail' | 'payment' | 'paid' | 'qr' | 'help' | 'missions' | 'privacy' | 'newUser' | 'human';
 
 type ChatAction = {
   label: string;
@@ -39,6 +39,7 @@ type ChatAction = {
     | 'missions'
     | 'missionEvidence'
     | 'catalog'
+    | 'auth'
     | 'human'
     | 'whatsapp'
     | 'uploadReceipt'
@@ -145,6 +146,7 @@ const mainActions: ChatAction[] = [
   { label: 'Cómo pago', type: 'payment' },
   { label: 'Subir comprobante', type: 'uploadReceipt' },
   { label: 'No entiendo algo', type: 'help' },
+  { label: 'Guía rápida', type: 'catalog', value: '/guia' },
   { label: 'Ganar contacto gratis', type: 'missions' },
   { label: 'Hablar con Jesús', type: 'human' },
 ];
@@ -530,6 +532,22 @@ export default function ChatWidget() {
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
+    if (currentFlow === 'privacy') {
+      return [
+        { label: 'Explorar sin registrarme', type: 'catalog', value: '/catalogo' },
+        { label: 'Crear cuenta segura', type: 'auth', value: '/auth?mode=register' },
+        { label: 'Ver catálogo', type: 'catalog', value: '/catalogo' },
+        { label: 'Hablar con soporte', type: 'human' },
+      ];
+    }
+    if (currentFlow === 'newUser') {
+      return [
+        { label: 'Ver mis 3 contactos gratis', type: 'catalog', value: '/?trial=1' },
+        { label: 'Explorar catálogo', type: 'catalog', value: '/catalogo' },
+        { label: 'Ver guía rápida', type: 'catalog', value: '/guia' },
+        { label: 'Hablar con soporte', type: 'human' },
+      ];
+    }
     if (currentFlow === 'human') {
       return [
         ...(hasWhatsApp ? [{ label: 'Abrir WhatsApp', type: 'whatsapp' as const }] : []),
@@ -694,6 +712,10 @@ export default function ChatWidget() {
       window.location.href = action.value;
       return;
     }
+    if (action.type === 'auth') {
+      window.location.href = action.value ?? '/auth?mode=register';
+      return;
+    }
 
     await addUserMessage(action.label);
 
@@ -774,6 +796,14 @@ export default function ChatWidget() {
     await delay(1500);
     setIsTyping(false);
     const normalized = normalizeText(message);
+    if (hasAny(normalized, ['no quiero poner mi correo', 'no quiero poner correo', 'por que me piden gmail', 'porque me piden gmail', 'por que piden correo', 'porque piden correo', 'es seguro registrarme', 'tengo miedo de poner mi correo', 'miedo de poner correo', 'gmail'])) {
+      await addAssistantMessage('Te entiendo. Puedes explorar ContactHub sin registrarte. Solo pedimos correo cuando quieres guardar una prueba, desbloquear una carpeta o enviar comprobante. Tu correo sirve como llave para activar tus accesos.', 'privacy');
+      return;
+    }
+    if (hasAny(normalized, ['donde veo mis 3 contactos gratis', 'mis contactos gratis', 'prueba gratis', 'como empiezo', 'no se que hacer', 'acabo de registrarme', 'recien me registre', 'recien me registré', 'recién me registre', 'recién me registré', 'que hago ahora', 'donde veo mis accesos', 'guia rapida'])) {
+      await addAssistantMessage('Tranqui 👋 Si recién entraste, empieza por tu prueba gratis. Puedes elegir una carpeta y ver 3 contactos reales. También puedes explorar el catálogo antes de desbloquear algo.', 'newUser');
+      return;
+    }
     const plan = findPlanFromText(normalized);
     if (plan) {
       setSelectedPlan(plan);
@@ -1001,7 +1031,9 @@ export default function ChatWidget() {
 
           <div className="border-t border-line bg-ink-950/40 p-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-gray-500">
-              {currentFlow === 'main' ? 'Elige una opción rápida' : `Opciones de ${currentFlow === 'folderDetail' ? 'carpeta' : currentFlow}`}
+              {currentFlow === 'main'
+                ? 'Elige una opción rápida'
+                : `Opciones de ${currentFlow === 'folderDetail' ? 'carpeta' : currentFlow === 'privacy' ? 'privacidad' : currentFlow === 'newUser' ? 'inicio' : currentFlow}`}
             </p>
             <div className="mb-4 max-h-48 overflow-y-auto rounded-2xl border border-line bg-white/[0.03] p-3">
               <div className="flex flex-wrap gap-2">

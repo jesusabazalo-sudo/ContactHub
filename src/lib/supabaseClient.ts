@@ -56,6 +56,7 @@ export type Database = {
           icon: string;
           contacts_count: number;
           sort_order: number | null;
+          display_order: number | null;
           tags: string[];
           is_active: boolean;
           is_featured: boolean;
@@ -73,6 +74,7 @@ export type Database = {
           icon?: string;
           contacts_count?: number;
           sort_order?: number | null;
+          display_order?: number | null;
           tags?: string[];
           is_active?: boolean;
           is_featured?: boolean;
@@ -89,6 +91,7 @@ export type Database = {
           icon?: string;
           contacts_count?: number;
           sort_order?: number | null;
+          display_order?: number | null;
           tags?: string[];
           is_active?: boolean;
           is_featured?: boolean;

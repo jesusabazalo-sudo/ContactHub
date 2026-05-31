@@ -20,6 +20,20 @@ export default function LegalPage() {
               ocultos cuando el usuario no tenga acceso.
             </p>
           </article>
+          <article id="privacidad" className="scroll-mt-28 rounded-lg border border-line bg-panel p-6">
+            <h2 className="text-lg font-bold text-white">Privacidad</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-400">
+              Usamos tu correo solo para gestionar tu cuenta, guardar tus accesos, asociar comprobantes de pago y darte soporte. No vendemos tu información,
+              no compartimos tu correo y no publicamos tus datos personales.
+            </p>
+          </article>
+          <article id="uso-de-datos" className="scroll-mt-28 rounded-lg border border-line bg-panel p-6">
+            <h2 className="text-lg font-bold text-white">Uso de datos</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-400">
+              Tu correo funciona como una llave de acceso: permite saber qué carpetas tienes desbloqueadas, guardar tu prueba gratis, revisar comprobantes y
+              proteger lo que desbloqueas dentro de ContactHub.
+            </p>
+          </article>
           <article className="rounded-lg border border-line bg-panel p-6">
             <h2 className="text-lg font-bold text-white">Activación manual</h2>
             <p className="mt-3 text-sm leading-6 text-gray-400">

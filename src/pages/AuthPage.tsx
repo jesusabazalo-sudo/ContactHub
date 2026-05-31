@@ -68,7 +68,7 @@ export default function AuthPage() {
   const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers>({});
   const [isSavingOnboarding, setIsSavingOnboarding] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(false);
-  const { isLoading: isSessionLoading, resetPassword, session, signIn, signUp } = useAuth();
+  const { isLoading: isSessionLoading, resetPassword, session, signIn, signInWithGoogle, signUp } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hasShownSessionNotice = useRef(false);
@@ -187,6 +187,18 @@ export default function AuthPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesión con Google.';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function completeOnboarding() {
     if (!session?.user) {
       navigate('/catalogo', { replace: true });
@@ -275,6 +287,26 @@ export default function AuthPage() {
           {!isSupabaseConfigured ? <SupabaseMissingAlert className="mt-5" /> : null}
           {notice ? <div className="mt-5 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">{notice}</div> : null}
 
+          <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-[rgba(255,255,255,0.85)]">
+            <p className="font-bold text-white">Tu correo es tu llave de acceso</p>
+            <p className="mt-2">
+              Usamos tu correo para guardar tus carpetas desbloqueadas, registrar tu prueba gratis y asociar comprobantes. No pedimos tu contraseña de Gmail, no vendemos tu información y no publicamos tu correo.
+            </p>
+            <p className="mt-2 text-brand-100">
+              Puedes explorar primero y registrarte cuando quieras guardar un acceso.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void handleGoogleSignIn()}
+            disabled={isLoading}
+            className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white/[0.08] px-5 text-sm font-bold text-white transition hover:border-brand-400/45 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-ink-950">G</span>
+            Continuar con Google
+          </button>
+
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
             {isRegisterMode ? (
               <label className="grid gap-2">
@@ -307,9 +339,25 @@ export default function AuthPage() {
 
             <button type="submit" disabled={isLoading} className="focus-ring btn-primary-glow mt-2 inline-flex h-[52px] items-center justify-center gap-3 rounded-2xl bg-brand-400 px-5 text-sm font-black text-ink-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-75">
               {isLoading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-950/30 border-t-ink-950" /> : null}
-              {isLoading ? 'Entrando...' : mode === 'login' ? 'Entrar a ContactHub' : 'Crear cuenta gratis'}
+              {isLoading ? 'Entrando...' : mode === 'login' ? 'Entrar a ContactHub' : 'Crear cuenta segura'}
             </button>
           </form>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={() => setMode('register')} className="focus-ring inline-flex h-11 items-center justify-center rounded-2xl border border-brand-400/30 bg-brand-400/10 px-4 text-xs font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950">
+              Crear cuenta segura
+            </button>
+            <button type="button" onClick={() => navigate('/catalogo')} className="focus-ring inline-flex h-11 items-center justify-center rounded-2xl border border-line bg-white/5 px-4 text-xs font-bold text-white transition hover:border-brand-400/40">
+              Explorar sin registrarme
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-1 rounded-2xl border border-line bg-white/[0.03] p-4 text-xs leading-5 text-gray-400">
+            <p>Registro necesario solo para guardar tus accesos.</p>
+            <p>Tu correo funciona como tu llave de entrada.</p>
+            <p>Sin cuenta puedes explorar. Con cuenta puedes desbloquear.</p>
+            <p>No pedimos contraseña si usas un proveedor externo; el acceso lo gestiona ese proveedor de autenticación.</p>
+          </div>
 
           <div className="mt-5 flex flex-col items-center gap-3 text-center text-sm">
             <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="focus-ring rounded-full px-3 py-2 font-semibold text-brand-200 hover:text-white">

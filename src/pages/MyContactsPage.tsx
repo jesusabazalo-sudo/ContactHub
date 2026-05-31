@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import MissionsSection from '../components/missions/MissionsSection';
+import QuickGuide from '../components/onboarding/QuickGuide';
 import FriendlyErrorState from '../components/system/FriendlyErrorState';
 import LoadingState from '../components/system/LoadingState';
 import ProgressBar from '../components/ui/ProgressBar';
@@ -11,7 +12,7 @@ import { sanitizeText, sanitizeTextInput } from '../lib/sanitize';
 import { getMyContactsData, type MyContactsData, type UnlockedContact } from '../services/myContactsService';
 import { formatPhone } from '../utils/phone';
 
-const TOTAL_FOLDERS = 25;
+const TOTAL_FOLDERS = 24;
 
 function openSupportChat(message: string) {
   window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
@@ -124,6 +125,10 @@ export default function MyContactsPage() {
             <p className="text-sm text-gray-400">{data.contacts.length} contactos visibles en acceso rápido</p>
           </div>
           <ProgressBar value={progress} className="mt-5" />
+        </div>
+
+        <div className="mt-6">
+          <QuickGuide />
         </div>
 
         {unlockedCount >= 1 && unlockedCount <= 3 ? (
@@ -296,6 +301,9 @@ function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | n
               </button>
             </div>
           </div>
+        </div>
+        <div className="mt-6">
+          <QuickGuide />
         </div>
         <MissionsSection compact />
       </div>

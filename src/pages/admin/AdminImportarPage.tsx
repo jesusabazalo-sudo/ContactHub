@@ -1,14 +1,22 @@
 import { UploadCloud } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
+import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
-type CategoryOption = { id: string; name: string; icon?: string | null };
+type CategoryOption = {
+  id: string;
+  name: string;
+  icon?: string | null;
+  slug?: string | null;
+  sort_order?: number | null;
+  short_description?: string | null;
+} & OfficialCategoryDisplay;
 type ParsedLine = { raw: string; name: string; phone: string; valid: boolean; error?: string };
 
 const phoneRegex = /(\+?[\d][\d\s\-\(\)]{6,18}[\d])/;
@@ -68,6 +76,8 @@ export default function AdminImportarPage() {
   const [error, setError] = useState<string | null>(null);
   const [failed, setFailed] = useState<Array<{ line: string; error: string }>>([]);
   const [realSavedCount, setRealSavedCount] = useState<number | null>(null);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const categoryPickerRef = useRef<HTMLDivElement | null>(null);
 
   async function loadCategories() {
     setIsLoading(true);
@@ -79,11 +89,14 @@ export default function AdminImportarPage() {
         setError('Falta conectar Supabase. Revisa tu archivo .env.local.');
         return;
       }
-      const categoriesResult = await client
+      const categoriesWithOrder = await client
         .from('categories')
-        .select('id, name, icon')
+        .select('id, name, icon, slug, sort_order, short_description')
         .eq('is_active', true)
-        .order('name', { ascending: true });
+        .order('sort_order', { ascending: true });
+      const categoriesResult = categoriesWithOrder.error?.message.toLowerCase().includes('sort_order')
+        ? await client.from('categories').select('id, name, icon, slug, short_description').eq('is_active', true).order('name', { ascending: true })
+        : categoriesWithOrder;
 
       if (categoriesResult.error) {
         console.error('Error cargando categorías:', categoriesResult.error);
@@ -91,7 +104,9 @@ export default function AdminImportarPage() {
         setError(categoriesResult.error.message);
         return;
       }
-      const nextCategories = (categoriesResult.data ?? []) as CategoryOption[];
+      const nextCategories = normalizeOfficialCategoryRows((categoriesResult.data ?? []) as CategoryOption[])
+        .filter((category) => category.displayOrder >= 1 && category.displayOrder <= 24)
+        .slice(0, 24) as CategoryOption[];
       console.log('Categorías cargadas:', nextCategories.length, nextCategories[0]);
       setCategories(nextCategories);
       setCategoryId((current) => current || nextCategories[0]?.id || '');
@@ -107,6 +122,24 @@ export default function AdminImportarPage() {
   useEffect(() => {
     void loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (!isCategoryPickerOpen) return undefined;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (categoryPickerRef.current && !categoryPickerRef.current.contains(event.target as Node)) {
+        setIsCategoryPickerOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCategoryPickerOpen(false);
+    };
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCategoryPickerOpen]);
 
   const parsedContacts = useMemo(() => text.split('\n').map(parseLine).filter((line) => line.raw), [text]);
   const validContacts = parsedContacts.filter((line) => line.valid);
@@ -260,20 +293,46 @@ export default function AdminImportarPage() {
 
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
           <div className="w-full space-y-4">
-            <label className="grid gap-2">
+            <div ref={categoryPickerRef} className="relative grid gap-2">
               <span className="text-sm font-semibold text-gray-300">Categoría destino</span>
-              <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="focus-ring h-12 rounded-full border border-line bg-ink-950/70 px-4 text-white">
-                <option value="">Selecciona una carpeta...</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.icon ? `${category.icon} ` : ''}{category.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <button
+                type="button"
+                onClick={() => setIsCategoryPickerOpen((current) => !current)}
+                className="focus-ring flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-left text-sm font-semibold text-white hover:border-brand-400/45"
+                aria-expanded={isCategoryPickerOpen}
+              >
+                <span className="min-w-0 truncate">{selectedCategory?.displayLabel ?? 'Selecciona una carpeta...'}</span>
+                <span className="shrink-0 text-brand-300">{isCategoryPickerOpen ? '▲' : '▼'}</span>
+              </button>
+              {isCategoryPickerOpen ? (
+                <div className="absolute left-0 right-0 top-[76px] z-30 max-h-[380px] overflow-y-auto rounded-2xl border border-brand-400/25 bg-ink-950/95 p-2 shadow-2xl shadow-black/40">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        setCategoryId(category.id);
+                        setIsCategoryPickerOpen(false);
+                      }}
+                      className={`focus-ring flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${
+                        categoryId === category.id ? 'bg-brand-400/20 text-white ring-1 ring-brand-400/40' : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className="mt-0.5 w-6 shrink-0 text-center text-lg">{category.displayIcon}</span>
+                      <span className="min-w-0">
+                        <span className="block font-bold leading-snug">
+                          {String(category.displayOrder).padStart(2, '0')}. {category.displayTitle}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-gray-500">{category.displaySubtitle}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
 
             <div className="rounded-2xl border border-line bg-ink-950/50 p-4 text-sm leading-6 text-gray-300">
-              <p className="font-semibold text-white">Destino: {selectedCategory?.name ?? 'Selecciona una categoría'}</p>
+              <p className="font-semibold text-white">Destino: {selectedCategory?.displayLabel ?? 'Selecciona una categoría'}</p>
               {selectedCategory?.id ? <p className="mt-1 truncate text-xs text-gray-500">{selectedCategory.id}</p> : null}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-white/5 p-3">

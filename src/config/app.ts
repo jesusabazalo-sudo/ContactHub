@@ -5,7 +5,7 @@ export const APP_CONFIG = {
   whatsappNumber: '+51963187899',
   defaultCurrency: 'S/',
   contactsClaim: '800+',
-  categoriesClaim: '25',
+  categoriesClaim: '24',
   startingPrice: 'S/20',
   promo: 'Explora, elige según tu meta y desbloquea solo lo que te sirve.',
   ownerAdminEmail: import.meta.env.VITE_OWNER_ADMIN_EMAIL || 'tu_correo_admin@ejemplo.com',

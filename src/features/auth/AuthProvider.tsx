@@ -13,6 +13,7 @@ type AuthContextValue = {
   authError: string | null;
   sessionExpired: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signUp: (params: { email: string; password: string; fullName?: string }) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -209,6 +210,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured) {
+      throw new Error('Falta conectar Supabase. Crea un archivo .env.local en la raíz del proyecto con las variables necesarias.');
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      throw new Error(getFriendlyAuthError(error));
+    }
+  }, []);
+
   const signUp = useCallback(async ({ email, password, fullName }: { email: string; password: string; fullName?: string }) => {
     if (!supabase || !isSupabaseConfigured) {
       throw new Error('Falta conectar Supabase. Crea un archivo .env.local en la raíz del proyecto con las variables necesarias.');
@@ -283,12 +301,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       authError,
       sessionExpired,
       signIn,
+      signInWithGoogle,
       signUp,
       resetPassword,
       signOut,
       refreshAdminStatus,
     }),
-    [authError, isAdmin, isAdminLoading, isLoading, refreshAdminStatus, resetPassword, session, sessionExpired, signIn, signOut, signUp, user],
+    [authError, isAdmin, isAdminLoading, isLoading, refreshAdminStatus, resetPassword, session, sessionExpired, signIn, signInWithGoogle, signOut, signUp, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

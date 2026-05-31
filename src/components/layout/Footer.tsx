@@ -3,9 +3,12 @@ import { APP_CONFIG } from '../../config/app';
 
 const footerLinks = [
   { label: 'Catálogo', to: '/catalogo' },
+  { label: 'Guía rápida', to: '/guia' },
   { label: 'Precios', to: '/precios' },
   { label: 'FAQ', to: '/faq' },
   { label: 'Legal', to: '/legal' },
+  { label: 'Privacidad', to: '/legal#privacidad' },
+  { label: 'Uso de datos', to: '/legal#uso-de-datos' },
 ];
 
 export default function Footer() {
@@ -16,6 +19,9 @@ export default function Footer() {
           <div className="font-display text-xl font-bold text-white">{APP_CONFIG.name}</div>
           <p className="mt-3 max-w-md text-sm leading-6 text-gray-400">Directorio digital privado de contactos y oportunidades.</p>
           <p className="mt-5 text-xs leading-5 text-gray-500">Para soporte, usa la burbuja de chat de ContactHub.</p>
+          <p className="mt-3 max-w-md text-xs leading-5 text-gray-500">
+            Usamos tu correo solo para gestionar tu cuenta, accesos, comprobantes y soporte. No vendemos tu información.
+          </p>
         </div>
 
         <div>
