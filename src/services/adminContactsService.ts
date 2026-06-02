@@ -117,7 +117,17 @@ export async function importContacts(contacts: Array<{ name: string; phone: stri
 
 export async function deleteContact(id: string) {
   if (!supabase || !isSupabaseConfigured) return false;
-  const { error } = await supabase.from('contacts').delete().eq('id', id);
+  const now = new Date().toISOString();
+  const { error } = await (supabase as any)
+    .from('contacts')
+    .update({ status: 'inactive', is_active: false, deleted_at: now, updated_at: now })
+    .eq('id', id);
+  if (error && /is_active|deleted_at|schema cache|column/i.test(error.message)) {
+    const { error: fallbackError } = await supabase.from('contacts').update({ status: 'inactive', updated_at: now }).eq('id', id);
+    if (!fallbackError) return true;
+    console.error('deleteContact fallback:', fallbackError.message);
+    return false;
+  }
   if (error) {
     console.error('deleteContact:', error.message);
     return false;
@@ -127,7 +137,17 @@ export async function deleteContact(id: string) {
 
 export async function deleteContactsBulk(ids: string[]) {
   if (!supabase || !isSupabaseConfigured || !ids.length) return false;
-  const { error } = await supabase.from('contacts').delete().in('id', ids);
+  const now = new Date().toISOString();
+  const { error } = await (supabase as any)
+    .from('contacts')
+    .update({ status: 'inactive', is_active: false, deleted_at: now, updated_at: now })
+    .in('id', ids);
+  if (error && /is_active|deleted_at|schema cache|column/i.test(error.message)) {
+    const { error: fallbackError } = await supabase.from('contacts').update({ status: 'inactive', updated_at: now }).in('id', ids);
+    if (!fallbackError) return true;
+    console.error('deleteContactsBulk fallback:', fallbackError.message);
+    return false;
+  }
   if (error) {
     console.error('deleteContactsBulk:', error.message);
     return false;

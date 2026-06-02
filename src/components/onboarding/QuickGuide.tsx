@@ -1,4 +1,4 @@
-import { BookOpen, Gift, HelpCircle, MessageCircle, Receipt, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { BookOpen, Gift, HelpCircle, Receipt, Search, ShieldCheck, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthProvider';
@@ -104,7 +104,7 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
       <button
         type="button"
         onClick={() => setIsHidden(false)}
-        className="focus-ring inline-flex items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-sm font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950"
+        className="focus-ring inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-[#0f2a22] px-4 py-2 text-sm font-bold text-brand-100 shadow-[0_0_24px_rgba(29,180,122,0.08)] transition hover:bg-brand-400 hover:text-ink-950"
       >
         <BookOpen className="h-4 w-4" />
         Guía rápida
@@ -113,15 +113,15 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
   }
 
   return (
-    <section className="rounded-3xl border border-brand-400/20 bg-panel/95 p-5 shadow-2xl shadow-black/20 sm:p-6">
+    <section className="rounded-3xl border border-brand-400/30 bg-[linear-gradient(135deg,rgba(15,31,28,0.98),rgba(7,17,17,0.98))] p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45),0_0_42px_rgba(29,180,122,0.08)] sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-brand-300">
+          <p className="inline-flex items-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/12 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-brand-200">
             <ShieldCheck className="h-3.5 w-3.5" />
             Empieza por aquí
           </p>
           <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-white">Bienvenido a ContactHub 👋</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-200">
             Te ayudamos a encontrar contactos y oportunidades según lo que estás buscando lograr.
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
               window.localStorage.setItem(storageKey, 'true');
               setIsHidden(true);
             }}
-            className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 text-xs font-bold text-gray-200 transition hover:border-brand-400/35"
+            className="focus-ring rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-xs font-bold text-white transition hover:border-brand-400/45 hover:bg-brand-400/12"
           >
             Entendido, ocultar guía
           </button>
@@ -142,9 +142,9 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {steps.map((step, index) => (
-          <div key={step} className="rounded-2xl border border-line bg-ink-950/60 p-4">
-            <p className="text-xs font-bold text-brand-300">{String(index + 1).padStart(2, '0')}</p>
-            <p className="mt-2 text-sm font-semibold text-white">{step}</p>
+          <div key={step} className="rounded-2xl border border-brand-400/12 bg-[#10231f]/85 p-4 transition hover:border-brand-400/35 hover:bg-[#123027]">
+            <p className="text-xs font-black text-brand-300">{String(index + 1).padStart(2, '0')}</p>
+            <p className="mt-2 text-sm font-semibold leading-5 text-white">{step}</p>
           </div>
         ))}
       </div>
@@ -152,12 +152,12 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {guideCards.map((card) => {
           const Icon = card.icon;
-          const buttonClass = 'focus-ring mt-4 inline-flex w-full items-center justify-center rounded-full bg-brand-400 px-4 py-2.5 text-xs font-black text-ink-950 transition hover:bg-white';
+          const buttonClass = 'focus-ring mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-full bg-brand-400 px-4 py-2.5 text-xs font-black text-ink-950 transition hover:bg-white active:scale-95';
           return (
-            <article key={card.title} className="rounded-2xl border border-line bg-white/[0.03] p-4">
+            <article key={card.title} className="rounded-2xl border border-white/10 bg-[#0b1818]/90 p-4 transition hover:border-brand-400/35 hover:bg-[#0f2420]">
               <Icon className="h-5 w-5 text-brand-300" />
               <h3 className="mt-3 text-sm font-bold text-white">{card.title}</h3>
-              <p className="mt-2 min-h-12 text-xs leading-5 text-gray-400">{card.text}</p>
+              <p className="mt-2 min-h-12 text-xs leading-5 text-gray-300">{card.text}</p>
               {card.to ? (
                 <Link to={card.to} className={buttonClass}>
                   {card.cta}
@@ -175,9 +175,9 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
       {mode === 'full' ? (
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
           {infoBlocks.map((block) => (
-            <article key={block.title} className="rounded-2xl border border-brand-400/15 bg-brand-400/[0.06] p-5">
+            <article key={block.title} className="rounded-2xl border border-brand-400/20 bg-brand-400/[0.08] p-5">
               <h3 className="font-display text-lg font-bold text-white">{block.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-gray-300">{block.text}</p>
+              <p className="mt-2 text-sm leading-6 text-gray-200">{block.text}</p>
             </article>
           ))}
         </div>

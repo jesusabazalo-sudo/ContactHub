@@ -36,6 +36,7 @@ export default function App() {
       <Routes>
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/login" element={<AuthPage />} />
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/catalogo" element={<CatalogPage />} />
