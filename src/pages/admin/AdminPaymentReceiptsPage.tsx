@@ -10,11 +10,12 @@ import { formatDate } from '../../lib/format';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ReceiptStatus = 'pendiente' | 'verificado' | 'rechazado';
+type ReceiptFilter = 'all' | ReceiptStatus;
 
 type ChatReceipt = {
   id: string;
   user_id: string | null;
-  message: string;
+  message: string | null;
   attachment_url: string | null;
   attachment_type: string | null;
   comprobante_status: ReceiptStatus | null;
@@ -53,7 +54,11 @@ function statusLabel(status: ReceiptStatus | null | undefined) {
 function statusClass(status: ReceiptStatus | null | undefined) {
   if (status === 'verificado') return 'border-brand-400/30 bg-brand-400/10 text-brand-200';
   if (status === 'rechazado') return 'border-red-400/30 bg-red-400/10 text-red-200';
-  return 'border-amber-300/30 bg-amber-300/10 text-amber-100';
+  return 'border-red-400/30 bg-red-400/10 text-red-100';
+}
+
+function normalizeStatus(status: ReceiptStatus | null | undefined): ReceiptStatus {
+  return status ?? 'pendiente';
 }
 
 export default function AdminPaymentReceiptsPage() {
@@ -62,9 +67,21 @@ export default function AdminPaymentReceiptsPage() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [selectedReceipt, setSelectedReceipt] = useState<ChatReceipt | null>(null);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<ReceiptFilter>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingId, setIsUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const counts = useMemo(() => ({
+    all: receipts.length,
+    pendiente: receipts.filter((receipt) => normalizeStatus(receipt.comprobante_status) === 'pendiente').length,
+    verificado: receipts.filter((receipt) => normalizeStatus(receipt.comprobante_status) === 'verificado').length,
+    rechazado: receipts.filter((receipt) => normalizeStatus(receipt.comprobante_status) === 'rechazado').length,
+  }), [receipts]);
+
+  const filteredReceipts = useMemo(() => (
+    statusFilter === 'all' ? receipts : receipts.filter((receipt) => normalizeStatus(receipt.comprobante_status) === statusFilter)
+  ), [receipts, statusFilter]);
 
   const selectedCategoryNames = useMemo(
     () => categories.filter((category) => selectedCategoryIds.includes(category.id)).map((category) => category.displayLabel),
@@ -88,7 +105,7 @@ export default function AdminPaymentReceiptsPage() {
           .select('id,user_id,message,attachment_url,attachment_type,comprobante_status,created_at')
           .eq('has_attachment', true)
           .order('created_at', { ascending: false })
-          .limit(200),
+          .limit(250),
         supabase
           .from('categories')
           .select('id,name,icon,slug,sort_order,short_description')
@@ -97,20 +114,12 @@ export default function AdminPaymentReceiptsPage() {
       ]);
 
       if (messagesRes.error) {
-        console.error('AdminPaymentReceiptsPage chat_messages:', {
-          message: messagesRes.error.message,
-          details: messagesRes.error.details,
-          code: messagesRes.error.code,
-          hint: messagesRes.error.hint,
-        });
+        console.error('AdminPaymentReceiptsPage chat_messages:', messagesRes.error);
         setReceipts([]);
-        setError('No se pudieron cargar comprobantes. Ejecuta la migración 013_chat_receipts_24h.sql si aún no existe.');
+        setError('No se pudieron cargar comprobantes. Ejecuta la migracion 013_chat_receipts_24h.sql si aun no existe.');
         return;
       }
-
-      if (categoriesRes.error) {
-        console.error('AdminPaymentReceiptsPage categories:', categoriesRes.error.message);
-      }
+      if (categoriesRes.error) console.error('AdminPaymentReceiptsPage categories:', categoriesRes.error.message);
 
       const rows = (messagesRes.data ?? []) as ChatReceipt[];
       const userIds = [...new Set(rows.map((row) => row.user_id).filter(Boolean))] as string[];
@@ -118,8 +127,8 @@ export default function AdminPaymentReceiptsPage() {
         ? await supabase.from('profiles').select('id,email,full_name').in('id', userIds)
         : { data: [], error: null };
       if (profilesRes.error) console.error('AdminPaymentReceiptsPage profiles:', profilesRes.error.message);
-      const profiles = new Map((profilesRes.data ?? []).map((profile: { id: string; email: string | null; full_name: string | null }) => [profile.id, profile]));
 
+      const profiles = new Map((profilesRes.data ?? []).map((profile: { id: string; email: string | null; full_name: string | null }) => [profile.id, profile]));
       const signedRows = await Promise.all(rows.map(async (row) => {
         let signedUrl = row.attachment_url ?? '';
         if (row.attachment_url && !row.attachment_url.startsWith('http') && !row.attachment_url.startsWith('blob:')) {
@@ -131,9 +140,9 @@ export default function AdminPaymentReceiptsPage() {
         return {
           ...row,
           signedUrl,
-          user_email: profile?.email ?? 'Sin email',
+          user_email: profile?.email ?? 'Usuario desconocido',
           user_name: profile?.full_name ?? null,
-          comprobante_status: row.comprobante_status ?? 'pendiente',
+          comprobante_status: normalizeStatus(row.comprobante_status),
         };
       }));
 
@@ -141,7 +150,7 @@ export default function AdminPaymentReceiptsPage() {
       setCategories(normalizeOfficialCategoryRows((categoriesRes.data ?? []) as AdminCategory[]) as AdminCategory[]);
     } catch (loadError) {
       console.error('AdminPaymentReceiptsPage catch:', loadError);
-      setError('Error al cargar comprobantes. Revisa consola o configuración de Supabase.');
+      setError('Error al cargar comprobantes. Revisa consola o configuracion de Supabase.');
       setReceipts([]);
     } finally {
       setIsLoading(false);
@@ -165,7 +174,6 @@ export default function AdminPaymentReceiptsPage() {
       toast.error(updateError.message);
       return false;
     }
-    toast.success('Comprobante actualizado.');
     await loadReceipts();
     return true;
   }
@@ -179,8 +187,9 @@ export default function AdminPaymentReceiptsPage() {
       session_id: receipt.user_id,
       sender: 'admin',
       read: false,
-      message: 'Hola, revisamos tu comprobante pero no pudimos verificarlo.\n¿Puedes enviarnos una captura más clara del pago?\nEstamos para ayudarte. 🙏',
+      message: 'Revisamos tu comprobante pero no pudimos verificarlo.\n\nPuedes enviarnos una captura mas clara del pago con monto y numero visible.\n\nEstamos aqui para ayudarte.',
     });
+    toast.success('Comprobante rechazado y usuario notificado.');
   }
 
   async function activateAccess() {
@@ -189,42 +198,44 @@ export default function AdminPaymentReceiptsPage() {
       toast.error('Este comprobante no tiene usuario vinculado.');
       return;
     }
+    const targetUserId = selectedReceipt.user_id;
     if (!selectedCategoryIds.length) {
       toast.error('Elige al menos una carpeta para activar.');
       return;
     }
-    const targetUserId = selectedReceipt.user_id;
 
     setIsUpdatingId(selectedReceipt.id);
     try {
-      const accessRows = selectedCategoryIds.map((categoryId) => ({
+      const rows = selectedCategoryIds.map((categoryId) => ({
         user_id: targetUserId,
         category_id: categoryId,
         granted_by: adminUser?.id ?? null,
         status: 'active' as const,
         updated_at: new Date().toISOString(),
       }));
-      const { error: accessError } = await supabase.from('user_category_access').upsert(accessRows, { onConflict: 'user_id,category_id' });
+      const { error: accessError } = await supabase.from('user_category_access').upsert(rows, { onConflict: 'user_id,category_id' });
       if (accessError) {
         console.error('AdminPaymentReceiptsPage activate:', accessError.message);
         toast.error(accessError.message);
         return;
       }
 
-      const folderText = selectedCategoryNames.join(', ');
       await dynamicSupabase().from('chat_messages').update({ comprobante_status: 'verificado', read: true }).eq('id', selectedReceipt.id);
       await supabase.from('chat_messages').insert({
         user_id: selectedReceipt.user_id,
         session_id: selectedReceipt.user_id,
         sender: 'admin',
         read: false,
-        message: `🎉 ¡Tu pago fue verificado! Te activamos acceso a ${folderText}.\nYa puedes ver todos los contactos. ¡Gracias por confiar en nosotros!`,
+        message: `Tu pago fue verificado.\n\nYa tienes acceso a: ${selectedCategoryNames.join(', ')}.\n\nPuedes ver todos los contactos ahora mismo. Gracias por confiar en ContactHub.`,
       });
 
-      toast.success('✅ Comprobante aprobado y acceso activado.');
+      toast.success('Comprobante aprobado y acceso activado.');
       setSelectedReceipt(null);
       setSelectedCategoryIds([]);
       await loadReceipts();
+    } catch (activationError) {
+      console.error('AdminPaymentReceiptsPage activate catch:', activationError);
+      toast.error('Error al activar. Intenta de nuevo.');
     } finally {
       setIsUpdatingId(null);
     }
@@ -238,6 +249,13 @@ export default function AdminPaymentReceiptsPage() {
 
   if (isLoading) return <LoadingState title="Cargando comprobantes" message="Leyendo adjuntos enviados por chat." />;
 
+  const tabs: Array<{ id: ReceiptFilter; label: string; count: number }> = [
+    { id: 'all', label: 'Todos', count: counts.all },
+    { id: 'pendiente', label: 'Pendientes', count: counts.pendiente },
+    { id: 'verificado', label: 'Verificados', count: counts.verificado },
+    { id: 'rechazado', label: 'Rechazados', count: counts.rechazado },
+  ];
+
   return (
     <AdminShell>
       <AdminNotice />
@@ -247,7 +265,7 @@ export default function AdminPaymentReceiptsPage() {
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Pagos</p>
             <h2 className="mt-2 font-display text-2xl font-bold text-white">Comprobantes de pago</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
-              Revisa imágenes enviadas desde el chat y activa manualmente las carpetas correctas.
+              Revisa los pagos recibidos y activa el acceso del cliente.
             </p>
           </div>
           <button
@@ -260,6 +278,22 @@ export default function AdminPaymentReceiptsPage() {
           </button>
         </div>
 
+        <div className="mt-6 flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id)}
+              className={`rounded-full border px-4 py-2 text-xs font-black transition ${
+                statusFilter === tab.id ? 'border-brand-400/50 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-gray-300 hover:border-brand-400/40'
+              }`}
+            >
+              {tab.label}
+              {tab.count ? <span className="ml-2 rounded-full bg-black/20 px-2 py-0.5">{tab.count}</span> : null}
+            </button>
+          ))}
+        </div>
+
         {error ? (
           <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-6 text-amber-50">
             <p className="font-semibold text-white">{error}</p>
@@ -269,47 +303,58 @@ export default function AdminPaymentReceiptsPage() {
           </div>
         ) : null}
 
-        {!error && receipts.length ? (
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-gray-500">
-                <tr className="border-b border-line">
-                  <th className="py-3 pr-4">Usuario</th>
-                  <th className="py-3 pr-4">Miniatura</th>
-                  <th className="py-3 pr-4">Fecha y hora</th>
-                  <th className="py-3 pr-4">Estado</th>
-                  <th className="py-3 pr-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {receipts.map((receipt) => (
-                  <tr key={receipt.id} className="align-top text-gray-300">
-                    <td className="py-4 pr-4">
-                      <p className="font-semibold text-white">{receipt.user_email}</p>
+        {!error && filteredReceipts.length ? (
+          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+            {filteredReceipts.map((receipt) => (
+              <article
+                key={receipt.id}
+                className={`flex flex-col gap-4 rounded-2xl border bg-white/[0.03] p-4 sm:flex-row ${
+                  normalizeStatus(receipt.comprobante_status) === 'pendiente'
+                    ? 'border-red-400/30'
+                    : normalizeStatus(receipt.comprobante_status) === 'verificado'
+                      ? 'border-brand-400/30'
+                      : 'border-white/10'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => receipt.signedUrl && window.open(receipt.signedUrl, '_blank', 'noopener,noreferrer')}
+                  className="group mx-auto h-28 w-28 flex-none overflow-hidden rounded-2xl border-2 border-purple-400/60 bg-ink-950 sm:mx-0"
+                >
+                  {receipt.signedUrl ? (
+                    <img src={receipt.signedUrl} alt="Comprobante" className="h-full w-full object-cover transition group-hover:scale-105" />
+                  ) : (
+                    <span className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">Sin imagen</span>
+                  )}
+                </button>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="break-all text-sm font-bold text-white">{receipt.user_email}</p>
                       <p className="mt-1 text-xs text-gray-500">{receipt.user_name ?? 'Sin nombre registrado'}</p>
-                      <p className="mt-1 max-w-[220px] break-all text-[11px] text-gray-600">{receipt.user_id ?? 'Sin user_id'}</p>
-                    </td>
-                    <td className="py-4 pr-4">
-                      {receipt.signedUrl ? (
-                        <button type="button" onClick={() => window.open(receipt.signedUrl, '_blank', 'noopener,noreferrer')} className="group block">
-                          <img src={receipt.signedUrl} alt="Comprobante" className="h-20 w-24 rounded-xl border border-line object-cover transition group-hover:border-brand-400/50" />
-                          <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-300">
-                            <Eye className="h-3 w-3" />
-                            Ver completa
-                          </span>
-                        </button>
-                      ) : (
-                        <span className="text-xs text-gray-500">Sin imagen disponible</span>
-                      )}
-                    </td>
-                    <td className="py-4 pr-4">{formatDate(receipt.created_at)}</td>
-                    <td className="py-4 pr-4">
-                      <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(receipt.comprobante_status)}`}>
-                        {statusLabel(receipt.comprobante_status)}
-                      </span>
-                    </td>
-                    <td className="py-4 pr-4">
-                      <div className="flex flex-wrap gap-2">
+                      <p className="mt-1 text-xs text-gray-500">{formatDate(receipt.created_at)}</p>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(receipt.comprobante_status)}`}>
+                      {statusLabel(receipt.comprobante_status)}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-xs leading-5 text-gray-400">{receipt.message ?? 'Comprobante enviado desde chat.'}</p>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {receipt.signedUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => window.open(receipt.signedUrl, '_blank', 'noopener,noreferrer')}
+                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-1.5 text-xs font-bold text-white transition hover:border-brand-400/40"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Ver comprobante
+                      </button>
+                    ) : null}
+                    {normalizeStatus(receipt.comprobante_status) === 'pendiente' ? (
+                      <>
                         <button
                           type="button"
                           disabled={isUpdatingId === receipt.id}
@@ -317,19 +362,10 @@ export default function AdminPaymentReceiptsPage() {
                             setSelectedReceipt(receipt);
                             setSelectedCategoryIds([]);
                           }}
-                          className="inline-flex items-center gap-1 rounded-full bg-brand-400 px-3 py-1.5 text-xs font-bold text-ink-950 disabled:opacity-60"
+                          className="inline-flex items-center gap-1 rounded-full bg-brand-400 px-3 py-1.5 text-xs font-black text-ink-950 disabled:opacity-60"
                         >
                           <ShieldCheck className="h-3.5 w-3.5" />
                           Activar acceso
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isUpdatingId === receipt.id}
-                          onClick={() => void updateReceiptStatus(receipt, 'verificado')}
-                          className="inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-200 disabled:opacity-60"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          Marcar verificado
                         </button>
                         <button
                           type="button"
@@ -340,19 +376,40 @@ export default function AdminPaymentReceiptsPage() {
                           <XCircle className="h-3.5 w-3.5" />
                           Rechazar
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </>
+                    ) : null}
+                    {normalizeStatus(receipt.comprobante_status) !== 'pendiente' ? (
+                      <button
+                        type="button"
+                        disabled={isUpdatingId === receipt.id}
+                        onClick={() => void updateReceiptStatus(receipt, 'pendiente')}
+                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-1.5 text-xs font-bold text-gray-200 disabled:opacity-60"
+                      >
+                        Reabrir revision
+                      </button>
+                    ) : null}
+                    {normalizeStatus(receipt.comprobante_status) === 'pendiente' ? (
+                      <button
+                        type="button"
+                        disabled={isUpdatingId === receipt.id}
+                        onClick={() => void updateReceiptStatus(receipt, 'verificado')}
+                        className="inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-200 disabled:opacity-60"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Marcar revisado
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         ) : null}
 
-        {!error && !receipts.length ? (
+        {!error && !filteredReceipts.length ? (
           <div className="mt-8 rounded-2xl border border-line bg-ink-950/60 p-8 text-center">
             <p className="font-display text-xl font-bold text-white">No hay comprobantes pendientes por revisar.</p>
-            <p className="mt-2 text-sm text-gray-400">Cuando un cliente suba una imagen desde el chat, aparecerá aquí.</p>
+            <p className="mt-2 text-sm text-gray-400">Cuando un cliente suba una imagen desde el chat, aparecera aqui.</p>
           </div>
         ) : null}
       </section>
@@ -363,7 +420,7 @@ export default function AdminPaymentReceiptsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">Activar acceso</p>
-                <h3 className="mt-2 font-display text-2xl font-bold text-white">{selectedReceipt.user_email}</h3>
+                <h3 className="mt-2 break-all font-display text-2xl font-bold text-white">{selectedReceipt.user_email}</h3>
                 <p className="mt-2 text-sm text-gray-400">Selecciona una o varias carpetas para activar por este comprobante.</p>
               </div>
               <button type="button" onClick={() => setSelectedReceipt(null)} className="rounded-full border border-line px-3 py-1.5 text-sm font-bold text-white">Cerrar</button>
@@ -383,7 +440,7 @@ export default function AdminPaymentReceiptsPage() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="mt-1 h-4 w-4 rounded border border-brand-400/50 bg-ink-950 text-center text-[10px] text-brand-300">{selected ? '✓' : ''}</span>
+                      <span className="mt-1 h-4 w-4 rounded border border-brand-400/50 bg-ink-950 text-center text-[10px] text-brand-300">{selected ? 'OK' : ''}</span>
                       <div>
                         <p className="font-semibold text-white">{category.displayLabel}</p>
                         <p className="mt-1 text-xs text-gray-500">{category.short_description ?? 'Carpeta oficial ContactHub'}</p>
@@ -402,7 +459,7 @@ export default function AdminPaymentReceiptsPage() {
                 onClick={() => void activateAccess()}
                 className="rounded-full bg-brand-400 px-5 py-2 text-sm font-black text-ink-950 disabled:opacity-50"
               >
-                ✅ Activar accesos seleccionados
+                Confirmar y activar
               </button>
             </div>
           </div>

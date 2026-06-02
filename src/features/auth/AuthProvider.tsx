@@ -56,19 +56,29 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [sessionExpired, setSessionExpired] = useState(false);
   const manualSignOutRef = useRef(false);
   const onlineIncrementedRef = useRef<string | null>(null);
+  const adminStatusUserRef = useRef<string | null>(null);
+  const isAdminRef = useRef(false);
 
   const user = session?.user ?? null;
 
-  const loadAdminStatus = useCallback(async (nextSession: Session | null) => {
+  useEffect(() => {
+    isAdminRef.current = isAdmin;
+  }, [isAdmin]);
+
+  const loadAdminStatus = useCallback(async (nextSession: Session | null, force = false) => {
     if (!nextSession?.user) {
       setIsAdmin(false);
+      adminStatusUserRef.current = null;
       return;
     }
 
-    setIsAdminLoading(true);
+    if (!force && adminStatusUserRef.current === nextSession.user.id) return;
+
+    if (!isAdminRef.current) setIsAdminLoading(true);
     try {
       const nextIsAdmin = await resolveAdminStatus(nextSession.user.id);
       setIsAdmin(nextIsAdmin);
+      adminStatusUserRef.current = nextSession.user.id;
     } finally {
       setIsAdminLoading(false);
     }
@@ -91,7 +101,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!isMounted) return;
         setSession(data.session);
         setSessionExpired(false);
-        await loadAdminStatus(data.session);
+        await loadAdminStatus(data.session, true);
       } catch (error) {
         if (!isMounted) return;
         setAuthError(getFriendlyAuthError(error));
@@ -116,13 +126,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      setSession(nextSession);
       setAuthError(null);
       setSessionExpired(false);
 
+      if (event === 'TOKEN_REFRESHED') {
+        setSession(nextSession);
+        return;
+      }
+
       if (event === 'SIGNED_OUT') {
+        setSession(null);
         const wasManualSignOut = manualSignOutRef.current;
         setIsAdmin(false);
+        adminStatusUserRef.current = null;
         setSessionExpired(!wasManualSignOut);
         manualSignOutRef.current = false;
         if (!wasManualSignOut && ['/admin', '/mis-contactos'].some((path) => window.location.pathname.startsWith(path))) {
@@ -133,7 +149,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') {
+      setSession(nextSession);
+
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         void loadAdminStatus(nextSession);
       }
     });

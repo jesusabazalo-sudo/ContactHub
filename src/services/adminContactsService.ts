@@ -4,6 +4,11 @@ import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 export type ContactStatus = 'active' | 'inactive' | 'review' | 'rejected';
 export type ContactRiskLevel = 'safe' | 'review' | 'prohibited';
 
+function applyVisibleContactsFilter(query: any, status?: string) {
+  if (status && status !== 'all') return query.eq('status', status as ContactStatus);
+  return query.neq('status', 'inactive').neq('status', 'deleted').neq('status', 'archived');
+}
+
 export const getFlag = (phone: string): string => {
   if (phone.startsWith('+51')) return '🇵🇪';
   if (phone.startsWith('+1')) return '🇺🇸';
@@ -53,7 +58,7 @@ export async function getContacts(filters?: { search?: string; categoryId?: stri
   const safeSearch = sanitizeText(filters?.search ?? '', 80);
   if (safeSearch) query = query.or(`name.ilike.%${safeSearch}%,phone.ilike.%${safeSearch}%`);
   if (filters?.categoryId && filters.categoryId !== 'all') query = query.eq('category_id', filters.categoryId);
-  if (filters?.status && filters.status !== 'all') query = query.eq('status', filters.status as ContactStatus);
+  query = applyVisibleContactsFilter(query, filters?.status);
 
   const { data, error } = await query;
   if (error) {
@@ -69,7 +74,7 @@ export async function getTotalContactsCount(filters?: { search?: string; categor
   const safeSearch = sanitizeText(filters?.search ?? '', 80);
   if (safeSearch) query = query.or(`name.ilike.%${safeSearch}%,phone.ilike.%${safeSearch}%`);
   if (filters?.categoryId && filters.categoryId !== 'all') query = query.eq('category_id', filters.categoryId);
-  if (filters?.status && filters.status !== 'all') query = query.eq('status', filters.status as ContactStatus);
+  query = applyVisibleContactsFilter(query, filters?.status);
   const { count, error } = await query;
   if (error) {
     console.error('getTotalContactsCount:', error.message);

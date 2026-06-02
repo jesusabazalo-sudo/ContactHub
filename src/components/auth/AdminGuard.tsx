@@ -8,7 +8,7 @@ export default function AdminGuard({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const { isAdmin, isAdminLoading, isLoading, session } = useAuth();
 
-  if (isLoading || isAdminLoading) {
+  if (isLoading || (isAdminLoading && !isAdmin)) {
     return <LoadingState title="Verificando permisos" message="Estamos revisando si tu usuario tiene rol de administrador." />;
   }
 

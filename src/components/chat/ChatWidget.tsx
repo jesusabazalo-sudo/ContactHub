@@ -1,5 +1,6 @@
 import { Copy, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { APP_CONFIG } from '../../config/app';
 import { officialCategories } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
@@ -446,6 +447,9 @@ export default function ChatWidget() {
   const [selectedFolder, setSelectedFolder] = useState<ChatCategory | null>(null);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<ReceiptPreview | null>(null);
+  const [selectedReceiptFile, setSelectedReceiptFile] = useState<File | null>(null);
+  const [selectedReceiptPreviewUrl, setSelectedReceiptPreviewUrl] = useState<string | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [whatsappNoticeShown, setWhatsappNoticeShown] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
@@ -658,14 +662,22 @@ export default function ChatWidget() {
     return { path, signedUrl: await signAttachmentUrl(path) };
   }
 
-  async function handleReceiptFile(file?: File | null) {
-    if (!file) return;
+  function clearSelectedReceipt() {
+    if (selectedReceiptPreviewUrl) URL.revokeObjectURL(selectedReceiptPreviewUrl);
+    setSelectedReceiptFile(null);
+    setSelectedReceiptPreviewUrl(null);
+    if (receiptInputRef.current) receiptInputRef.current.value = '';
+  }
+
+  async function handleReceiptFile(inputFile?: File | null) {
+    if (!inputFile) return;
+    const file = inputFile;
     if (!user?.id) {
       setIsOpen(true);
       await addAssistantMessage('Para subir tu comprobante, primero inicia sesión o crea una cuenta. Así podemos vincular el pago con tu acceso.', 'payment');
       return;
     }
-    const allowed = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
     if (!allowed) {
       await addAssistantMessage('Puedes subir una imagen JPG, PNG o WEBP del comprobante.', 'payment');
       return;
@@ -677,6 +689,10 @@ export default function ChatWidget() {
     const previewUrl = URL.createObjectURL(file);
     setIsOpen(true);
     setCurrentFlow('payment');
+    if (selectedReceiptPreviewUrl) URL.revokeObjectURL(selectedReceiptPreviewUrl);
+    setSelectedReceiptFile(file);
+    setSelectedReceiptPreviewUrl(previewUrl);
+    return;
     const uploaded = await uploadReceiptToSupabase(file);
     const localAttachmentId = await addUserMessage(`📎 Comprobante adjuntado: ${file.name}`, {
       has_attachment: Boolean(uploaded),
@@ -695,6 +711,43 @@ export default function ChatWidget() {
         : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.',
       uploaded ? 'paid' : 'payment',
     );
+  }
+
+  async function confirmReceiptUpload() {
+    if (!selectedReceiptFile) return;
+    setIsUploadingReceipt(true);
+    const file = selectedReceiptFile;
+    const previewUrl = selectedReceiptPreviewUrl;
+    try {
+      const uploaded = await uploadReceiptToSupabase(file);
+      if (!uploaded) throw new Error('No se pudo subir el comprobante.');
+
+      const localAttachmentId = await addUserMessage(`ðŸ“Ž Comprobante adjuntado: ${file.name}`, {
+        has_attachment: true,
+        attachment_url: uploaded.path,
+        attachment_type: file.type,
+        comprobante_status: 'pendiente',
+      });
+      if (previewUrl) setAttachmentUrls((current) => ({ ...current, [localAttachmentId]: previewUrl }));
+      setReceipt({ fileName: file.name, fileType: file.type || 'imagen', previewUrl, status: 'uploaded' });
+      setSelectedReceiptFile(null);
+      setSelectedReceiptPreviewUrl(null);
+      if (receiptInputRef.current) receiptInputRef.current.value = '';
+      toast.success('âœ… Comprobante enviado correctamente');
+
+      setIsTyping(true);
+      await delay(2000);
+      setIsTyping(false);
+      await addAssistantMessage(
+        'âœ… Â¡Comprobante recibido! Gracias por tu confianza ðŸ™\n\nEstamos verificando tu pago. En pocos minutos activaremos tu acceso y te avisamos aquÃ­ mismo.\n\nðŸ’œ Si tienes alguna duda, escrÃ­benos.',
+        'paid',
+      );
+    } catch (error) {
+      console.error('Error subiendo comprobante:', error);
+      toast.error('Error al enviar. Intenta de nuevo.');
+    } finally {
+      setIsUploadingReceipt(false);
+    }
   }
 
   async function handleAction(action: ChatAction) {
@@ -967,7 +1020,7 @@ export default function ChatWidget() {
 
   return (
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
-      <input ref={receiptInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
+      <input ref={receiptInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
         <div className="fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0F2027] shadow-2xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
           <div className="flex items-center justify-between border-b border-line bg-white/[0.03] px-5 py-4">
@@ -1052,8 +1105,50 @@ export default function ChatWidget() {
               </div>
             </div>
 
+            {selectedReceiptFile && selectedReceiptPreviewUrl ? (
+              <div className="mb-3 rounded-2xl border border-purple-400/30 bg-purple-500/10 p-3">
+                <div className="flex items-center gap-3">
+                  <img src={selectedReceiptPreviewUrl} alt="Vista previa del comprobante" className="h-20 w-20 rounded-xl border border-purple-400/40 object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-white">{selectedReceiptFile.name}</p>
+                    <p className="mt-1 text-xs text-purple-100/70">Revisa la imagen antes de enviarla.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void confirmReceiptUpload()}
+                        disabled={isUploadingReceipt}
+                        className="rounded-full bg-brand-400 px-3 py-1.5 text-xs font-black text-ink-950 transition hover:bg-white disabled:opacity-60"
+                      >
+                        {isUploadingReceipt ? 'Enviando...' : 'Enviar comprobante'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearSelectedReceipt}
+                        disabled={isUploadingReceipt}
+                        className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-white/70 transition hover:border-white/30 hover:text-white disabled:opacity-60"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                  <button type="button" onClick={clearSelectedReceipt} className="rounded-full border border-white/15 p-1.5 text-white/70 transition hover:text-white">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => receiptInputRef.current?.click()}
+              className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-purple-400/35 bg-purple-500/15 px-4 py-2.5 text-sm font-black text-purple-100 transition hover:border-purple-300/60 hover:bg-purple-500/20"
+            >
+              <UploadCloud className="h-4 w-4" />
+              Enviar comprobante Yape/Plin
+            </button>
+
             <div className="flex items-end gap-2 rounded-2xl border border-line bg-ink-950/70 p-2">
-              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-line bg-white/5 text-gray-200 transition hover:border-brand-400/40 hover:text-brand-200">
+              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-line bg-white/5 text-gray-200 transition hover:border-purple-400/50 hover:text-purple-200">
                 <Paperclip className="h-4 w-4" />
               </button>
               <textarea

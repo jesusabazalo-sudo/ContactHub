@@ -1,5 +1,5 @@
 import { Archive, Check, ChevronDown, Copy, ExternalLink, Plus, RefreshCw, Save, Search, Tags, Trash2, X, XCircle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
@@ -70,6 +70,7 @@ type ContactForm = {
 
 const pageSize = 50;
 const suggestedFolderCapacity = 200;
+const adminContactsStateKey = 'contacthub_admin_contacts_state_v1';
 const baseContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level, country_flag, country_code';
 const extendedContactSelect = `${baseContactSelect}, whatsapp, internal_note, source, is_active, deleted_at`;
 
@@ -93,6 +94,25 @@ type SupabaseDebugError = {
   code?: string | null;
   hint?: string | null;
 };
+
+type PersistedAdminContactsState = {
+  selectedCategory?: string;
+  activeSubtab?: 'list' | 'folder';
+  selectedStatus?: 'all' | ContactStatus;
+  qualityFilter?: ContactQualityFilter;
+  tagFilter?: string;
+  search?: string;
+  currentPage?: number;
+};
+
+function loadPersistedAdminContactsState(): PersistedAdminContactsState {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(window.sessionStorage.getItem(adminContactsStateKey) ?? '{}') as PersistedAdminContactsState;
+  } catch {
+    return {};
+  }
+}
 
 function logSupabaseError(context: string, error: SupabaseDebugError) {
   console.error(context, {
@@ -199,6 +219,16 @@ function getContactQuality(contact: ContactRow) {
   if (contact.status === 'rejected') return { key: 'rejected', label: 'Rechazado', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
   if (contact.phone && contact.description?.trim()) return { key: 'complete', label: 'Completo', className: 'bg-brand-400/15 text-brand-200 border-brand-400/25' };
   return { key: 'verified', label: 'Verificado', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
+}
+
+const hiddenContactStatuses = new Set(['inactive', 'deleted', 'archived']);
+
+function isVisibleContact(contact: Partial<ContactRow> & { status?: string | null }) {
+  const status = String(contact.status ?? 'active').toLowerCase();
+  if (hiddenContactStatuses.has(status)) return false;
+  if (contact.deleted_at) return false;
+  if (contact.is_active === false) return false;
+  return true;
 }
 
 function getWhatsappLink(phone: string | null | undefined) {
@@ -315,18 +345,20 @@ function getLegacyFolderValues(row: Record<string, unknown>) {
 }
 
 export default function AdminContactsPage() {
+  const persistedState = useMemo(loadPersistedAdminContactsState, []);
+  const hasLoadedContactsRef = useRef(false);
   const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [activeSubtab, setActiveSubtab] = useState<'list' | 'folder'>('list');
+  const [selectedCategory, setSelectedCategory] = useState(persistedState.selectedCategory ?? 'all');
+  const [activeSubtab, setActiveSubtab] = useState<'list' | 'folder'>(persistedState.activeSubtab ?? 'list');
   const [isFolderPickerOpen, setIsFolderPickerOpen] = useState(false);
   const [folderPickerSearch, setFolderPickerSearch] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<'all' | ContactStatus>('all');
-  const [qualityFilter, setQualityFilter] = useState<ContactQualityFilter>('all');
-  const [tagFilter, setTagFilter] = useState('');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
+  const [selectedStatus, setSelectedStatus] = useState<'all' | ContactStatus>(persistedState.selectedStatus ?? 'all');
+  const [qualityFilter, setQualityFilter] = useState<ContactQualityFilter>(persistedState.qualityFilter ?? 'all');
+  const [tagFilter, setTagFilter] = useState(persistedState.tagFilter ?? '');
+  const [search, setSearch] = useState(persistedState.search ?? '');
+  const [debouncedSearch, setDebouncedSearch] = useState(persistedState.search ?? '');
+  const [currentPage, setCurrentPage] = useState(persistedState.currentPage ?? 0);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editing, setEditing] = useState<ContactRow | null>(null);
@@ -397,6 +429,11 @@ export default function AdminContactsPage() {
       ? 'Sin categoría'
       : getCategoryCompactLabel(selectedCategoryObject);
 
+  const applyStatusVisibility = (query: any) => {
+    if (selectedStatus && selectedStatus !== 'all') return query.eq('status', selectedStatus);
+    return query.neq('status', 'inactive').neq('status', 'deleted').neq('status', 'archived');
+  };
+
   const loadCategories = async () => {
     if (!supabase || !isSupabaseConfigured) {
       setCategories(buildOfficialCategoryRows([]) as CategoryOption[]);
@@ -419,13 +456,18 @@ export default function AdminContactsPage() {
     const officialRows = buildOfficialCategoryRows(realCategoryRows);
 
     const realIds = new Set(officialRows.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => category.id));
-    const { data: contactCounters, error: contactCountersError } = await supabase
+    let { data: contactCounters, error: contactCountersError } = await (supabase as any)
       .from('contacts')
-      .select('id, category_id, phone, description, status')
+      .select('id, category_id, phone, description, status, is_active, deleted_at')
       .limit(10000);
+    if (contactCountersError && isMissingColumnError(contactCountersError)) {
+      const fallbackCounters = await supabase.from('contacts').select('id, category_id, phone, description, status').limit(10000);
+      contactCounters = fallbackCounters.data;
+      contactCountersError = fallbackCounters.error;
+    }
     if (contactCountersError) console.warn('contact counters:', contactCountersError.message);
 
-    const rowsForStats = (contactCounters ?? []).filter((contact) => contact.status !== 'inactive');
+    const rowsForStats = ((contactCounters ?? []) as Array<Partial<ContactRow> & { status?: string | null }>).filter(isVisibleContact);
     const countByCategory = new Map<string, number>();
     rowsForStats.forEach((contact) => {
       if (contact.category_id && realIds.has(contact.category_id)) {
@@ -464,7 +506,7 @@ export default function AdminContactsPage() {
       query = query.or(searchFields.join(','));
     }
     if (selectedCategory && selectedCategory !== 'all' && !isUncategorizedFilter(selectedCategory) && !isSyntheticCategoryId(selectedCategory)) query = query.eq('category_id', selectedCategory);
-    if (selectedStatus && selectedStatus !== 'all') query = query.eq('status', selectedStatus);
+    query = applyStatusVisibility(query);
     return query;
   };
 
@@ -477,7 +519,7 @@ export default function AdminContactsPage() {
       if (includeOptionalSearch) searchFields.push(`whatsapp.ilike.%${searchTerm}%`);
       query = query.or(searchFields.join(','));
     }
-    if (selectedStatus && selectedStatus !== 'all') query = query.eq('status', selectedStatus);
+    query = applyStatusVisibility(query);
     return query;
   };
 
@@ -490,7 +532,7 @@ export default function AdminContactsPage() {
     }
 
     try {
-      const showFullLoading = contacts.length === 0 && !debouncedSearch.trim() && currentPage === 0;
+      const showFullLoading = !hasLoadedContactsRef.current && contacts.length === 0;
       if (showFullLoading) {
         setLoading(true);
       } else {
@@ -502,6 +544,7 @@ export default function AdminContactsPage() {
         setContacts([]);
         setTotalCount(0);
         setSelectedIds([]);
+        hasLoadedContactsRef.current = true;
         return;
       }
 
@@ -524,12 +567,15 @@ export default function AdminContactsPage() {
       const catsMap = new Map((catsData ?? []).map((category) => [category.id, category]));
 
       const realIds = new Set(realCategoryIds);
+      const activeRows = selectedStatus === 'all'
+        ? ((contactsData ?? []) as Array<Partial<ContactRow> & { status?: string | null }>).filter(isVisibleContact)
+        : contactsData ?? [];
       const visibleRows = isUncategorized
-        ? (contactsData ?? []).filter((contact) => {
+        ? activeRows.filter((contact) => {
           const row = contact as Partial<ContactRow>;
           return !row.category_id || !realIds.has(row.category_id);
         })
-        : contactsData ?? [];
+        : activeRows;
       const pagedRows = isUncategorized ? visibleRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : visibleRows;
 
       const enriched = pagedRows.map((contact) => {
@@ -554,6 +600,7 @@ export default function AdminContactsPage() {
       }) as ContactRow[];
 
       setContacts(enriched);
+      hasLoadedContactsRef.current = true;
       setSelectedIds([]);
 
       if (isUncategorized) {
@@ -565,7 +612,7 @@ export default function AdminContactsPage() {
       const searchTerm = debouncedSearch.trim();
       if (searchTerm) countQuery = countQuery.or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,status.ilike.%${searchTerm}%`);
       if (selectedCategory && selectedCategory !== 'all') countQuery = countQuery.eq('category_id', selectedCategory);
-      if (selectedStatus && selectedStatus !== 'all') countQuery = countQuery.eq('status', selectedStatus);
+      countQuery = applyStatusVisibility(countQuery);
       const { count, error: countError } = await countQuery;
       if (countError) {
         logSupabaseError('AdminContactsPage count query failed:', countError);
@@ -585,6 +632,21 @@ export default function AdminContactsPage() {
   useEffect(() => {
     void loadCategories();
   }, []);
+
+  useEffect(() => {
+    window.sessionStorage.setItem(
+      adminContactsStateKey,
+      JSON.stringify({
+        selectedCategory,
+        activeSubtab,
+        selectedStatus,
+        qualityFilter,
+        tagFilter,
+        search,
+        currentPage,
+      } satisfies PersistedAdminContactsState),
+    );
+  }, [activeSubtab, currentPage, qualityFilter, search, selectedCategory, selectedStatus, tagFilter]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -656,7 +718,7 @@ export default function AdminContactsPage() {
     }
     let query = supabase.from('contacts').select('id').limit(1000);
     if (selectedCategory !== 'all') query = query.eq('category_id', selectedCategory);
-    if (selectedStatus !== 'all') query = query.eq('status', selectedStatus);
+    query = applyStatusVisibility(query);
     const { data, error: idsError } = await query;
     if (idsError) {
       toast.error('No pude seleccionar toda la carpeta.');
@@ -683,7 +745,15 @@ export default function AdminContactsPage() {
   }
 
   async function reloadCurrentPage() {
+    await loadCategories();
     await loadContacts();
+  }
+
+  function removeContactsFromLocal(ids: string[]) {
+    const idSet = new Set(ids);
+    setContacts((current) => current.filter((contact) => !idSet.has(contact.id)));
+    setSelectedIds((current) => current.filter((id) => !idSet.has(id)));
+    setTotalCount((count) => Math.max(0, count - ids.length));
   }
 
   async function updateContactCompat(id: string, payload: Record<string, unknown>) {
@@ -802,7 +872,7 @@ export default function AdminContactsPage() {
       closeAddModal();
       toast.success('Contacto agregado correctamente');
       await (supabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<unknown> }).rpc('sync_category_count', { cat_id: categoryId }).catch(() => null);
-      await loadContacts();
+      await reloadCurrentPage();
     } finally {
       setActionLoading(false);
     }
@@ -813,10 +883,12 @@ export default function AdminContactsPage() {
     try {
       const ok = await deleteContact(contact.id);
       if (!ok) {
-        toast.error('Supabase no permitió archivar este contacto por permisos RLS.');
+        toast.error('No se pudo eliminar. Inténtalo nuevamente.');
+        await reloadCurrentPage();
         return;
       }
-      toast.success('Contacto archivado.');
+      removeContactsFromLocal([contact.id]);
+      toast.success('Contactos eliminados correctamente.');
       await reloadCurrentPage();
     } finally {
       setActionLoading(false);
@@ -824,19 +896,22 @@ export default function AdminContactsPage() {
   }
 
   async function deleteRow(contact: ContactRow) {
-    if (!window.confirm('Vas a eliminar 1 contacto. Esta acción no se puede deshacer.')) return;
+    if (!window.confirm('Vas a eliminar 1 contacto. Esta acción no se puede deshacer. ¿Deseas continuar?')) return;
     await archiveRow(contact);
   }
 
   async function archiveSelected() {
-    if (!selectedIds.length || !window.confirm(`Vas a eliminar ${selectedIds.length} contactos. Esta acción no se puede deshacer.`)) return;
+    if (!selectedIds.length || !window.confirm(`Vas a eliminar ${selectedIds.length} contactos. Esta acción no se puede deshacer. ¿Deseas continuar?`)) return;
     setActionLoading(true);
+    const idsToDelete = [...selectedIds];
     try {
-      const ok = await deleteContactsBulk(selectedIds);
+      const ok = await deleteContactsBulk(idsToDelete);
       if (!ok) {
-        toast.error('Supabase no permitió archivar seleccionados. Revisa permisos RLS.');
+        toast.error('No se pudo eliminar. Inténtalo nuevamente.');
+        await reloadCurrentPage();
         return;
       }
+      removeContactsFromLocal(idsToDelete);
       toast.success('Contactos eliminados correctamente.');
       setSelectedIds([]);
       await reloadCurrentPage();

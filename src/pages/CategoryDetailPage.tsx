@@ -24,6 +24,7 @@ export default function CategoryDetailPage() {
   const [detail, setDetail] = useState<CategoryDetailState | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   function openChatForCategory() {
     if (!category) return;
@@ -34,7 +35,7 @@ export default function CategoryDetailPage() {
     let isMounted = true;
 
     async function loadDetail() {
-      if (!slug || isLoading || isAdminLoading) return;
+      if (!slug || isLoading || (isAdminLoading && !isAdmin)) return;
 
       setIsLoadingDetail(true);
       setError(null);
@@ -120,12 +121,12 @@ export default function CategoryDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [isAdmin, isAdminLoading, isLoading, slug, user?.id]);
+  }, [isAdmin, isAdminLoading, isLoading, retryKey, slug, user?.id]);
 
   const trialCount = useMemo(() => detail?.trialContactIds.filter((id) => detail.phonesByContactId.has(id)).length ?? 0, [detail]);
   const rewardCount = useMemo(() => detail?.rewardContactIds.filter((id) => detail.phonesByContactId.has(id)).length ?? 0, [detail]);
 
-  if (isLoading || isAdminLoading || isLoadingDetail) {
+  if (isLoading || (isAdminLoading && !isAdmin) || isLoadingDetail) {
     return (
       <section className="section-pad bg-ink-950">
         <div className="container-shell">
@@ -161,7 +162,15 @@ export default function CategoryDetailPage() {
           <div className="rounded-2xl border border-amber-300/25 bg-amber-300/10 p-8 text-center">
             <h1 className="font-display text-3xl font-bold text-white">No se pudo cargar esta carpeta.</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-amber-100">{error}</p>
-            <button type="button" onClick={() => window.location.reload()} className="mt-6 inline-flex rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950">
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setIsLoadingDetail(true);
+                setRetryKey((value) => value + 1);
+              }}
+              className="mt-6 inline-flex rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950"
+            >
               Reintentar
             </button>
           </div>
