@@ -6,7 +6,7 @@ import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
-import { officialCategories, type OfficialCategoryDisplay } from '../../data/officialCategories';
+import { buildOfficialCategoryOptions, officialCategories, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { deleteContact, deleteContactsBulk, getCountryCode, getFlag, updateContact } from '../../services/adminContactsService';
@@ -282,55 +282,36 @@ function findRealCategoryForOfficial(realRows: CategoryOption[], official: (type
 }
 
 function buildOfficialCategoryRows(realRows: CategoryOption[] = []) {
-  const uniqueRealRows = [...new Map(realRows.map((category) => [category.slug ?? category.id, category])).values()];
+  return buildOfficialCategoryOptions(realRows) as CategoryOption[];
+}
 
-  return officialCategories
-    .filter((category) => category.displayOrder <= 24)
-    .map((official) => {
-      const real = findRealCategoryForOfficial(uniqueRealRows, official);
-      const base: CategoryOption = real
-        ? {
-            ...real,
-            name: official.name,
-            icon: official.icon,
-            short_description: official.shortDescription,
-            tags: official.tags,
-            sort_order: official.sortOrder,
-            displayOrder: official.displayOrder,
-            displayIcon: official.icon,
-            displayTitle: official.title,
-            displaySubtitle: official.subtitle,
-            displayLabel: `${official.icon} ${String(official.displayOrder).padStart(2, '0')}. ${official.title} - ${official.subtitle}`,
-            officialSlug: official.slug,
-          }
-        : {
-        id: `missing:${official.slug}`,
-        name: official.name,
-        icon: official.icon,
-        slug: official.slug,
-        sort_order: official.sortOrder,
-        short_description: official.shortDescription,
-        tags: official.tags,
-        displayOrder: official.displayOrder,
-        displayIcon: official.icon,
-        displayTitle: official.title,
-        displaySubtitle: official.subtitle,
-        displayLabel: `${official.icon} ${String(official.displayOrder).padStart(2, '0')}. ${official.title} - ${official.subtitle}`,
-        officialSlug: official.slug,
-      };
+function findCategoryByLegacyValue(value: unknown, categoryRows: CategoryOption[]) {
+  const text = String(value ?? '').trim();
+  if (!text) return undefined;
+  const normalizedKey = normalizeCategoryKey(text);
+  const normalizedWords = normalizeCategoryWords(text);
 
-      return {
-        ...base,
-        displayOrder: official.displayOrder,
-        displayIcon: official.icon,
-        displayTitle: official.title,
-        displaySubtitle: official.subtitle,
-        officialSlug: official.slug,
-        contacts_count: 0,
-        sort_order: official.sortOrder,
-      };
-    })
-    .sort((a, b) => (a.displayOrder ?? 999) - (b.displayOrder ?? 999));
+  return categoryRows.find((category) => {
+    const slug = normalizeCategoryKey(category.slug);
+    const officialSlug = normalizeCategoryKey(category.officialSlug);
+    const title = normalizeCategoryWords(category.displayTitle);
+    const subtitle = normalizeCategoryWords(category.displaySubtitle);
+    const label = normalizeCategoryWords(category.displayLabel);
+    const name = normalizeCategoryWords(category.name);
+
+    if (normalizedKey && (normalizedKey === slug || normalizedKey === officialSlug)) return true;
+    if (normalizedWords && (label.includes(normalizedWords) || name.includes(normalizedWords))) return true;
+    if (title && normalizedWords.includes(title)) return true;
+    if (subtitle && normalizedWords.includes(subtitle)) return true;
+    if (subtitle && subtitle.includes(normalizedWords)) return true;
+    return false;
+  });
+}
+
+function getLegacyFolderValues(row: Record<string, unknown>) {
+  return ['category_slug', 'folder_slug', 'category_name', 'folder_name', 'carpeta']
+    .map((key) => row[key])
+    .filter((value) => String(value ?? '').trim());
 }
 
 export default function AdminContactsPage() {
@@ -669,6 +650,10 @@ export default function AdminContactsPage() {
 
   async function selectCurrentFolder() {
     if (!supabase || !isSupabaseConfigured) return;
+    if (selectedCategory === 'uncategorized' || isSyntheticCategoryId(selectedCategory)) {
+      setSelectedIds(filteredContacts.map((contact) => contact.id));
+      return;
+    }
     let query = supabase.from('contacts').select('id').limit(1000);
     if (selectedCategory !== 'all') query = query.eq('category_id', selectedCategory);
     if (selectedStatus !== 'all') query = query.eq('status', selectedStatus);
@@ -905,6 +890,73 @@ export default function AdminContactsPage() {
     }
   }
 
+  async function repairCategoryLinks() {
+    if (!supabase || !isSupabaseConfigured) {
+      toast.error('Falta conectar Supabase.');
+      return;
+    }
+    const realCategories = categories.filter((category) => !isSyntheticCategoryId(category.id));
+    const realIds = new Set(realCategories.map((category) => category.id));
+    if (!realCategories.length) {
+      toast.error('No hay carpetas reales para reparar vínculos.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const legacySelect = `${baseContactSelect}, category_slug, folder_slug, category_name, folder_name, carpeta`;
+      let { data, error: repairReadError } = await (supabase as any).from('contacts').select(legacySelect).limit(10000);
+      let hasLegacyColumns = true;
+
+      if (repairReadError && isMissingColumnError(repairReadError)) {
+        hasLegacyColumns = false;
+        const fallback = await supabase.from('contacts').select(baseContactSelect).limit(10000);
+        data = fallback.data;
+        repairReadError = fallback.error;
+      }
+
+      if (repairReadError) {
+        logSupabaseError('repairCategoryLinks read failed:', repairReadError);
+        toast.error('No pude leer contactos para reparar. Revisa consola.');
+        return;
+      }
+
+      if (!hasLegacyColumns) {
+        toast.info('No encontré columnas antiguas de carpeta para inferir vínculos. Los contactos sin categoría quedan para reasignación manual.');
+        setSelectedCategory('uncategorized');
+        return;
+      }
+
+      const repairs = ((data ?? []) as Array<Record<string, unknown>>)
+        .filter((row) => {
+          const categoryId = String(row.category_id ?? '');
+          return !categoryId || !realIds.has(categoryId);
+        })
+        .map((row) => {
+          const target = getLegacyFolderValues(row)
+            .map((value) => findCategoryByLegacyValue(value, realCategories))
+            .find(Boolean);
+          return target ? { id: String(row.id), target } : null;
+        })
+        .filter((repair): repair is { id: string; target: CategoryOption } => Boolean(repair));
+
+      if (!repairs.length) {
+        toast.info('No encontré contactos reparables automáticamente. Puedes usar “Sin categoría” y moverlos manualmente.');
+        setSelectedCategory('uncategorized');
+        return;
+      }
+
+      if (!window.confirm(`Se encontraron ${repairs.length} contactos reparables. ¿Quieres reasignarlos a sus carpetas oficiales ahora?`)) return;
+
+      await Promise.all(repairs.map((repair) => updateContactCompat(repair.id, { category_id: repair.target.id })));
+      toast.success(`${repairs.length} vínculos de carpetas reparados.`);
+      await loadCategories();
+      await loadContacts();
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   if (loading) return <LoadingState title="Cargando contactos" message="Leyendo contactos reales desde Supabase." />;
   if (error) return <FriendlyErrorState title="Error al cargar contactos." message={error} onRetry={reloadCurrentPage} />;
 
@@ -932,6 +984,9 @@ export default function AdminContactsPage() {
             <button type="button" onClick={() => void reloadCurrentPage()} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-brand-400/35">
               <RefreshCw className="h-4 w-4" />
               Recargar
+            </button>
+            <button type="button" disabled={actionLoading} onClick={() => void repairCategoryLinks()} className="focus-ring inline-flex items-center gap-2 rounded-full border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 text-sm font-bold text-yellow-100 hover:border-yellow-300/45 disabled:opacity-50">
+              Reparar vínculos de carpetas
             </button>
           </div>
         </div>

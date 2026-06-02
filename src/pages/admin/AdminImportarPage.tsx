@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
-import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
+import { buildOfficialCategoryOptions, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { formatPhone, maskPhone } from '../../utils/phone';
@@ -65,6 +65,10 @@ function chunks<T>(arr: T[], n: number) {
   return Array.from({ length: Math.ceil(arr.length / n) }, (_, index) => arr.slice(index * n, index * n + n));
 }
 
+function isSyntheticCategoryId(id?: string | null) {
+  return Boolean(id?.startsWith('missing:'));
+}
+
 export default function AdminImportarPage() {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [categoryId, setCategoryId] = useState('');
@@ -89,14 +93,10 @@ export default function AdminImportarPage() {
         setError('Falta conectar Supabase. Revisa tu archivo .env.local.');
         return;
       }
-      const categoriesWithOrder = await client
+      const categoriesResult = await client
         .from('categories')
-        .select('id, name, icon, slug, sort_order, short_description')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-      const categoriesResult = categoriesWithOrder.error?.message.toLowerCase().includes('sort_order')
-        ? await client.from('categories').select('id, name, icon, slug, short_description').eq('is_active', true).order('name', { ascending: true })
-        : categoriesWithOrder;
+        .select('id, name, icon, slug, short_description, contacts_count')
+        .eq('is_active', true);
 
       if (categoriesResult.error) {
         console.error('Error cargando categorías:', categoriesResult.error);
@@ -104,12 +104,15 @@ export default function AdminImportarPage() {
         setError(categoriesResult.error.message);
         return;
       }
-      const nextCategories = normalizeOfficialCategoryRows((categoriesResult.data ?? []) as CategoryOption[])
+      const nextCategories = buildOfficialCategoryOptions(categoriesResult.data ?? [])
         .filter((category) => category.displayOrder >= 1 && category.displayOrder <= 24)
         .slice(0, 24) as CategoryOption[];
       console.log('Categorías cargadas:', nextCategories.length, nextCategories[0]);
       setCategories(nextCategories);
-      setCategoryId((current) => current || nextCategories[0]?.id || '');
+      setCategoryId((current) => {
+        const currentStillValid = nextCategories.some((category) => category.id === current && !isSyntheticCategoryId(category.id));
+        return currentStillValid ? current : nextCategories.find((category) => !isSyntheticCategoryId(category.id))?.id ?? '';
+      });
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar categorías.';
       console.error('Error cargando categorías para importar:', loadError);
@@ -145,7 +148,8 @@ export default function AdminImportarPage() {
   const validContacts = parsedContacts.filter((line) => line.valid);
   const invalidContacts = parsedContacts.filter((line) => !line.valid);
   const selectedCategory = categories.find((category) => category.id === categoryId) ?? null;
-  const canImport = Boolean(selectedCategory?.id) && validContacts.length > 0 && !isImporting;
+  const selectedCategoryIsReal = Boolean(selectedCategory?.id) && !isSyntheticCategoryId(selectedCategory?.id);
+  const canImport = selectedCategoryIsReal && validContacts.length > 0 && !isImporting;
 
   async function verifyCategoryContacts(selectedId: string) {
     const client = ensureClient();
@@ -173,8 +177,8 @@ export default function AdminImportarPage() {
     setResult('');
     setRealSavedCount(null);
 
-    if (!selectedCategory?.id) {
-      toast.error('Selecciona una categoría válida.');
+    if (!selectedCategory?.id || isSyntheticCategoryId(selectedCategory.id)) {
+      toast.error('Selecciona una carpeta real de Supabase. Esta carpeta oficial todavía no tiene ID vinculado.');
       return;
     }
 
@@ -323,7 +327,10 @@ export default function AdminImportarPage() {
                         <span className="block font-bold leading-snug">
                           {String(category.displayOrder).padStart(2, '0')}. {category.displayTitle}
                         </span>
-                        <span className="mt-0.5 block text-xs text-gray-500">{category.displaySubtitle}</span>
+                        <span className="mt-0.5 block text-xs text-gray-500">
+                          {category.displaySubtitle}
+                          {isSyntheticCategoryId(category.id) ? ' · falta crear en Supabase' : ''}
+                        </span>
                       </span>
                     </button>
                   ))}

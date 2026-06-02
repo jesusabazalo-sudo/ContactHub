@@ -362,20 +362,76 @@ function normalize(value?: string | null) {
     .replace(/^-|-$/g, '');
 }
 
+export const officialCategorySlugAliases: Record<string, string[]> = {
+  'elite-business': ['corporate-negocios'],
+  'ia-masters': ['inteligencia-artificial-tech', 'ia-herramientas-tech'],
+  'knowledge-vault': ['educacion-cursos-libros', 'educacion-cursos-libros-recursos'],
+  'fit-kingdom': ['fitness-salud-nutricion'],
+  'creative-studio': ['diseno-creatividad-recursos', 'creatividad-diseno-fotografia'],
+  enterplay: ['gaming-streaming-entretenimiento'],
+  'scale-up': ['marketing-digital-crecimiento'],
+  'sports-lab': ['deportes-manualidades', 'deportes-especificos-manualidades'],
+  'tech-repair': ['reparaciones-tecnicas-oficios'],
+  'soul-realm': ['espiritualidad-familia', 'espiritualidad-ocultismo-familia'],
+  'misc-bonus': ['varios-bonus'],
+  'cash-flow': ['power-money-negocios-escalables'],
+  'mind-power': ['mentes-maestras-alto-rendimiento'],
+  'viral-factory': ['content-kings-viral-lab'],
+  'beat-studio': ['audio-masters-musica', 'audio-masters-musica-infinita'],
+  'gamer-zone': ['gamer-elite-vicios-digitales'],
+  'sacred-power': ['espiritualidad-poder-interior'],
+  'the-vault': ['prohibido'],
+  'family-care': ['familia-educacion-desarrollo-infantil'],
+  'pro-tools': ['oficios-herramientas-pro'],
+  'science-deep': ['ciencia-tecnica-conocimiento-avanzado'],
+  'warrior-fit': ['fitness-warrior-guerreros-modernos'],
+  'chef-gold': ['chef-premium-gastronomia-elite'],
+  'bonus-hunt': ['bonus-track-tesoros-ocultos'],
+};
+
+function normalizeWords(value?: string | null) {
+  return normalize(value).replace(/-/g, ' ').trim();
+}
+
+function stripLeadingSymbol(value?: string | null) {
+  return (value ?? '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+}
+
+function officialSlugSet(official: OfficialCategory) {
+  return new Set([official.slug, ...(officialCategorySlugAliases[official.slug] ?? [])].map(normalize));
+}
+
+function categoryMatchesOfficial(
+  category: { slug?: string | null; name?: string | null; short_description?: string | null; shortDescription?: string | null },
+  official: OfficialCategory,
+) {
+  const slug = normalize(category.slug);
+  if (slug && officialSlugSet(official).has(slug)) return true;
+
+  const name = normalizeWords(stripLeadingSymbol(category.name));
+  const shortDescription = normalizeWords(category.shortDescription ?? category.short_description);
+  const officialTitle = normalizeWords(official.title);
+  const officialSubtitle = normalizeWords(official.subtitle);
+  const officialName = normalizeWords(official.name);
+
+  if (name && (name === officialName || name.includes(officialTitle))) return true;
+  if (name && officialSubtitle && name.includes(officialSubtitle)) return true;
+  if (shortDescription && officialSubtitle && shortDescription.includes(officialSubtitle)) return true;
+  return false;
+}
+
 export function getOfficialCategoryByOrder(order?: number | null) {
   if (!order) return undefined;
   return officialCategories.find((category) => category.sortOrder === order);
 }
 
 export function getOfficialCategoryFor(
-  category: { sort_order?: number | null; sortOrder?: number | null; display_order?: number | null; displayOrder?: number | null; slug?: string | null; name?: string | null },
+  category: { sort_order?: number | null; sortOrder?: number | null; display_order?: number | null; displayOrder?: number | null; slug?: string | null; name?: string | null; short_description?: string | null; shortDescription?: string | null },
   fallbackIndex = -1,
 ) {
-  const order = category.display_order ?? category.displayOrder ?? category.sort_order ?? category.sortOrder ?? (fallbackIndex >= 0 ? fallbackIndex + 1 : null);
+  const order = category.display_order ?? category.displayOrder ?? category.sort_order ?? category.sortOrder ?? null;
   return (
-    officialCategories.find((item) => item.slug === category.slug) ??
-    officialCategories.find((item) => normalize(item.name) === normalize(category.name)) ??
-    officialCategories.find((item) => normalize(item.title) === normalize(category.name)) ??
+    officialCategories.find((item) => categoryMatchesOfficial(category, item)) ??
     getOfficialCategoryByOrder(order) ??
     (fallbackIndex >= 0 ? officialCategories[fallbackIndex] : undefined)
   );
@@ -518,4 +574,55 @@ export function normalizeOfficialCategoryRows<
   });
 
   return [...byOfficialKey.values()].sort((a, b) => a.displayOrder - b.displayOrder || a.displayTitle.localeCompare(b.displayTitle));
+}
+
+export function buildOfficialCategoryOptions<
+  T extends {
+    id?: string;
+    sort_order?: number | null;
+    sortOrder?: number | null;
+    display_order?: number | null;
+    displayOrder?: number | null;
+    slug?: string | null;
+    name?: string | null;
+    icon?: string | null;
+    description?: string | null;
+    short_description?: string | null;
+    shortDescription?: string | null;
+    tags?: string[] | null;
+    contacts_count?: number | null;
+  },
+>(items: T[]) {
+  const uniqueItems = [...new Map(items.map((item) => [item.slug ?? item.id ?? item.name ?? Math.random().toString(), item])).values()];
+
+  return officialCategories
+    .filter((category) => category.displayOrder <= 24)
+    .map((official) => {
+      const real = uniqueItems.find((item) => categoryMatchesOfficial(item, official));
+      const base = real ?? ({ id: `missing:${official.slug}`, slug: official.slug, contacts_count: 0 } as T);
+
+      return {
+        ...base,
+        sort_order: official.sortOrder,
+        sortOrder: official.sortOrder,
+        display_order: official.displayOrder,
+        displayOrder: official.displayOrder,
+        icon: official.icon,
+        name: official.name,
+        description: official.description,
+        short_description: official.shortDescription,
+        shortDescription: official.shortDescription,
+        tags: official.tags,
+        whatYouCanFind: official.whatYouCanFind,
+        is_active: official.isActive,
+        isActive: official.isActive,
+        isPremiumOfficial: official.isPremium ?? false,
+        displayIcon: official.icon,
+        displayTitle: official.title,
+        displaySubtitle: official.subtitle,
+        displayLabel: `${official.icon} ${String(official.displayOrder).padStart(2, '0')}. ${official.title} – ${official.subtitle}`,
+        officialSlug: official.slug,
+        contacts_count: real?.contacts_count ?? 0,
+      };
+    });
 }
