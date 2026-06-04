@@ -109,14 +109,14 @@ export default function CatalogPage() {
   if (error) return <FriendlyErrorState title="No se pudo cargar el catálogo." message={error} onRetry={loadCategories} />;
 
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad dopamine-surface bg-ink-950">
       <div className="container-shell">
         <SectionHeading
           eyebrow="Catálogo"
           title="Explora oportunidades según lo que quieres lograr"
           description={`${APP_CONFIG.contactsClaim} contactos y oportunidades organizados por intención: aprender, vender, conseguir proveedores, encontrar servicios, mejorar un negocio o resolver una necesidad concreta.`}
         />
-        <div className="mt-8 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4 text-sm leading-6 text-gray-300">
+        <div className="dopamine-card neon-edge mt-8 rounded-2xl p-4 text-sm leading-6 text-gray-300">
           Puedes registrarte gratis, revisar qué existe en cada carpeta y ver teléfonos ocultos. Los números completos se muestran solo con acceso, prueba o recompensa aprobada.
         </div>
         <div className="mt-8">

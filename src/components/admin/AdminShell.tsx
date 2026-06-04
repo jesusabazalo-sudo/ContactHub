@@ -36,8 +36,8 @@ function AdminLink({
       to={link.to}
       end={link.to === '/admin'}
       className={({ isActive }) =>
-        `focus-ring inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
-          isActive ? 'bg-brand-400 text-ink-950' : 'text-gray-300 hover:bg-white/5 hover:text-white'
+        `focus-ring inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition hover:-translate-y-0.5 ${
+          isActive ? 'bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-[0_0_22px_rgba(34,197,94,0.22)]' : 'text-gray-300 hover:bg-white/5 hover:text-white'
         }`
       }
     >
@@ -88,7 +88,7 @@ export default function AdminShell({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad dopamine-surface bg-ink-950">
       <div className="container-shell">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -101,7 +101,7 @@ export default function AdminShell({ children }: PropsWithChildren) {
           {user?.email ? <span className="inline-flex w-fit rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-sm font-semibold text-brand-400">Admin: {user.email}</span> : null}
         </div>
 
-        <div className="mb-4 overflow-x-auto rounded-2xl border border-line bg-panel p-2">
+        <div className="dopamine-card mb-4 overflow-x-auto rounded-2xl p-2">
           <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
             {mainLinks.map((link) => (
               <AdminLink key={link.to} link={link} />
@@ -109,7 +109,7 @@ export default function AdminShell({ children }: PropsWithChildren) {
           </div>
         </div>
 
-        <div className="mb-8 overflow-x-auto rounded-2xl border border-line bg-ink-950/50 p-2">
+        <div className="mb-8 overflow-x-auto rounded-2xl border border-brand-400/15 bg-ink-950/60 p-2 shadow-[0_0_28px_rgba(34,197,94,0.06)]">
           <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
             <span className="px-3 text-xs font-bold uppercase tracking-wide text-gray-500">Gestion</span>
             {managementLinks.map((link) => (

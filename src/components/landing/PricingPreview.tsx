@@ -5,7 +5,7 @@ import SectionHeading from '../ui/SectionHeading';
 
 export default function PricingPreview() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad dopamine-surface bg-ink-950">
       <div className="container-shell">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeading

@@ -10,7 +10,7 @@ function openChat(message?: string) {
 
 export default function FinalCTA() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad dopamine-surface bg-ink-950">
       <div className="container-shell text-center">
         <p className="text-sm font-semibold uppercase text-brand-400">Empieza con claridad</p>
         <h2 className="mx-auto mt-4 max-w-3xl font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
@@ -22,7 +22,7 @@ export default function FinalCTA() {
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/auth"
-            className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+            className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
           >
             Crear cuenta gratis
             <ArrowRight className="h-4 w-4" />
@@ -30,7 +30,7 @@ export default function FinalCTA() {
           <button
             type="button"
             onClick={() => openChat('Hola, quiero contar mi meta para que me orienten dentro de ContactHub.')}
-            className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:border-brand-400/50 hover:bg-brand-400/10"
+            className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/25 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-400/10"
           >
             <MessageCircle className="h-4 w-4" />
             Hablar por chat

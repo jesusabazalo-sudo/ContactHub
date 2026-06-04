@@ -90,7 +90,7 @@ export default function MyContactsPage() {
   const needsForPower = Math.max(0, 4 - unlockedCount);
 
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad dopamine-surface bg-ink-950">
       <div className="container-shell">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -114,7 +114,7 @@ export default function MyContactsPage() {
           </button>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-line bg-panel p-5">
+        <div className="dopamine-card neon-edge mt-8 rounded-2xl p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold text-brand-400">Resumen de acceso</p>
@@ -132,7 +132,7 @@ export default function MyContactsPage() {
         </div>
 
         {unlockedCount >= 1 && unlockedCount <= 3 ? (
-          <div className="mt-6 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-5">
+          <div className="dopamine-card neon-edge mt-6 rounded-2xl p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <p className="text-sm leading-6 text-gray-200">
                 Tienes {unlockedCount} carpetas. Si agregas {needsForPower} más llegas al Pack Power y desbloqueas más valor. ¿Te interesa?
@@ -157,8 +157,8 @@ export default function MyContactsPage() {
               key={folder.id}
               type="button"
               onClick={() => setActiveCategoryId(folder.id)}
-              className={`focus-ring rounded-lg border p-5 text-left transition ${
-                activeCategoryId === folder.id ? 'border-brand-400/50 bg-brand-400/10' : 'border-line bg-panel hover:border-brand-400/30'
+              className={`focus-ring card-hover rounded-2xl border p-5 text-left transition ${
+                activeCategoryId === folder.id ? 'border-brand-400/50 bg-brand-400/10 shadow-[0_0_28px_rgba(34,197,94,0.12)]' : 'border-line bg-panel hover:border-brand-400/30'
               }`}
             >
               <p className="text-lg font-bold text-white">{folder.name}</p>
@@ -168,7 +168,7 @@ export default function MyContactsPage() {
           ))}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-line bg-panel p-4">
+        <div className="dopamine-card mt-8 rounded-2xl p-4">
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
             <label className="relative block">
               <span className="sr-only">Buscar dentro de mis contactos</span>
@@ -235,9 +235,9 @@ export default function MyContactsPage() {
 
 function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | null; totalFolders: number }) {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad dopamine-surface bg-ink-950">
       <div className="container-shell">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-line bg-panel p-6 shadow-2xl shadow-black/20 sm:p-8">
+        <div className="dopamine-card neon-edge mx-auto max-w-5xl rounded-3xl p-6 sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div>
               {userEmail ? (
@@ -280,7 +280,7 @@ function EmptyContactsState({ userEmail, totalFolders }: { userEmail: string | n
               </div>
             </div>
 
-            <div className="rounded-2xl border border-brand-400/25 bg-ink-950/70 p-5">
+            <div className="rounded-2xl border border-brand-400/25 bg-ink-950/70 p-5 shadow-[0_0_30px_rgba(34,197,94,0.08)]">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-gray-400">Carpetas desbloqueadas</p>
@@ -322,7 +322,7 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
   }
 
   return (
-    <article className="rounded-lg border border-line bg-panel p-5">
+    <article className="card-hover dopamine-card rounded-2xl p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase text-brand-400">{folderName ?? 'Carpeta desbloqueada'}</p>

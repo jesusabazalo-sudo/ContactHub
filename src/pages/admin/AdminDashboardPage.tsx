@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
       <AdminNotice />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <article key={stat.label} className="rounded-lg border border-line bg-panel p-5">
+          <article key={stat.label} className="card-hover dopamine-card rounded-2xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-gray-400">{stat.label}</p>
@@ -73,11 +73,11 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-2xl border border-line bg-panel p-6">
+        <section className="dopamine-card rounded-2xl p-6">
           <h2 className="font-display text-2xl font-bold text-white">Accesos rápidos</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {quickLinks.map((link) => (
-              <Link key={link.label} to={link.to} className="rounded-lg border border-line bg-white/5 p-4 transition hover:border-brand-400/35 hover:bg-brand-400/10">
+              <Link key={link.label} to={link.to} className="card-hover rounded-2xl border border-line bg-white/5 p-4 transition hover:border-brand-400/35 hover:bg-brand-400/10">
                 <p className="font-semibold text-white">{link.label}</p>
                 <p className="mt-2 text-sm leading-6 text-gray-400">{link.description}</p>
               </Link>
@@ -85,7 +85,7 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-line bg-panel p-6">
+        <section className="dopamine-card rounded-2xl p-6">
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-brand-400" />
             <h2 className="font-display text-2xl font-bold text-white">Actividad reciente</h2>
@@ -93,7 +93,7 @@ export default function AdminDashboardPage() {
           <div className="mt-5 grid gap-3">
             {data?.recentActivity.length ? (
               data.recentActivity.map((activity) => (
-                <article key={activity.id} className="rounded-lg border border-line bg-ink-950/50 p-4">
+                <article key={activity.id} className="rounded-2xl border border-brand-400/10 bg-ink-950/50 p-4">
                   <p className="font-semibold text-white">{activity.action}</p>
                   <p className="mt-1 text-xs text-gray-500">{formatDate(activity.createdAt)}</p>
                   <p className="mt-2 text-sm text-gray-400">

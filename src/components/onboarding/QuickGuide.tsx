@@ -113,7 +113,7 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
   }
 
   return (
-    <section className="rounded-3xl border border-brand-400/30 bg-[linear-gradient(135deg,rgba(15,31,28,0.98),rgba(7,17,17,0.98))] p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45),0_0_42px_rgba(29,180,122,0.08)] sm:p-6">
+    <section className="dopamine-card neon-edge rounded-3xl p-5 text-white sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="inline-flex items-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/12 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-brand-200">
@@ -142,8 +142,8 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {steps.map((step, index) => (
-          <div key={step} className="rounded-2xl border border-brand-400/12 bg-[#10231f]/85 p-4 transition hover:border-brand-400/35 hover:bg-[#123027]">
-            <p className="text-xs font-black text-brand-300">{String(index + 1).padStart(2, '0')}</p>
+          <div key={step} className="card-hover rounded-2xl border border-brand-400/12 bg-[#10231f]/85 p-4 transition hover:border-brand-400/35 hover:bg-[#123027]">
+            <p className="stat-number text-xs font-black">{String(index + 1).padStart(2, '0')}</p>
             <p className="mt-2 text-sm font-semibold leading-5 text-white">{step}</p>
           </div>
         ))}
@@ -154,8 +154,8 @@ export default function QuickGuide({ mode = 'compact', forceOpen = false }: Quic
           const Icon = card.icon;
           const buttonClass = 'focus-ring mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-full bg-brand-400 px-4 py-2.5 text-xs font-black text-ink-950 transition hover:bg-white active:scale-95';
           return (
-            <article key={card.title} className="rounded-2xl border border-white/10 bg-[#0b1818]/90 p-4 transition hover:border-brand-400/35 hover:bg-[#0f2420]">
-              <Icon className="h-5 w-5 text-brand-300" />
+            <article key={card.title} className="card-hover rounded-2xl border border-white/10 bg-[#0b1818]/90 p-4 transition hover:border-brand-400/35 hover:bg-[#0f2420]">
+              <Icon className="h-5 w-5 text-accent-cyan" />
               <h3 className="mt-3 text-sm font-bold text-white">{card.title}</h3>
               <p className="mt-2 min-h-12 text-xs leading-5 text-gray-300">{card.text}</p>
               {card.to ? (

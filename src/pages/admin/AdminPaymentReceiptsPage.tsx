@@ -16,8 +16,11 @@ type ChatReceipt = {
   id: string;
   user_id: string | null;
   message: string | null;
+  attachment_path: string | null;
   attachment_url: string | null;
   attachment_type: string | null;
+  attachment_name: string | null;
+  attachment_size: number | null;
   comprobante_status: ReceiptStatus | null;
   created_at: string;
   signedUrl?: string;
@@ -102,7 +105,7 @@ export default function AdminPaymentReceiptsPage() {
       const [messagesRes, categoriesRes] = await Promise.all([
         dynamicSupabase()
           .from('chat_messages')
-          .select('id,user_id,message,attachment_url,attachment_type,comprobante_status,created_at')
+          .select('id,user_id,message,attachment_path,attachment_url,attachment_type,attachment_name,attachment_size,comprobante_status,created_at')
           .eq('has_attachment', true)
           .order('created_at', { ascending: false })
           .limit(250),
@@ -130,11 +133,14 @@ export default function AdminPaymentReceiptsPage() {
 
       const profiles = new Map((profilesRes.data ?? []).map((profile: { id: string; email: string | null; full_name: string | null }) => [profile.id, profile]));
       const signedRows = await Promise.all(rows.map(async (row) => {
-        let signedUrl = row.attachment_url ?? '';
-        if (row.attachment_url && !row.attachment_url.startsWith('http') && !row.attachment_url.startsWith('blob:')) {
-          const signed = await dynamicSupabase().storage.from('comprobantes').createSignedUrl(row.attachment_url, 60 * 60);
+        const attachmentPath = row.attachment_path ?? row.attachment_url ?? '';
+        let signedUrl = '';
+        if (attachmentPath && !attachmentPath.startsWith('http') && !attachmentPath.startsWith('blob:')) {
+          const signed = await dynamicSupabase().storage.from('comprobantes').createSignedUrl(attachmentPath, 60 * 60);
           if (signed.error) console.error('AdminPaymentReceiptsPage signed url:', signed.error.message);
           signedUrl = signed.data?.signedUrl ?? '';
+        } else {
+          signedUrl = attachmentPath;
         }
         const profile = row.user_id ? profiles.get(row.user_id) : null;
         return {
@@ -259,7 +265,7 @@ export default function AdminPaymentReceiptsPage() {
   return (
     <AdminShell>
       <AdminNotice />
-      <section className="rounded-2xl border border-line bg-panel p-5">
+      <section className="dopamine-card neon-edge rounded-2xl p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Pagos</p>
@@ -271,7 +277,7 @@ export default function AdminPaymentReceiptsPage() {
           <button
             type="button"
             onClick={() => void loadReceipts()}
-            className="focus-ring inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-bold text-white hover:border-brand-400/40"
+            className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-brand-400/40"
           >
             <RefreshCw className="h-4 w-4" />
             Actualizar
@@ -285,7 +291,7 @@ export default function AdminPaymentReceiptsPage() {
               type="button"
               onClick={() => setStatusFilter(tab.id)}
               className={`rounded-full border px-4 py-2 text-xs font-black transition ${
-                statusFilter === tab.id ? 'border-brand-400/50 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-gray-300 hover:border-brand-400/40'
+                statusFilter === tab.id ? 'border-brand-400/50 bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-[0_0_20px_rgba(34,197,94,0.18)]' : 'border-line bg-white/5 text-gray-300 hover:border-brand-400/40'
               }`}
             >
               {tab.label}
@@ -308,7 +314,7 @@ export default function AdminPaymentReceiptsPage() {
             {filteredReceipts.map((receipt) => (
               <article
                 key={receipt.id}
-                className={`flex flex-col gap-4 rounded-2xl border bg-white/[0.03] p-4 sm:flex-row ${
+                className={`card-hover flex flex-col gap-4 rounded-2xl border bg-white/[0.03] p-4 sm:flex-row ${
                   normalizeStatus(receipt.comprobante_status) === 'pendiente'
                     ? 'border-red-400/30'
                     : normalizeStatus(receipt.comprobante_status) === 'verificado'
@@ -435,7 +441,7 @@ export default function AdminPaymentReceiptsPage() {
                     key={category.id}
                     type="button"
                     onClick={() => toggleCategory(category.id)}
-                    className={`rounded-2xl border p-4 text-left transition ${
+                    className={`card-hover rounded-2xl border p-4 text-left transition ${
                       selected ? 'border-brand-400/60 bg-brand-400/12' : 'border-line bg-white/[0.03] hover:border-brand-400/35'
                     }`}
                   >

@@ -17,8 +17,11 @@ type ChatMessage = {
   created_at: string;
   kind?: 'text' | 'yapeQr';
   has_attachment?: boolean | null;
+  attachment_path?: string | null;
   attachment_url?: string | null;
   attachment_type?: string | null;
+  attachment_name?: string | null;
+  attachment_size?: number | null;
   comprobante_status?: 'pendiente' | 'verificado' | 'rechazado' | null;
 };
 
@@ -239,8 +242,11 @@ function localMessage(message: string, sender: 'user' | 'admin', kind: ChatMessa
     created_at: new Date().toISOString(),
     kind,
     has_attachment: false,
+    attachment_path: null,
     attachment_url: null,
     attachment_type: null,
+    attachment_name: null,
+    attachment_size: null,
     comprobante_status: 'pendiente',
     ...extras,
   };
@@ -271,10 +277,6 @@ function getWhatsAppUrl(message: string) {
   const number = (cleanEnv(import.meta.env.NEXT_PUBLIC_WHATSAPP_NUMBER as string | undefined) || APP_CONFIG.whatsappNumber).replace(/\D/g, '');
   if (!number) return null;
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-}
-
-function safeFileName(fileName: string) {
-  return fileName.replace(/[^a-zA-Z0-9.\-_]+/g, '-').slice(0, 90);
 }
 
 function getPlanAmount(plan: ChatPlan | null) {
@@ -357,13 +359,13 @@ function PaymentCard({
   }
 
   return (
-    <div className="rounded-3xl border border-brand-400/25 bg-white/[0.04] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+    <div className="dopamine-card neon-edge rounded-3xl p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">{primaryMethod.title}</p>
           <p className="mt-1 text-sm font-semibold text-white">{paymentName || 'Titular no configurado'}</p>
         </div>
-        <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-200">Manual verificado</span>
+        <span className="premium-chip rounded-full px-3 py-1 text-xs font-bold">Manual verificado</span>
       </div>
 
       {primaryMethod.qrUrl ? (
@@ -403,7 +405,7 @@ function PaymentCard({
       ) : null}
 
       {receipt ? (
-        <div className="mt-4 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-3">
+        <div className="mt-4 rounded-2xl border border-brand-400/25 bg-gradient-to-br from-brand-400/10 to-accent-violet/10 p-3">
           <p className="text-xs font-bold text-brand-200">Comprobante recibido</p>
           <p className="mt-1 break-all text-xs text-gray-300">{receipt.fileName}</p>
           {receipt.previewUrl ? <img src={receipt.previewUrl} alt="Vista previa del comprobante" className="mt-3 max-h-40 rounded-xl border border-line object-contain" /> : null}
@@ -416,11 +418,11 @@ function PaymentCard({
       ) : null}
 
       <div className="mt-4 grid gap-2">
-        <button type="button" onClick={onUpload} className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2.5 text-sm font-bold text-brand-200 transition hover:bg-brand-400/15">
+        <button type="button" onClick={onUpload} className="btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full border border-purple-400/30 bg-purple-500/15 px-4 py-2.5 text-sm font-bold text-purple-100 transition hover:bg-purple-500/20">
           <UploadCloud className="h-4 w-4" />
           Subir comprobante
         </button>
-        <button type="button" onClick={onPaid} className="rounded-full bg-brand-400 px-4 py-2.5 text-sm font-bold text-ink-950 transition hover:bg-white">
+        <button type="button" onClick={onPaid} className="btn-primary-glow rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-4 py-2.5 text-sm font-bold text-ink-950 transition hover:bg-white">
           Ya pagué
         </button>
         {canOpenWhatsApp ? (
@@ -571,8 +573,11 @@ export default function ChatWidget() {
       message,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       has_attachment: extras.has_attachment ?? false,
-      attachment_url: extras.attachment_url ?? null,
+      attachment_path: extras.attachment_path ?? null,
+      attachment_url: null,
       attachment_type: extras.attachment_type ?? null,
+      attachment_name: extras.attachment_name ?? null,
+      attachment_size: extras.attachment_size ?? null,
       comprobante_status: extras.comprobante_status ?? 'pendiente',
     });
   }
@@ -653,13 +658,16 @@ export default function ChatWidget() {
 
   async function uploadReceiptToSupabase(file: File) {
     if (!user?.id || !supabase || !isSupabaseConfigured) return null;
-    const path = `${user.id}/${Date.now()}-${safeFileName(file.name)}`;
+    const extFromName = file.name.split('.').pop()?.toLowerCase();
+    const extFromType = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+    const ext = extFromName && ['jpg', 'jpeg', 'png', 'webp'].includes(extFromName) ? extFromName : extFromType;
+    const path = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
     const uploadResult = await dynamicSupabase().storage.from('comprobantes').upload(path, file, { upsert: false, contentType: file.type || 'application/octet-stream' });
     if (uploadResult.error) {
       console.error('payment receipt upload:', uploadResult.error.message);
       return null;
     }
-    return { path, signedUrl: await signAttachmentUrl(path) };
+    return { path };
   }
 
   function clearSelectedReceipt() {
@@ -692,25 +700,6 @@ export default function ChatWidget() {
     if (selectedReceiptPreviewUrl) URL.revokeObjectURL(selectedReceiptPreviewUrl);
     setSelectedReceiptFile(file);
     setSelectedReceiptPreviewUrl(previewUrl);
-    return;
-    const uploaded = await uploadReceiptToSupabase(file);
-    const localAttachmentId = await addUserMessage(`📎 Comprobante adjuntado: ${file.name}`, {
-      has_attachment: Boolean(uploaded),
-      attachment_url: uploaded?.path ?? previewUrl,
-      attachment_type: file.type,
-      comprobante_status: 'pendiente',
-    });
-    setAttachmentUrls((current) => ({ ...current, [localAttachmentId]: previewUrl }));
-    setReceipt({ fileName: file.name, fileType: file.type || 'imagen', previewUrl, status: uploaded ? 'uploaded' : 'fallback' });
-    setIsTyping(true);
-    await delay(2000);
-    setIsTyping(false);
-    await addAssistantMessage(
-      uploaded
-        ? '✅ ¡Recibido! Tu comprobante fue registrado.\nVerificaremos tu pago y activaremos tu acceso en los próximos minutos. Si tienes alguna duda escríbenos aquí mismo. 🙏'
-        : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.',
-      uploaded ? 'paid' : 'payment',
-    );
   }
 
   async function confirmReceiptUpload() {
@@ -724,8 +713,10 @@ export default function ChatWidget() {
 
       const localAttachmentId = await addUserMessage(`ðŸ“Ž Comprobante adjuntado: ${file.name}`, {
         has_attachment: true,
-        attachment_url: uploaded.path,
+        attachment_path: uploaded.path,
         attachment_type: file.type,
+        attachment_name: file.name,
+        attachment_size: file.size,
         comprobante_status: 'pendiente',
       });
       if (previewUrl) setAttachmentUrls((current) => ({ ...current, [localAttachmentId]: previewUrl }));
@@ -938,9 +929,10 @@ export default function ChatWidget() {
   async function loadMessages() {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data, error } = await supabase
+    const client = dynamicSupabase();
+    const { data, error } = await client
       .from('chat_messages')
-      .select('id,user_id,message,session_id,sender,read,created_at,has_attachment,attachment_url,attachment_type,comprobante_status')
+      .select('id,user_id,message,session_id,sender,read,created_at,has_attachment,attachment_path,attachment_url,attachment_type,attachment_name,attachment_size,comprobante_status')
       .eq('user_id', user.id)
       .gte('created_at', oneDayAgo)
       .order('created_at', { ascending: true });
@@ -957,17 +949,18 @@ export default function ChatWidget() {
       await loadMessages();
       return;
     }
-    const nextMessages = data as ChatMessage[];
+    const nextMessages = (data ?? []) as ChatMessage[];
     const signed: Record<string, string> = {};
     await Promise.all(nextMessages.map(async (message) => {
-      if (message.has_attachment && message.attachment_url) {
-        const signedUrl = await signAttachmentUrl(message.attachment_url);
+      const attachmentPath = message.attachment_path ?? message.attachment_url;
+      if (message.has_attachment && attachmentPath) {
+        const signedUrl = await signAttachmentUrl(attachmentPath);
         if (signedUrl) signed[message.id] = signedUrl;
       }
     }));
     setAttachmentUrls(signed);
     setMessages(nextMessages);
-    setUnread(data.filter((message) => message.sender === 'admin' && !message.read).length);
+    setUnread(nextMessages.filter((message) => message.sender === 'admin' && !message.read).length);
   }
 
   async function markAdminMessagesRead() {
@@ -1022,25 +1015,25 @@ export default function ChatWidget() {
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
       <input ref={receiptInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
-        <div className="fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0F2027] shadow-2xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
-          <div className="flex items-center justify-between border-b border-line bg-white/[0.03] px-5 py-4">
+        <div className="dopamine-card neon-edge fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
+          <div className="flex items-center justify-between border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-5 py-4">
             <div>
               <p className="font-display text-lg font-bold text-white">Jesús - ContactHub</p>
               <p className="mt-1 flex items-center gap-2 text-xs text-brand-400">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400" />
+                <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
                 Guía de precios, carpetas, pagos y acceso
               </p>
             </div>
-            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-line bg-white/5 p-2 text-white transition hover:border-brand-400/40">
+            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-line bg-white/5 p-2 text-white transition hover:border-brand-400/40 hover:bg-brand-400/10">
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
-            <p className="rounded-2xl border border-line bg-white/[0.03] px-3 py-2 text-center text-[11px] leading-5 text-gray-500">{chatRetentionNote}</p>
+            <p className="rounded-2xl border border-brand-400/15 bg-white/[0.035] px-3 py-2 text-center text-[11px] leading-5 text-gray-400">{chatRetentionNote}</p>
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl border px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md border-brand-400/25 bg-[#1a4a32] text-white' : 'rounded-bl-md border-brand-400/15 bg-[#0d2a1f] text-white'}`}>
+                <div className={`max-w-[88%] rounded-2xl border px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md border-brand-400/30 bg-gradient-to-br from-[#1a4a32] to-[#113423] text-white' : 'rounded-bl-md border-brand-400/15 bg-gradient-to-br from-[#0d2a1f] to-[#091612] text-white'}`}>
                   {message.has_attachment && (attachmentUrls[message.id] || message.attachment_url) ? (
                     <div className="mb-2">
                       <img src={attachmentUrls[message.id] ?? message.attachment_url ?? ''} alt="Comprobante enviado" className="max-h-48 max-w-[220px] rounded-xl border border-brand-400/25 object-contain" />
@@ -1082,7 +1075,7 @@ export default function ChatWidget() {
             ) : null}
           </div>
 
-          <div className="border-t border-line bg-ink-950/40 p-4">
+          <div className="border-t border-brand-400/15 bg-ink-950/60 p-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-gray-500">
               {currentFlow === 'main'
                 ? 'Elige una opción rápida'
@@ -1095,7 +1088,7 @@ export default function ChatWidget() {
                     key={`${action.type}-${action.value ?? action.label}`}
                     type="button"
                     onClick={() => void handleAction(action)}
-                    className={`rounded-full border px-3 py-2 text-xs font-semibold transition hover:border-brand-400/50 hover:bg-brand-400/10 ${
+                    className={`rounded-full border px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-400/10 ${
                       action.type === 'whatsapp' ? 'border-brand-400/35 bg-brand-400/10 text-brand-200' : 'border-line bg-white/5 text-gray-200'
                     }`}
                   >
@@ -1141,13 +1134,13 @@ export default function ChatWidget() {
             <button
               type="button"
               onClick={() => receiptInputRef.current?.click()}
-              className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-purple-400/35 bg-purple-500/15 px-4 py-2.5 text-sm font-black text-purple-100 transition hover:border-purple-300/60 hover:bg-purple-500/20"
+              className="btn-primary-glow mb-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-purple-400/35 bg-purple-500/15 px-4 py-2.5 text-sm font-black text-purple-100 transition hover:border-purple-300/60 hover:bg-purple-500/20"
             >
               <UploadCloud className="h-4 w-4" />
               Enviar comprobante Yape/Plin
             </button>
 
-            <div className="flex items-end gap-2 rounded-2xl border border-line bg-ink-950/70 p-2">
+            <div className="flex items-end gap-2 rounded-2xl border border-brand-400/15 bg-ink-950/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-line bg-white/5 text-gray-200 transition hover:border-purple-400/50 hover:text-purple-200">
                 <Paperclip className="h-4 w-4" />
               </button>
@@ -1165,7 +1158,7 @@ export default function ChatWidget() {
                 rows={1}
                 className="chat-textarea focus-ring max-h-[132px] min-h-11 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 text-white placeholder:text-gray-500"
               />
-              <button type="button" onClick={() => void sendMessage()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-brand-500 text-ink-950 transition hover:bg-white active:scale-95">
+              <button type="button" onClick={() => void sendMessage()} className="focus-ring btn-primary-glow inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 transition hover:bg-white active:scale-95">
                 <Send className="h-4 w-4" />
               </button>
             </div>
@@ -1173,7 +1166,7 @@ export default function ChatWidget() {
         </div>
       ) : null}
 
-      <button type="button" onClick={() => setIsOpen((current) => !current)} className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#1DB47A] text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
+      <button type="button" onClick={() => setIsOpen((current) => !current)} className="badge-pulse relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 via-accent-cyan to-brand-500 text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
         <MessageCircle className="h-6 w-6" />
         {unread ? <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">{unread}</span> : null}
       </button>

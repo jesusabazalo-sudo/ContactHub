@@ -24,7 +24,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
 
   return (
     <article
-      className={`card-hover relative rounded-lg border p-5 transition duration-200 hover:-translate-y-1 ${
+      className={`card-hover dopamine-card relative rounded-2xl border p-5 transition duration-200 hover:-translate-y-1 ${
         plan.isRecommended
           ? 'border-brand-400/55 bg-brand-400/10 shadow-glow'
           : plan.isPremium
@@ -38,7 +38,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
       </div>
       <div className="mt-5 flex items-end gap-1">
         <span className="text-sm font-semibold text-gray-400">{APP_CONFIG.defaultCurrency}</span>
-        <span className="font-display text-4xl font-bold text-white">{plan.price}</span>
+        <span className="stat-number font-display text-4xl font-bold">{plan.price}</span>
       </div>
       <p className="mt-3 text-sm font-semibold text-brand-400">{folderText}</p>
       <p className={`mt-4 text-sm leading-6 text-gray-300 ${compact ? 'min-h-24' : 'min-h-16'}`}>{plan.description}</p>
@@ -59,7 +59,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
       <button
         type="button"
         onClick={openChat}
-        className="focus-ring btn-primary-glow mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+        className="focus-ring btn-primary-glow mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
       >
         <MessageCircle className="h-4 w-4" />
         {plan.cta}

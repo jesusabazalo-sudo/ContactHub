@@ -246,7 +246,7 @@ export default function AdminRecompensasPage() {
     <AdminShell>
       <AdminNotice />
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-2xl border border-line bg-panel p-5">
+        <section className="dopamine-card rounded-2xl p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-2xl font-bold text-white">Dar regalo de carpetas</h2>
@@ -287,7 +287,7 @@ export default function AdminRecompensasPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-line bg-panel p-5">
+        <section className="dopamine-card rounded-2xl p-5">
           {selectedUser ? (
             <>
               <p className="text-sm font-semibold text-brand-400">Usuario seleccionado</p>
@@ -335,7 +335,7 @@ export default function AdminRecompensasPage() {
                         }
                       }}
                       className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition hover:border-brand-400/45 ${
-                        checked ? 'border-brand-400/70 bg-brand-400/15 shadow-[0_0_0_1px_rgba(29,180,122,0.12)]' : 'border-line bg-white/5'
+                        checked ? 'border-brand-400/70 bg-brand-400/15 shadow-[0_0_24px_rgba(34,197,94,0.12)]' : 'border-line bg-white/5 hover:border-brand-400/35'
                       }`}
                     >
                       <input type="checkbox" checked={checked} readOnly className="pointer-events-none mt-1" />
@@ -378,7 +378,7 @@ export default function AdminRecompensasPage() {
         </section>
       </div>
 
-      <section className="mt-6 rounded-2xl border border-line bg-panel p-5">
+      <section className="dopamine-card mt-6 rounded-2xl p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold text-white">Misiones en revisión</h2>
@@ -461,7 +461,7 @@ export default function AdminRecompensasPage() {
         </div>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-line bg-panel p-5">
+      <section className="dopamine-card mt-6 rounded-2xl p-5">
         <h2 className="font-display text-2xl font-bold text-white">Historial de regalos</h2>
         <div className="mt-5 overflow-x-auto rounded-xl border border-line">
           <table className="w-full min-w-[760px] text-left text-sm">
