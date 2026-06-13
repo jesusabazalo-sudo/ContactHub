@@ -16,9 +16,9 @@ type OnboardingAnswers = {
 };
 
 const TAGLINES = [
-  'La información que otros no comparten.',
-  'Más de 800 contactos organizados.',
-  'Encuentra lo que necesitas hoy.',
+  'Explora primero, registrate cuando quieras guardar accesos.',
+  'Contactos organizados y telefonos protegidos.',
+  'Tu correo sirve para cuidar tu cuenta y tus permisos.',
 ];
 
 const GEO_SHAPES = [
@@ -72,7 +72,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hasShownSessionNotice = useRef(false);
-  const redirectTo = searchParams.get('redirect') || '/catalogo';
+  const redirectTo = searchParams.get('redirect') || '/mis-contactos';
   const reason = searchParams.get('reason');
   const notice = useMemo(() => (reason === 'session-expired' ? 'Tu sesión expiró. Inicia sesión de nuevo.' : null), [reason]);
   const isRegisterMode = mode === 'register';
@@ -192,8 +192,8 @@ export default function AuthPage() {
     try {
       await signInWithGoogle();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesión con Google.';
-      toast.error(message);
+      if (import.meta.env.DEV) console.warn('Google sign-in error:', error);
+      toast.error('No se pudo iniciar sesión con Google. Intenta nuevamente o usa correo.');
     } finally {
       setIsLoading(false);
     }

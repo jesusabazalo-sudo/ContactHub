@@ -10,6 +10,7 @@ const links = [
   { label: 'Promos', to: '/promos' },
   { label: 'Catálogo', to: '/catalogo' },
   { label: 'Precios', to: '/precios' },
+  { label: 'Publicar', to: '/publica-tu-servicio' },
   { label: 'Preguntas', to: '/faq' },
 ];
 

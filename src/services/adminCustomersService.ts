@@ -1,6 +1,7 @@
 import { sanitizeText } from '../lib/sanitize';
 import { supabase } from '../lib/supabaseClient';
 import { applyOfficialCategoryDisplay, sortByOfficialOrder } from '../data/officialCategories';
+import { grantCategoryAccess, revokeCategoryAccess } from './accessService';
 
 export type CustomerStatus = 'nuevo' | 'pendiente' | 'activo' | 'vip' | 'bloqueado';
 export type CustomerStatusFilter = 'todos' | CustomerStatus;
@@ -159,10 +160,16 @@ export async function getCustomerFeedback() {
 
 export async function grantFolderGift(userId: string, categoryIds: string[], reason: string, grantedBy: string) {
   if (!supabase) return false;
-  const rows = categoryIds.map((cid) => ({ user_id: userId, category_id: cid, granted_by: grantedBy, status: 'active' as const }));
-  const { error } = await supabase.from('user_category_access').upsert(rows, { onConflict: 'user_id,category_id' });
-  if (error) {
-    console.error('grantFolderGift:', error.message);
+  const accessResult = await grantCategoryAccess({
+    targetUserId: userId,
+    categoryIds,
+    grantedBy,
+    accessType: 'gift',
+    source: 'admin_customers',
+    note: reason || 'Regalo de carpetas desde CRM.',
+  });
+  if (!accessResult.ok) {
+    console.error('grantFolderGift:', accessResult.error);
     return false;
   }
 
@@ -286,11 +293,12 @@ export async function activateCustomerCategory(params: { email: string; category
 
 export async function revokeCustomerAccess(params: { userId: string; categoryId: string; adminUserId: string }) {
   if (!supabase) return false;
-  const { error } = await supabase
-    .from('user_category_access')
-    .update({ status: 'revoked', granted_by: params.adminUserId, updated_at: new Date().toISOString() })
-    .eq('user_id', params.userId)
-    .eq('category_id', params.categoryId);
-  if (error) console.error('revokeCustomerAccess:', error.message);
-  return !error;
+  const result = await revokeCategoryAccess({
+    targetUserId: params.userId,
+    categoryId: params.categoryId,
+    revokedBy: params.adminUserId,
+    note: 'Acceso revocado desde CRM de clientes.',
+  });
+  if (!result.ok) console.error('revokeCustomerAccess:', result.error);
+  return result.ok;
 }

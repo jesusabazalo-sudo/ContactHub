@@ -7,6 +7,12 @@ import LoadingState from '../../components/system/LoadingState';
 import { buildOfficialCategoryOptions, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
+import {
+  importContactsWorkbook,
+  parseContactsWorkbook,
+  type ExcelImportPreview,
+  type ExcelImportResult,
+} from '../../services/excelContactsImportService';
 import { formatPhone, maskPhone } from '../../utils/phone';
 
 type CategoryOption = {
@@ -16,10 +22,26 @@ type CategoryOption = {
   slug?: string | null;
   sort_order?: number | null;
   short_description?: string | null;
+  tags?: string[] | null;
 } & OfficialCategoryDisplay;
-type ParsedLine = { raw: string; name: string; phone: string; valid: boolean; error?: string };
+type ParsedLine = { raw: string; name: string; phone: string; valid: boolean; sensitive?: boolean; sensitiveReason?: string; error?: string };
 
 const phoneRegex = /(\+?[\d][\d\s\-\(\)]{6,18}[\d])/;
+const sensitiveTerms = [
+  'arma',
+  'armas',
+  'droga',
+  'drogas',
+  'hack',
+  'hackeo',
+  'cuenta robada',
+  'datos personales',
+  'base de datos privada',
+  'documentos falsos',
+  'estafa',
+  'invadir',
+  'espionaje',
+];
 
 function ensureClient() {
   if (!supabase || !isSupabaseConfigured) return null;
@@ -61,6 +83,22 @@ function parseLine(line: string): ParsedLine {
   return { raw: sanitizeText(raw, 500), name: sanitizeText(cleanName(raw, phoneMatch[1]), 160), phone: sanitizePhone(phone), valid: true };
 }
 
+function detectSensitiveContent(value: string) {
+  const normalized = value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const match = sensitiveTerms.find((term) => normalized.includes(term));
+  return match ? { sensitive: true, reason: `Coincidencia sensible: ${match}` } : { sensitive: false };
+}
+
+function normalizePhoneKey(phone: string) {
+  return sanitizePhone(phone).replace(/\D/g, '');
+}
+
+function parseImportLine(line: string): ParsedLine {
+  const parsed = parseLine(line);
+  const sensitive = detectSensitiveContent(parsed.raw);
+  return { ...parsed, sensitive: sensitive.sensitive, sensitiveReason: sensitive.reason };
+}
+
 function chunks<T>(arr: T[], n: number) {
   return Array.from({ length: Math.ceil(arr.length / n) }, (_, index) => arr.slice(index * n, index * n + n));
 }
@@ -81,7 +119,63 @@ export default function AdminImportarPage() {
   const [failed, setFailed] = useState<Array<{ line: string; error: string }>>([]);
   const [realSavedCount, setRealSavedCount] = useState<number | null>(null);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [excelPreview, setExcelPreview] = useState<ExcelImportPreview | null>(null);
+  const [excelResult, setExcelResult] = useState<ExcelImportResult | null>(null);
+  const [isExcelImporting, setIsExcelImporting] = useState(false);
   const categoryPickerRef = useRef<HTMLDivElement | null>(null);
+
+  async function handleExcelFile(file?: File) {
+    if (!file) return;
+    setExcelResult(null);
+    setResult('');
+    setFailed([]);
+    try {
+      setProgress('Leyendo hoja Todos...');
+      const preview = await parseContactsWorkbook(file);
+      setExcelPreview(preview);
+      toast.success(`${preview.totalRows} filas leídas desde ${file.name}`);
+    } catch (fileError) {
+      const message = fileError instanceof Error ? fileError.message : 'No se pudo leer el Excel.';
+      setExcelPreview(null);
+      toast.error(message);
+    } finally {
+      setProgress('');
+    }
+  }
+
+  async function importExcel() {
+    if (!excelPreview) return;
+    setIsExcelImporting(true);
+    setExcelResult(null);
+    try {
+      const imported = await importContactsWorkbook(excelPreview, categories, setProgress);
+      setExcelResult(imported);
+      if (imported.failed || imported.uncategorized) {
+        toast.warning(`Importación terminada con ${imported.failed} fallos.`);
+      } else {
+        toast.success(`${imported.inserted} contactos importados correctamente.`);
+      }
+    } catch (excelError) {
+      const message = excelError instanceof Error ? excelError.message : 'No se pudo importar el Excel.';
+      toast.error(message);
+      setExcelResult({
+        inserted: 0,
+        publicInserted: 0,
+        reservedInserted: 0,
+        failed: excelPreview.validRows.length,
+        existingDuplicates: 0,
+        invalid: excelPreview.invalidRows.length,
+        reserved: excelPreview.reservedRows.length,
+        inputDuplicates: excelPreview.duplicateRows.length,
+        uncategorized: 0,
+        byFolder: {},
+        errors: [message],
+      });
+    } finally {
+      setProgress('');
+      setIsExcelImporting(false);
+    }
+  }
 
   async function loadCategories() {
     setIsLoading(true);
@@ -95,7 +189,7 @@ export default function AdminImportarPage() {
       }
       const categoriesResult = await client
         .from('categories')
-        .select('id, name, icon, slug, short_description, contacts_count')
+        .select('id, name, icon, slug, short_description, contacts_count, tags')
         .eq('is_active', true);
 
       if (categoriesResult.error) {
@@ -144,12 +238,25 @@ export default function AdminImportarPage() {
     };
   }, [isCategoryPickerOpen]);
 
-  const parsedContacts = useMemo(() => text.split('\n').map(parseLine).filter((line) => line.raw), [text]);
+  const parsedContacts = useMemo(() => text.split('\n').map(parseImportLine).filter((line) => line.raw), [text]);
   const validContacts = parsedContacts.filter((line) => line.valid);
   const invalidContacts = parsedContacts.filter((line) => !line.valid);
   const selectedCategory = categories.find((category) => category.id === categoryId) ?? null;
+  const uniqueContacts = useMemo(() => {
+    const seen = new Set<string>();
+    return validContacts.filter((contact) => {
+      const key = normalizePhoneKey(contact.phone);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [validContacts]);
+  const duplicateInputCount = validContacts.length - uniqueContacts.length;
+  const sensitiveContacts = uniqueContacts.filter((line) => line.sensitive);
+  const isVaultDestination = selectedCategory?.officialSlug === 'the-vault' || selectedCategory?.slug === 'the-vault';
+  const importableContacts = uniqueContacts.filter((line) => !line.sensitive || isVaultDestination);
   const selectedCategoryIsReal = Boolean(selectedCategory?.id) && !isSyntheticCategoryId(selectedCategory?.id);
-  const canImport = selectedCategoryIsReal && validContacts.length > 0 && !isImporting;
+  const canImport = selectedCategoryIsReal && importableContacts.length > 0 && !isImporting;
 
   async function verifyCategoryContacts(selectedId: string) {
     const client = ensureClient();
@@ -182,7 +289,7 @@ export default function AdminImportarPage() {
       return;
     }
 
-    if (!validContacts.length) {
+    if (!importableContacts.length) {
       const noValidError = 'No hay contactos válidos para importar.';
       setResult(noValidError);
       console.log('CONTACTHUB_DEBUG_IMPORT', { selectedCategory, parsedContacts, insertedCount: 0, error: noValidError });
@@ -192,11 +299,35 @@ export default function AdminImportarPage() {
     console.log('IMPORT_CATEGORY_SELECTED', selectedCategory);
     setIsImporting(true);
     let insertedCount = 0;
+    let existingDuplicateCount = 0;
     const failedRows: Array<{ line: string; error: string }> = [];
     const insertedContacts: Array<{ id: string; name: string; phone: string; category_id: string; status: string }> = [];
 
     try {
-      const importChunks = chunks(validContacts, 50);
+      if (!isVaultDestination && sensitiveContacts.length) {
+        failedRows.push(...sensitiveContacts.map((contact) => ({
+          line: contact.raw,
+          error: `${contact.sensitiveReason ?? 'Contenido sensible'}. No se publico; revisa y usa THE VAULT si corresponde.`,
+        })));
+      }
+
+      const existingResult = await client
+        .from('contacts')
+        .select('phone')
+        .eq('category_id', selectedCategory.id)
+        .neq('status', 'inactive');
+      if (existingResult.error) {
+        console.error('AdminImportarPage duplicate check:', existingResult.error.message);
+        throw new Error(`No se pudo verificar duplicados: ${existingResult.error.message}`);
+      }
+
+      const existingPhones = new Set((existingResult.data ?? []).map((row) => normalizePhoneKey(row.phone ?? '')).filter(Boolean));
+      const contactsToInsert = importableContacts.filter((contact) => {
+        const duplicate = existingPhones.has(normalizePhoneKey(contact.phone));
+        if (duplicate) existingDuplicateCount += 1;
+        return !duplicate;
+      });
+      const importChunks = chunks(contactsToInsert, 50);
 
       for (let index = 0; index < importChunks.length; index += 1) {
         const currentChunk = importChunks[index];
@@ -204,29 +335,46 @@ export default function AdminImportarPage() {
 
         const rows = currentChunk.map((contact) => {
           const country = countryFromPhone(contact.phone);
+          const phone = sanitizePhone(contact.phone);
+          const automaticTags = [
+            ...(selectedCategory.tags ?? []),
+            selectedCategory.displayTitle,
+            ...contact.name.split(/\s+/),
+          ]
+            .map((tag) => sanitizeText(String(tag ?? ''), 28).toLowerCase())
+            .filter((tag) => tag.length > 2)
+            .filter((tag, tagIndex, allTags) => allTags.indexOf(tag) === tagIndex)
+            .slice(0, 6);
           return {
             category_id: selectedCategory.id,
             subcategory_id: null,
             name: sanitizeText(contact.name, 160),
-            description: contact.name,
-            phone: sanitizePhone(contact.phone),
+            description: `Contacto relacionado con ${selectedCategory.displaySubtitle || selectedCategory.short_description || selectedCategory.name}.`,
+            phone,
+            whatsapp: phone,
             phone_masked: maskPhone(contact.phone),
             country_code: country.countryCode,
             country_flag: country.countryFlag,
-            tags: [],
+            tags: automaticTags,
             source: 'importador admin',
-            status: 'active' as const,
-            risk_level: 'safe' as const,
+            status: contact.sensitive ? 'review' as const : 'active' as const,
+            risk_level: contact.sensitive ? 'review' as const : 'safe' as const,
           };
         });
 
-        const { data, error: insertError } = await client.from('contacts').insert(rows).select('id,name,phone,category_id,status');
+        const contactsTable = (client as unknown as { from: (table: string) => any }).from('contacts');
+        let insertResult: any = await contactsTable.insert(rows).select('id,name,phone,category_id,status');
+        if (insertResult.error && /whatsapp|schema cache|column/i.test(insertResult.error.message)) {
+          const fallbackRows = rows.map(({ whatsapp: _whatsapp, ...row }) => row);
+          insertResult = await contactsTable.insert(fallbackRows).select('id,name,phone,category_id,status');
+        }
+        const { data, error: insertError } = insertResult;
         if (insertError) {
           failedRows.push(...currentChunk.map((contact) => ({ line: contact.raw, error: insertError.message })));
           console.error('Error insertando lote de contactos:', insertError);
         } else {
           const savedRows = data ?? [];
-          const wrongCategory = savedRows.find((contact) => contact.category_id !== selectedCategory.id || !contact.category_id);
+          const wrongCategory = savedRows.find((contact: { category_id?: string | null }) => contact.category_id !== selectedCategory.id || !contact.category_id);
           if (wrongCategory) {
             const message = `Supabase guardó un contacto con category_id incorrecto: ${wrongCategory.category_id}`;
             console.error(message);
@@ -258,6 +406,13 @@ export default function AdminImportarPage() {
       } else {
         setResult(`${insertedCount} contactos importados correctamente. Contactos guardados en: ${selectedCategory.name}.`);
       }
+
+      const omittedDuplicates = duplicateInputCount + existingDuplicateCount;
+      setResult(
+        `${insertedCount} importados · ${omittedDuplicates} duplicados omitidos · ${invalidContacts.length} inválidos · ${
+          !isVaultDestination ? sensitiveContacts.length : 0
+        } sensibles separados. Destino: ${selectedCategory.displayLabel ?? selectedCategory.name}.`,
+      );
     } catch (importError) {
       const message = importError instanceof Error ? importError.message : 'No se pudo importar.';
       setResult(`No se pudo importar: ${message}`);
@@ -294,6 +449,76 @@ export default function AdminImportarPage() {
             </button>
           </div>
         ) : null}
+
+        <div className="mt-6 rounded-2xl border border-brand-400/25 bg-brand-400/[0.06] p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">Importación Excel por 24 carpetas</p>
+              <h3 className="mt-1 text-lg font-bold text-white">Cargar hoja “Todos” de forma segura</h3>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+                Valida teléfonos, usa Carpeta ID, omite duplicados y separa registros reservados antes de guardar.
+              </p>
+            </div>
+            <label className="focus-ring inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 hover:bg-brand-300">
+              <UploadCloud className="h-4 w-4" />
+              Seleccionar Excel
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                className="sr-only"
+                onChange={(event) => void handleExcelFile(event.target.files?.[0])}
+              />
+            </label>
+          </div>
+
+          {excelPreview ? (
+            <div className="mt-5">
+              <p className="text-sm font-semibold text-white">{excelPreview.fileName}</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {[
+                  ['Filas', excelPreview.totalRows, 'text-white'],
+                  ['Listos', excelPreview.validRows.length, 'text-brand-300'],
+                  ['Reservados', excelPreview.reservedRows.length, 'text-amber-200'],
+                  ['Inválidos', excelPreview.invalidRows.length, 'text-red-200'],
+                  ['Duplicados', excelPreview.duplicateRows.length, 'text-sky-200'],
+                ].map(([label, value, color]) => (
+                  <div key={String(label)} className="rounded-xl border border-white/10 bg-ink-950/55 p-3">
+                    <p className={`text-xl font-bold ${color}`}>{value}</p>
+                    <p className="text-xs text-gray-500">{label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                {Array.from({ length: 24 }, (_, index) => index + 1).map((order) => (
+                  <div key={order} className="rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-400">
+                    <span className="font-bold text-white">{String(order).padStart(2, '0')}</span>
+                    <span className="ml-2">{excelPreview.byFolder[order] ?? 0}</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                disabled={isExcelImporting || !excelPreview.validRows.length || categories.some((category) => isSyntheticCategoryId(category.id))}
+                onClick={() => void importExcel()}
+                className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 hover:bg-brand-300 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-gray-500 sm:w-auto"
+              >
+                <UploadCloud className="h-4 w-4" />
+                {isExcelImporting ? 'Importando...' : `Importar ${excelPreview.validRows.length} contactos validados`}
+              </button>
+            </div>
+          ) : null}
+
+          {excelResult ? (
+            <div className="mt-5 rounded-xl border border-white/10 bg-ink-950/65 p-4 text-sm text-gray-300">
+              <p className="font-bold text-white">Resultado de importación</p>
+              <p className="mt-2">
+                {excelResult.inserted} importados ({excelResult.publicInserted} públicos + {excelResult.reservedInserted} reservados) · {excelResult.invalid} inválidos ·{' '}
+                {excelResult.inputDuplicates + excelResult.existingDuplicates} duplicados · {excelResult.uncategorized} sin categoría.
+              </p>
+              {excelResult.errors.map((message) => <p key={message} className="mt-2 text-red-200">{message}</p>)}
+            </div>
+          ) : null}
+        </div>
 
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
           <div className="w-full space-y-4">
@@ -343,12 +568,20 @@ export default function AdminImportarPage() {
               {selectedCategory?.id ? <p className="mt-1 truncate text-xs text-gray-500">{selectedCategory.id}</p> : null}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-white/5 p-3">
-                  <p className="text-2xl font-bold text-brand-400">{validContacts.length}</p>
-                  <p className="text-xs text-gray-500">válidos</p>
+                  <p className="text-2xl font-bold text-brand-400">{importableContacts.length}</p>
+                  <p className="text-xs text-gray-500">listos</p>
                 </div>
                 <div className="rounded-lg bg-white/5 p-3">
                   <p className="text-2xl font-bold text-amber-200">{invalidContacts.length}</p>
-                  <p className="text-xs text-gray-500">ignorados</p>
+                  <p className="text-xs text-gray-500">inválidos</p>
+                </div>
+                <div className="rounded-lg bg-white/5 p-3">
+                  <p className="text-2xl font-bold text-sky-200">{duplicateInputCount}</p>
+                  <p className="text-xs text-gray-500">duplicados en lista</p>
+                </div>
+                <div className="rounded-lg bg-white/5 p-3">
+                  <p className="text-2xl font-bold text-red-200">{sensitiveContacts.length}</p>
+                  <p className="text-xs text-gray-500">sensibles</p>
                 </div>
               </div>
               {realSavedCount !== null ? <p className="mt-4 text-brand-300">Ahora hay {realSavedCount} contactos reales en esta categoría.</p> : null}
@@ -363,7 +596,7 @@ export default function AdminImportarPage() {
               }`}
             >
               <UploadCloud className="h-4 w-4" />
-              {validContacts.length ? `Importar ${validContacts.length} contactos` : 'No hay contactos válidos'}
+              {importableContacts.length ? `Importar ${importableContacts.length} contactos` : 'No hay contactos válidos'}
             </button>
 
             {progress ? <p className="text-sm text-brand-400">{progress}</p> : null}
@@ -376,7 +609,7 @@ export default function AdminImportarPage() {
               <textarea
                 value={text}
                 onChange={(event) => {
-                  setText(sanitizeTextInput(event.target.value, 20000));
+                  setText(sanitizeTextInput(event.target.value, 150000));
                   setResult('');
                   setFailed([]);
                   setRealSavedCount(null);
@@ -399,11 +632,16 @@ export default function AdminImportarPage() {
                 </thead>
                 <tbody>
                   {parsedContacts.map((line, index) => (
-                    <tr key={`${line.raw}-${index}`} className={`border-t border-line ${line.valid ? '' : 'bg-red-500/10'}`}>
-                      <td className={`px-4 py-3 font-bold ${line.valid ? 'text-brand-400' : 'text-red-200'}`}>{line.valid ? '✓' : '✕'}</td>
+                    <tr key={`${line.raw}-${index}`} className={`border-t border-line ${line.sensitive ? 'bg-amber-500/10' : line.valid ? '' : 'bg-red-500/10'}`}>
+                      <td className={`px-4 py-3 font-bold ${line.sensitive ? 'text-amber-200' : line.valid ? 'text-brand-400' : 'text-red-200'}`}>
+                        {line.sensitive ? 'REVISAR' : line.valid ? '✓' : '✕'}
+                      </td>
                       <td className="px-4 py-3 text-white">{line.name}</td>
                       <td className="px-4 py-3 font-mono text-gray-300">{line.phone || line.error}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{line.raw}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {line.raw}
+                        {line.sensitiveReason ? <span className="mt-1 block text-amber-200">{line.sensitiveReason}</span> : null}
+                      </td>
                     </tr>
                   ))}
                   {!parsedContacts.length ? (

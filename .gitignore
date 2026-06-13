@@ -5,3 +5,5 @@ dist
 .env.production
 .DS_Store
 *.tsbuildinfo
+.codex-dev*.log
+devserver.log

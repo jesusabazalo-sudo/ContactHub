@@ -18,7 +18,7 @@ export default function AdminPlaceholderPage({ title }: AdminPlaceholderPageProp
           <p className="mt-4 text-base leading-7 text-gray-300">Ruta admin protegida y lista para la siguiente fase.</p>
           <p className="mt-4 text-sm leading-6 text-gray-400">
             AdminGuard ya valida sesión y rol con Supabase. Esta sección específica queda reservada para fases posteriores.
-            El correo dueño se configura con `VITE_OWNER_ADMIN_EMAIL` y actualmente apunta a `{APP_CONFIG.ownerAdminEmail}`.
+            El correo administrativo se configura con `VITE_OWNER_ADMIN_EMAIL` y actualmente apunta a `{APP_CONFIG.ownerAdminEmail}`.
           </p>
           <Link
             to="/"

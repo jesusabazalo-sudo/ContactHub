@@ -31,27 +31,71 @@ export type MyContactsData = {
   totalUnlocked: number;
 };
 
+const EMPTY_MY_CONTACTS: MyContactsData = {
+  folders: [],
+  categories: [],
+  contacts: [],
+  totalUnlocked: 0,
+};
+
+function logQueryError(scope: string, error: { message?: string; code?: string; details?: string; hint?: string }) {
+  if (!import.meta.env.DEV) return;
+  console.error(`[myContactsService:${scope}]`, {
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint,
+  });
+}
+
 export async function getMyContactsData(userId: string): Promise<MyContactsData> {
-  if (!supabase) return { folders: [], categories: [], contacts: [], totalUnlocked: 0 };
-  const { data: accesses, error: accessError } = await supabase.from('user_category_access').select('category_id').eq('user_id', userId).eq('status', 'active');
+  if (!supabase) {
+    throw new Error('Supabase no esta configurado para consultar tus accesos.');
+  }
+
+  const { data: accesses, error: accessError } = await supabase
+    .from('user_category_access')
+    .select('category_id, status')
+    .eq('user_id', userId)
+    .eq('status', 'active');
 
   if (accessError) {
-    console.error('getMyContactsData access:', accessError.message);
-    return { folders: [], categories: [], contacts: [], totalUnlocked: 0 };
+    logQueryError('access', accessError);
+    throw new Error('No pudimos leer tus accesos activos. Revisa la politica RLS de user_category_access.');
   }
 
   if (!accesses || accesses.length === 0) {
-    return { folders: [], categories: [], contacts: [], totalUnlocked: 0 };
+    if (import.meta.env.DEV) {
+      console.debug('[myContactsService] active accesses', {
+        sessionUserId: userId,
+        activeAccessCount: 0,
+        categoryIds: [],
+      });
+    }
+    return EMPTY_MY_CONTACTS;
   }
 
-  const categoryIds = accesses.map((a) => a.category_id);
+  const categoryIds = [...new Set(accesses.map((access) => access.category_id).filter((categoryId): categoryId is string => Boolean(categoryId)))];
+  if (!categoryIds.length) {
+    throw new Error('Tus accesos activos no tienen una carpeta valida vinculada.');
+  }
   const [catsRes, contactsRes] = await Promise.all([
-    supabase.from('categories').select('id, name, icon, slug, description, short_description, sort_order, tags').in('id', categoryIds),
-    supabase.from('contact_unlocked_secure').select('*').in('category_id', categoryIds).limit(1000),
+    supabase.from('categories').select('id, name, icon, slug, description, short_description, tags').in('id', categoryIds),
+    supabase.from('contact_unlocked_secure').select('*').in('category_id', categoryIds).limit(5000),
   ]);
 
-  if (catsRes.error) console.error('getMyContactsData categories:', catsRes.error.message);
-  if (contactsRes.error) console.error('getMyContactsData contacts:', contactsRes.error.message);
+  if (catsRes.error) {
+    logQueryError('categories', catsRes.error);
+    throw new Error('No se pudieron confirmar tus carpetas desbloqueadas.');
+  }
+  if (contactsRes.error) {
+    logQueryError('contacts', contactsRes.error);
+    throw new Error('Tus carpetas están activas, pero no se pudieron cargar sus contactos.');
+  }
+  const resolvedCategoryIds = new Set((catsRes.data ?? []).map((category) => category.id));
+  if (categoryIds.some((categoryId) => !resolvedCategoryIds.has(categoryId))) {
+    throw new Error('Hay un acceso activo que no está vinculado a una carpeta válida.');
+  }
 
   const contacts = (contactsRes.data ?? []).map((contact) => ({
     id: contact.id,
@@ -82,11 +126,22 @@ export async function getMyContactsData(userId: string): Promise<MyContactsData>
     };
   });
 
+  if (import.meta.env.DEV) {
+    console.debug('[myContactsService] resolved access', {
+      sessionUserId: userId,
+      activeAccessCount: accesses.length,
+      uniqueCategoryCount: categoryIds.length,
+      categoryIds,
+      resolvedFolders: folders.map((folder) => ({ id: folder.id, name: folder.name })),
+      visibleContactsCount: contacts.length,
+    });
+  }
+
   return {
     folders,
     categories: folders,
     contacts,
-    totalUnlocked: contacts.length,
+    totalUnlocked: folders.length,
   };
 }
 
@@ -98,7 +153,11 @@ export async function getTrialContacts(userId: string) {
     return { used: false, contacts: [] };
   }
 
-  const { data: contacts, error: contactsError } = await supabase.from('contacts').select('id, name, phone, description, category_id, country_flag').in('id', claim.contact_ids ?? []);
+  const { data: contacts, error: contactsError } = await supabase
+    .from('contacts')
+    .select('id, name, phone, description, category_id, country_flag')
+    .in('id', claim.contact_ids ?? [])
+    .eq('status', 'active');
   if (contactsError) console.error('getTrialContacts contacts:', contactsError.message);
 
   return { used: true, contacts: contacts ?? [], claimedAt: claim.claimed_at };

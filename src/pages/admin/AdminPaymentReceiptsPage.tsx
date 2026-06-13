@@ -8,6 +8,7 @@ import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../
 import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
+import { grantCategoryAccess } from '../../services/accessService';
 
 type ReceiptStatus = 'pendiente' | 'verificado' | 'rechazado';
 type ReceiptFilter = 'all' | ReceiptStatus;
@@ -111,9 +112,9 @@ export default function AdminPaymentReceiptsPage() {
           .limit(250),
         supabase
           .from('categories')
-          .select('id,name,icon,slug,sort_order,short_description')
+          .select('id,name,icon,slug,short_description')
           .eq('is_active', true)
-          .order('sort_order', { ascending: true }),
+          .order('name', { ascending: true }),
       ]);
 
       if (messagesRes.error) {
@@ -200,6 +201,10 @@ export default function AdminPaymentReceiptsPage() {
 
   async function activateAccess() {
     if (!selectedReceipt || !supabase || !isSupabaseConfigured) return;
+    if (!adminUser?.id) {
+      toast.error('No se encontró la sesión admin.');
+      return;
+    }
     if (!selectedReceipt.user_id) {
       toast.error('Este comprobante no tiene usuario vinculado.');
       return;
@@ -212,17 +217,17 @@ export default function AdminPaymentReceiptsPage() {
 
     setIsUpdatingId(selectedReceipt.id);
     try {
-      const rows = selectedCategoryIds.map((categoryId) => ({
-        user_id: targetUserId,
-        category_id: categoryId,
-        granted_by: adminUser?.id ?? null,
-        status: 'active' as const,
-        updated_at: new Date().toISOString(),
-      }));
-      const { error: accessError } = await supabase.from('user_category_access').upsert(rows, { onConflict: 'user_id,category_id' });
-      if (accessError) {
-        console.error('AdminPaymentReceiptsPage activate:', accessError.message);
-        toast.error(accessError.message);
+      const accessResult = await grantCategoryAccess({
+        targetUserId,
+        targetUserEmail: selectedReceipt.user_email,
+        categoryIds: selectedCategoryIds,
+        grantedBy: adminUser.id,
+        accessType: 'receipt',
+        source: 'payment_receipt',
+        note: `Comprobante aprobado: ${selectedReceipt.id}`,
+      });
+      if (!accessResult.ok) {
+        toast.error(accessResult.error ?? 'No se pudo activar el acceso.');
         return;
       }
 
@@ -235,10 +240,10 @@ export default function AdminPaymentReceiptsPage() {
         message: `Tu pago fue verificado.\n\nYa tienes acceso a: ${selectedCategoryNames.join(', ')}.\n\nPuedes ver todos los contactos ahora mismo. Gracias por confiar en ContactHub.`,
       });
 
-      toast.success('Comprobante aprobado y acceso activado.');
       setSelectedReceipt(null);
       setSelectedCategoryIds([]);
       await loadReceipts();
+      toast.success(`Comprobante aprobado y acceso confirmado para ${accessResult.targetUserEmail ?? 'el cliente'}.`);
     } catch (activationError) {
       console.error('AdminPaymentReceiptsPage activate catch:', activationError);
       toast.error('Error al activar. Intenta de nuevo.');

@@ -26,9 +26,9 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 12% 8%, rgba(34, 197, 94, 0.18), transparent 24rem),
-    radial-gradient(circle at 88% 12%, rgba(124, 58, 237, 0.14), transparent 26rem),
-    radial-gradient(circle at 50% 88%, rgba(34, 211, 238, 0.08), transparent 22rem),
+    radial-gradient(circle at 12% 8%, rgba(34, 197, 94, 0.10), transparent 24rem),
+    radial-gradient(circle at 88% 12%, rgba(34, 197, 94, 0.055), transparent 26rem),
+    radial-gradient(circle at 50% 88%, rgba(34, 211, 238, 0.035), transparent 22rem),
     linear-gradient(180deg, #050B0A 0%, #0B1714 52%, #050B0A 100%);
   color: #ffffff;
   font-family: Inter, system-ui, sans-serif;
@@ -104,9 +104,9 @@ select {
 
 .hero-gradient {
   background:
-    radial-gradient(circle at 18% 20%, rgba(34,211,238,0.12), transparent 24rem),
-    radial-gradient(circle at 78% 8%, rgba(124,58,237,0.20), transparent 28rem),
-    linear-gradient(135deg, #050B0A 0%, #0d2a1f 36%, #130b2a 66%, #050B0A 100%);
+    radial-gradient(circle at 18% 20%, rgba(34,197,94,0.10), transparent 24rem),
+    radial-gradient(circle at 78% 8%, rgba(34,211,238,0.05), transparent 28rem),
+    linear-gradient(135deg, #050B0A 0%, #0d2a1f 42%, #08110f 72%, #050B0A 100%);
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
 }
@@ -123,14 +123,14 @@ select {
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 50px rgba(0,0,0,0.28), 0 0 34px rgba(34,197,94,0.18);
-  border-color: rgba(29,180,122,0.5) !important;
+  box-shadow: 0 18px 46px rgba(0,0,0,0.28), 0 0 24px rgba(34,197,94,0.10);
+  border-color: rgba(29,180,122,0.38) !important;
 }
 
 .btn-primary-glow {
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 22px rgba(34,197,94,0.34), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  box-shadow: 0 4px 18px rgba(34,197,94,0.20), 0 0 0 1px rgba(255,255,255,0.05) inset;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
@@ -145,7 +145,7 @@ select {
 }
 
 .btn-primary-glow:hover {
-  box-shadow: 0 10px 34px rgba(34,197,94,0.48), 0 0 30px rgba(124,58,237,0.14);
+  box-shadow: 0 10px 28px rgba(34,197,94,0.30);
   transform: translateY(-2px);
 }
 
@@ -167,7 +167,7 @@ select {
 }
 
 .stat-number {
-  background: linear-gradient(135deg, #22C55E, #22D3EE 55%, #A78BFA);
+  background: linear-gradient(135deg, #22C55E, #6EE7B7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -177,8 +177,8 @@ select {
   position: relative;
   isolation: isolate;
   background:
-    radial-gradient(circle at 12% 0%, rgba(34,197,94,0.16), transparent 20rem),
-    radial-gradient(circle at 94% 10%, rgba(124,58,237,0.12), transparent 20rem),
+    radial-gradient(circle at 12% 0%, rgba(34,197,94,0.10), transparent 20rem),
+    radial-gradient(circle at 94% 10%, rgba(34,211,238,0.04), transparent 20rem),
     linear-gradient(180deg, rgba(5,11,10,0.98), rgba(11,23,20,0.98));
 }
 
@@ -211,9 +211,9 @@ select {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 0% 0%, rgba(34,197,94,0.18), transparent 16rem),
-    radial-gradient(circle at 100% 0%, rgba(124,58,237,0.12), transparent 14rem);
-  opacity: 0.78;
+    radial-gradient(circle at 0% 0%, rgba(34,197,94,0.11), transparent 16rem),
+    radial-gradient(circle at 100% 0%, rgba(34,211,238,0.04), transparent 14rem);
+  opacity: 0.62;
 }
 
 .dopamine-card > * {
@@ -226,7 +226,7 @@ select {
 }
 
 .neon-text {
-  background: linear-gradient(135deg, #F8FAFC 0%, #34D399 35%, #22D3EE 70%, #A78BFA 100%);
+  background: linear-gradient(135deg, #F8FAFC 0%, #6EE7B7 45%, #22C55E 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -234,7 +234,7 @@ select {
 
 .premium-chip {
   border: 1px solid rgba(34,197,94,0.22);
-  background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(124,58,237,0.08));
+  background: linear-gradient(135deg, rgba(34,197,94,0.10), rgba(34,211,238,0.035));
   color: #d1fae5;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }

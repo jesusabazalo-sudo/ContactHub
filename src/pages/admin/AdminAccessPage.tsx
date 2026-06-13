@@ -10,10 +10,17 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import { sanitizeEmail, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { formatDate } from '../../lib/format';
 import {
+  getUserAccessDiagnostics,
+  reassignUnlinkedAccess,
+  revokeCategoryAccess,
+  revokeUnlinkedAccess,
+  type AccessDiagnostic,
+} from '../../services/accessService';
+import {
   cancelPendingPurchase,
   getAdminCategories,
   getPendingPurchases,
-  grantCategoryAccessesByEmail,
+  grantCategoryAccessesForUser,
   searchAdminUserByEmail,
   seedOfficialCategories,
   type AdminCategory,
@@ -38,6 +45,10 @@ export default function AdminAccessPage() {
   const [selectedPendingId, setSelectedPendingId] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<AdminFoundUser | null>(null);
   const [activationResult, setActivationResult] = useState<ActivationResult | null>(null);
+  const [legacyCategoryByAccess, setLegacyCategoryByAccess] = useState<Record<string, string>>({});
+  const [accessDiagnostics, setAccessDiagnostics] = useState<AccessDiagnostic[] | null>(null);
+  const [isCheckingAccesses, setIsCheckingAccesses] = useState(false);
+  const [isTotalConfirmOpen, setIsTotalConfirmOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +67,12 @@ export default function AdminAccessPage() {
     [selectedUser],
   );
 
-  const canActivateAccess = Boolean(selectedUser) && selectedCategoryIds.length > 0 && !isLoading && !isSearching && !isSubmitting;
+  const availableCategoryIds = useMemo(
+    () => categories.filter((category) => !activeCategoryIds.has(category.id)).map((category) => category.id),
+    [activeCategoryIds, categories],
+  );
+  const canActivateAccess = Boolean(selectedUser?.id) && selectedCategoryIds.length > 0 && !isLoading && !isSearching && !isSubmitting;
+  const allCategoriesSelected = availableCategoryIds.length > 0 && availableCategoryIds.every((categoryId) => selectedCategoryIds.includes(categoryId));
 
   async function loadAccessData() {
     setIsLoading(true);
@@ -96,8 +112,14 @@ export default function AdminAccessPage() {
 
     try {
       const nextUser = await searchAdminUserByEmail(emailToSearch);
+      if (!nextUser.id) {
+        throw new Error('No se encontró un cliente registrado con ese correo.');
+      }
       setSelectedUser(nextUser);
       setEmail(nextUser.email ?? emailToSearch);
+      setSelectedCategoryIds([]);
+      setLegacyCategoryByAccess({});
+      setAccessDiagnostics(null);
       toast.success('Usuario encontrado.');
     } catch (searchFailure) {
       const message = searchFailure instanceof Error ? searchFailure.message : 'No se pudo buscar el usuario.';
@@ -115,12 +137,28 @@ export default function AdminAccessPage() {
   }
 
   function toggleCategory(categoryId: string) {
+    if (activeCategoryIds.has(categoryId)) return;
     setActivationResult(null);
     setActivationError(null);
     setSelectedCategoryIds((current) => {
       const nextCategoryIds = current.includes(categoryId) ? current.filter((id) => id !== categoryId) : [...current, categoryId];
       return nextCategoryIds;
     });
+  }
+
+  function handleTotalAccessSelection() {
+    if (!selectedUser || !availableCategoryIds.length) return;
+    if (allCategoriesSelected) {
+      setSelectedCategoryIds([]);
+      return;
+    }
+    setIsTotalConfirmOpen(true);
+  }
+
+  function confirmTotalAccessSelection() {
+    setSelectedCategoryIds(availableCategoryIds);
+    setIsTotalConfirmOpen(false);
+    toast.success('Acceso total seleccionado.');
   }
 
   function usePendingPurchase(purchase: PendingPurchase) {
@@ -163,44 +201,72 @@ export default function AdminAccessPage() {
     setActivationError(null);
 
     try {
-      const emailForGrant = selectedUser.email ?? sanitizeEmail(email);
-      const result = await grantCategoryAccessesByEmail({
-        email: emailForGrant,
-        categoryIds: selectedCategoryIds,
+      const targetUserId = selectedUser.id;
+      const targetEmail = selectedUser.email ?? sanitizeEmail(email);
+      const requestedCategoryIds = [...selectedCategoryIds];
+      const result = await grantCategoryAccessesForUser({
+        targetUserId,
+        targetUserEmail: targetEmail,
+        categoryIds: requestedCategoryIds,
         adminUserId: user.id,
         notes: sanitizeText(notes, 500),
         source: selectedPending ? 'pending_request' : 'manual',
         pendingPurchaseId: selectedPending?.id,
       });
-      console.log('CONTACTHUB_DEBUG_ACCESS', {
-        selectedUser,
-        selectedCategory: selectedCategoryIds,
-        result,
-        error: null,
-      });
+      if (result.userId !== targetUserId) {
+        throw new Error('La verificación del acceso no coincide con el cliente seleccionado.');
+      }
+      if (import.meta.env.DEV) {
+        console.debug('CONTACTHUB_DEBUG_ACCESS', {
+          targetUserId,
+          targetEmail,
+          adminUserId: user.id,
+          categoryIds: requestedCategoryIds,
+          result,
+        });
+      }
 
+      const refreshedUser = await searchAdminUserByEmail(targetEmail);
+      const refreshedIds = new Set(refreshedUser.activeAccesses.map((access) => access.categoryId));
+      if (
+        refreshedUser.id !== targetUserId
+        || requestedCategoryIds.some((categoryId) => !refreshedIds.has(categoryId))
+      ) {
+        console.error('AdminAccessPage post-grant refetch mismatch:', {
+          targetUserId,
+          targetEmail,
+          requestedCategoryIds,
+          refreshedUser,
+        });
+        throw new Error('No se pudo confirmar el acceso del cliente.');
+      }
+
+      setSelectedUser(refreshedUser);
       setActivationResult({
         email: result.email,
         categoryNames: result.categoryNames,
         message: result.message,
       });
-      toast.success('🎉 ¡Acceso desbloqueado! Tu nueva carpeta ya está disponible.');
+      toast.success(`Acceso activado para ${targetEmail}.`);
+      if (selectedPending?.id) {
+        setPendingPurchases((current) => current.filter((purchase) => purchase.id !== selectedPending.id));
+      }
       setSelectedPendingId(null);
       setNotes('');
       setSelectedCategoryIds([]);
-      await loadAccessData();
-      const refreshedUser = await searchAdminUserByEmail(emailForGrant);
-      setSelectedUser(refreshedUser);
     } catch (activationError) {
       const message = activationError instanceof Error ? activationError.message : 'No se pudo activar el acceso.';
       setActivationError(message);
       console.error('Error activando accesos:', activationError);
-      console.log('CONTACTHUB_DEBUG_ACCESS', {
-        selectedUser,
-        selectedCategory: selectedCategoryIds,
-        result: null,
-        error: message,
-      });
+      if (import.meta.env.DEV) {
+        console.debug('CONTACTHUB_DEBUG_ACCESS_FAILURE', {
+          targetUserId: selectedUser.id,
+          targetEmail: selectedUser.email,
+          adminUserId: user.id,
+          categoryIds: selectedCategoryIds,
+          error: message,
+        });
+      }
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -220,6 +286,104 @@ export default function AdminAccessPage() {
     } catch (cancelError) {
       const message = cancelError instanceof Error ? cancelError.message : 'No se pudo cancelar la solicitud.';
       toast.error(message);
+    }
+  }
+
+  async function handleRevokeAccess(categoryId: string) {
+    if (!user?.id || !selectedUser) {
+      toast.error('No se encontró la sesión admin.');
+      return;
+    }
+
+    const categoryName = selectedUser.activeAccesses.find((access) => access.categoryId === categoryId)?.categoryName ?? 'esta carpeta';
+    const ok = window.confirm(`Vas a revocar el acceso a ${categoryName}. ¿Confirmas?`);
+    if (!ok) return;
+
+    try {
+      const result = await revokeCategoryAccess({
+        targetUserId: selectedUser.id,
+        categoryId,
+        revokedBy: user.id,
+        note: `Acceso revocado desde Admin Accesos: ${categoryName}`,
+      });
+      if (!result.ok) {
+        toast.error(result.error ?? 'No se pudo revocar el acceso.');
+        return;
+      }
+      toast.success('Acceso revocado.');
+      const refreshedUser = await searchAdminUserByEmail(selectedUser.email ?? email);
+      setSelectedUser(refreshedUser);
+      setSelectedCategoryIds((current) => current.filter((id) => id !== categoryId));
+    } catch (revokeError) {
+      const message = revokeError instanceof Error ? revokeError.message : 'No se pudo revocar el acceso.';
+      toast.error(message);
+    }
+  }
+
+  async function handleReassignUnlinked(accessId: string) {
+    if (!user?.id || !selectedUser?.id) {
+      toast.error('No se encontró la sesión admin o el cliente destino.');
+      return;
+    }
+    const categoryId = legacyCategoryByAccess[accessId];
+    if (!categoryId) {
+      toast.error('Selecciona una carpeta oficial para reasignar el acceso.');
+      return;
+    }
+    const result = await reassignUnlinkedAccess({
+      accessId,
+      targetUserId: selectedUser.id,
+      categoryId,
+      grantedBy: user.id,
+    });
+    if (!result.ok) {
+      toast.error(result.error ?? 'No se pudo reasignar el acceso.');
+      return;
+    }
+    toast.success(`Acceso antiguo reasignado para ${selectedUser.email ?? 'el cliente'}.`);
+    const refreshedUser = await searchAdminUserByEmail(selectedUser.email ?? email);
+    setSelectedUser(refreshedUser);
+    setLegacyCategoryByAccess((current) => {
+      const next = { ...current };
+      delete next[accessId];
+      return next;
+    });
+  }
+
+  async function handleRevokeUnlinked(accessId: string) {
+    if (!user?.id || !selectedUser?.id) {
+      toast.error('No se encontró la sesión admin o el cliente destino.');
+      return;
+    }
+    const ok = window.confirm('Este acceso no está vinculado a una carpeta válida. ¿Deseas revocarlo?');
+    if (!ok) return;
+    const result = await revokeUnlinkedAccess({
+      accessId,
+      targetUserId: selectedUser.id,
+      revokedBy: user.id,
+    });
+    if (!result.ok) {
+      toast.error(result.error ?? 'No se pudo revocar el acceso antiguo.');
+      return;
+    }
+    toast.success('Acceso antiguo revocado.');
+    const refreshedUser = await searchAdminUserByEmail(selectedUser.email ?? email);
+    setSelectedUser(refreshedUser);
+  }
+
+  async function handleVerifyRealAccesses() {
+    if (!selectedUser?.id) return;
+    setIsCheckingAccesses(true);
+    try {
+      const diagnostics = await getUserAccessDiagnostics(selectedUser.id);
+      setAccessDiagnostics(diagnostics);
+      toast.success(`${diagnostics.length} accesos activos confirmados en la tabla oficial.`);
+    } catch (diagnosticError) {
+      const message = diagnosticError instanceof Error ? diagnosticError.message : 'No se pudieron verificar los accesos reales.';
+      setAccessDiagnostics(null);
+      toast.error(message);
+    } finally {
+      setIsCheckingAccesses(false);
     }
   }
 
@@ -325,19 +489,109 @@ export default function AdminAccessPage() {
                   <p className="font-semibold text-white">{selectedUser.email ?? 'Usuario sin email'}</p>
                   <p className="mt-1 text-sm text-gray-400">{selectedUser.fullName ?? 'Sin nombre registrado'}</p>
                   <p className="mt-1 text-xs text-gray-500">Registrado: {formatDate(selectedUser.createdAt)}</p>
+                  <p className="mt-1 break-all text-[11px] text-brand-200">Destino verificado: {selectedUser.id}</p>
                 </div>
               </div>
               <div className="mt-4 grid gap-2 text-sm text-gray-400">
                 <p>Teléfono: {selectedUser.phone ?? 'No registrado'}</p>
                 <p>Carpetas activas: {selectedUser.activeAccesses.length}</p>
+                <p>Prueba gratis: {selectedUser.usedTrial ? 'Usada' : 'No registrada'}</p>
+                <p>Comprobantes: {selectedUser.receiptCount ?? 0} · Recompensas: {selectedUser.rewardCount ?? 0}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => void handleVerifyRealAccesses()}
+                disabled={isCheckingAccesses}
+                className="focus-ring mt-4 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-200 transition hover:bg-brand-400 hover:text-ink-950 disabled:opacity-60"
+              >
+                {isCheckingAccesses ? 'Verificando...' : 'Verificar accesos reales'}
+              </button>
+              {accessDiagnostics ? (
+                <div className="mt-3 rounded-xl border border-line bg-ink-950/60 p-3">
+                  <p className="text-xs font-semibold text-white">
+                    Tabla oficial: user_category_access · user_id: {selectedUser.id}
+                  </p>
+                  <div className="mt-2 grid gap-2">
+                    {accessDiagnostics.length ? accessDiagnostics.map((access) => (
+                      <div key={access.id} className="rounded-lg border border-line bg-white/[0.03] p-2 text-[11px] text-gray-400">
+                        <p className="font-semibold text-brand-200">{access.categoryName}</p>
+                        <p className="mt-1 break-all">
+                          category_id: {access.categoryId ?? 'null'} · status: {access.status} · access_type: {access.accessType ?? 'manual'}
+                        </p>
+                        <p className="mt-1 break-all">granted_by: {access.grantedBy ?? 'sin registro'}</p>
+                      </div>
+                    )) : (
+                      <p className="text-xs text-gray-500">No hay accesos activos reales para este cliente.</p>
+                    )}
+                  </div>
+                </div>
+              ) : null}
               {selectedUser.activeAccesses.length ? (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 grid gap-2">
                   {selectedUser.activeAccesses.map((access) => (
-                    <span key={access.categoryId} className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-200">
-                      {access.categoryName}
-                    </span>
+                    <div key={access.categoryId} className="flex flex-col gap-2 rounded-xl border border-brand-400/20 bg-brand-400/10 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-brand-200">{access.categoryName}</p>
+                        <p className="mt-1 text-[11px] text-gray-500">
+                          {access.accessType ?? access.source ?? 'manual'} · {formatDate(access.updatedAt ?? access.createdAt)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleRevokeAccess(access.categoryId)}
+                        className="focus-ring rounded-full border border-red-400/25 bg-red-400/10 px-3 py-1.5 text-xs font-bold text-red-100 transition hover:bg-red-400 hover:text-white"
+                      >
+                        Revocar
+                      </button>
+                    </div>
                   ))}
+                </div>
+              ) : null}
+              {selectedUser.unlinkedAccesses.length ? (
+                <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-300/10 p-4">
+                  <p className="text-sm font-semibold text-amber-100">Accesos pendientes de vincular</p>
+                  <p className="mt-1 text-xs leading-5 text-amber-100/70">
+                    No cuentan como carpetas activas hasta que elijas una carpeta oficial.
+                  </p>
+                  <div className="mt-3 grid gap-3">
+                    {selectedUser.unlinkedAccesses.map((access) => (
+                      <div key={access.accessId} className="rounded-lg border border-amber-200/15 bg-ink-950/45 p-3">
+                        <p className="break-all text-xs text-gray-400">
+                          Vínculo: {access.categoryId ?? 'sin category_id'} · {formatDate(access.updatedAt ?? access.createdAt)}
+                        </p>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                          <select
+                            value={legacyCategoryByAccess[access.accessId] ?? ''}
+                            onChange={(event) => setLegacyCategoryByAccess((current) => ({ ...current, [access.accessId]: event.target.value }))}
+                            className="focus-ring h-10 rounded-lg border border-line bg-ink-950 px-3 text-xs text-white"
+                          >
+                            <option value="">Selecciona carpeta oficial</option>
+                            {categories
+                              .filter((category) => !activeCategoryIds.has(category.id))
+                              .map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {String(category.sortOrder ?? 0).padStart(2, '0')}. {category.name}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => void handleReassignUnlinked(access.accessId)}
+                            className="focus-ring rounded-lg bg-brand-400 px-3 py-2 text-xs font-bold text-ink-950"
+                          >
+                            Reasignar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleRevokeUnlinked(access.accessId)}
+                            className="focus-ring rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-100"
+                          >
+                            Revocar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -346,26 +600,44 @@ export default function AdminAccessPage() {
           <div className="mt-6 grid gap-5">
             <div>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-gray-300">Categorías activas disponibles</p>
-                <p className="text-xs text-gray-500">{selectedCategoryIds.length} seleccionadas</p>
+                <div>
+                  <p className="text-sm font-semibold text-gray-300">Categorías activas disponibles</p>
+                  <p className="mt-1 text-xs text-gray-500">{selectedCategoryIds.length} seleccionadas</p>
+                </div>
+                {categories.length ? (
+                  <button
+                    type="button"
+                    onClick={handleTotalAccessSelection}
+                    className={`focus-ring rounded-full px-4 py-2 text-xs font-bold transition ${
+                      allCategoriesSelected ? 'border border-line bg-white/5 text-white' : 'bg-brand-400 text-ink-950 hover:bg-white'
+                    }`}
+                  >
+                    {allCategoriesSelected ? 'Deseleccionar todo' : 'Dar acceso total'}
+                  </button>
+                ) : null}
               </div>
 
               <div className="mt-3 grid max-h-[360px] gap-2 overflow-y-auto pr-1">
                 {categories.length ? (
                   categories.map((category) => {
-                    const checked = selectedCategoryIds.includes(category.id);
                     const alreadyActive = activeCategoryIds.has(category.id);
+                    const checked = !alreadyActive && selectedCategoryIds.includes(category.id);
 
                     return (
                       <label
                         key={category.id}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition hover:border-brand-400/50 ${
-                          checked ? 'border-brand-400/45 bg-brand-400/10' : 'border-line bg-ink-950/50'
+                        className={`flex items-center gap-3 rounded-xl border p-3 transition ${
+                          alreadyActive
+                            ? 'cursor-not-allowed border-brand-400/20 bg-brand-400/5 opacity-75'
+                            : checked
+                              ? 'cursor-pointer border-brand-400/45 bg-brand-400/10 hover:border-brand-400/50'
+                              : 'cursor-pointer border-line bg-ink-950/50 hover:border-brand-400/50'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
+                          disabled={alreadyActive}
                           onChange={() => toggleCategory(category.id)}
                           className="h-4 w-4 rounded border-line bg-ink-950 text-brand-400"
                         />
@@ -518,6 +790,34 @@ export default function AdminAccessPage() {
           </div>
         </section>
       </div>
+      {isTotalConfirmOpen && selectedUser ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-brand-400/30 bg-[#0f201f] p-6 shadow-2xl shadow-brand-400/10">
+            <h3 className="text-xl font-bold text-white">Confirmar acceso total</h3>
+            <p className="mt-3 text-sm leading-6 text-gray-300">
+              Se seleccionarán {availableCategoryIds.length} carpetas pendientes para{' '}
+              <strong className="text-brand-200">{selectedUser.email ?? 'este cliente'}</strong>.
+              El acceso se guardará para su ID de usuario, no para la cuenta admin.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsTotalConfirmOpen(false)}
+                className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmTotalAccessSelection}
+                className="focus-ring rounded-full bg-brand-400 px-4 py-2 text-sm font-bold text-ink-950"
+              >
+                Seleccionar acceso total
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AdminShell>
   );
 }

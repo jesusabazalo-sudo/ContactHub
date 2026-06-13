@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { APP_CONFIG } from '../../config/app';
 import { officialCategories } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { useAutofillProfile } from '../../hooks/useAutofillProfile';
 import { sanitizeText } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
@@ -104,7 +105,7 @@ const plans: ChatPlan[] = [
   { id: 'starter', label: 'S/65 — 4 carpetas', name: 'Starter', price: 'S/65', folderText: '4 carpetas', description: 'Una base práctica para comparar opciones sin ir directo al acceso total.' },
   { id: 'fast-track', label: 'S/99 — 7 carpetas', name: 'Fast Track', price: 'S/99', folderText: '7 carpetas', description: 'Para avanzar más rápido con varias carpetas relacionadas a tu objetivo.' },
   { id: 'power', label: 'S/150 — 10 carpetas', name: 'Power', price: 'S/150', folderText: '10 carpetas', description: 'Más alternativas para negocio, aprendizaje, proveedores o servicios.' },
-  { id: 'elite-total', label: 'S/360 — Acceso total', name: 'Elite Total', price: 'S/360', folderText: 'acceso total', description: 'Para quienes quieren desbloquear todo ContactHub y explorar la plataforma completa.' },
+  { id: 'elite-total', label: 'S/360 — Acceso completo', name: 'Acceso completo', price: 'S/360', folderText: 'todas las carpetas', description: 'Para quienes quieren explorar ContactHub de forma amplia y entender todas las categorias disponibles.' },
 ];
 
 const legacyChatFolderCategories: ChatCategory[] = [
@@ -137,8 +138,8 @@ const legacyChatFolderCategories: ChatCategory[] = [
 
 const officialChatFolderCategories: ChatCategory[] = officialCategories.map((category) => ({
   index: category.sortOrder,
-  name: category.name,
-  shortName: category.shortDescription,
+  name: category.title,
+  shortName: category.subtitle,
   description: category.description,
   finds: category.whatYouCanFind,
   price: 'S/20',
@@ -152,7 +153,7 @@ const mainActions: ChatAction[] = [
   { label: 'No entiendo algo', type: 'help' },
   { label: 'Guía rápida', type: 'catalog', value: '/guia' },
   { label: 'Ganar contacto gratis', type: 'missions' },
-  { label: 'Hablar con Jesús', type: 'human' },
+  { label: 'Contactar soporte', type: 'human' },
 ];
 
 const helpTopics: Record<string, string> = {
@@ -161,26 +162,25 @@ const helpTopics: Record<string, string> = {
   trial: 'Puedes elegir una carpeta para ver una muestra limitada de contactos reales. La prueba se usa una sola vez.',
   unlock: 'Después del pago o recompensa aprobada, activamos tu acceso. Desde ese momento puedes ver los contactos completos de la carpeta correspondiente.',
   pay: 'Puedes pagar por Yape. Escanea el QR o copia el número si está disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.',
-  trust: 'El acceso se activa de forma manual y verificada. No mostramos teléfonos completos hasta confirmar pago, prueba o recompensa aprobada.',
+  trust: 'Puedes explorar antes de registrarte o pagar. El correo solo guarda tus accesos, pruebas y comprobantes. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail. El acceso se activa de forma manual y verificada.',
   free: 'Sí. Puedes registrarte, explorar el catálogo y ganar contactos extra completando misiones como compartir ContactHub y enviar evidencia.',
 };
 
 const autoResponses = [
   {
     keywords: ['precio', 'cuanto', 'cuánto', 'costo', 'vale', 'cobras'],
-    response: `💰 Los precios son:
+    response: `Los precios son:
 - 1 carpeta: S/20
 - Pack Starter (4 carpetas): S/65
-- Pack Power (10 carpetas): S/150
-- Acceso Total (24 carpetas): S/360
+- Pack Power (10 carpetas): S/150  
+- Acceso completo (24 carpetas): S/360
 
-🎁 ¡Con regalo incluido! Compra 1 y llévate 2 más gratis.
-¿Cuál te interesa?`,
+Puedes revisar el catalogo antes de pagar. Si quieres, te ayudo a elegir segun tu meta.`,
     flow: 'prices' as ChatFlow,
   },
   {
     keywords: ['pagar', 'pago', 'yape', 'plin', 'transferencia', 'comprar'],
-    response: '💜 Puedes pagar por Yape. Escanea el QR o usa el número disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.',
+    response: 'Puedes pagar por Yape. Escanea el QR o usa el numero disponible solo cuando tengas claro que opcion quieres. Luego subes tu comprobante aqui mismo para revision manual y activacion.',
     flow: 'payment' as ChatFlow,
   },
   {
@@ -199,8 +199,8 @@ En total hay más de 800 contactos. ¿Qué tipo de oportunidad quieres explorar?
   },
   {
     keywords: ['garantia', 'garantía', 'seguro', 'confiable', 'funciona'],
-    response: '✅ Puedes explorar antes de decidir. Los contactos completos solo se muestran cuando tu acceso está activo, y también puedes probar 3 contactos gratis.',
-    flow: 'help' as ChatFlow,
+    response: 'Te entiendo. Puedes explorar antes de decidir. No pedimos claves, codigos privados ni contrasenas externas. Los contactos completos solo se muestran cuando tu acceso esta activo, y tambien puedes probar contactos gratis.',
+    flow: 'privacy' as ChatFlow,
   },
   {
     keywords: ['gratis', 'prueba', 'probar', 'free'],
@@ -270,7 +270,7 @@ function getPaymentMethods(): PaymentMethod[] {
 }
 
 function paymentInfoMessage() {
-  return 'Puedes pagar por Yape. Escanea el QR o usa el número disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.';
+  return 'Puedes pagar por Yape. Escanea el QR o usa el numero disponible solo cuando ya elegiste una opcion. Luego sube tu comprobante aqui mismo para revision manual. ContactHub nunca te pedira claves bancarias, codigos privados ni contrasenas externas.';
 }
 
 function getWhatsAppUrl(message: string) {
@@ -311,11 +311,11 @@ function YapeQrMessage({ paymentName }: { paymentName: string }) {
       </p>
       <img
         src={APP_CONFIG.qrYapeUrl}
-        alt="QR Yape - Jesus Francisco Abazalo Mori"
+        alt="QR Yape - titular asociado a ContactHub"
         style={{ width: '200px', maxWidth: '100%', borderRadius: '12px', border: '2px solid #1DB47A', margin: '0 auto' }}
       />
       <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
-        A nombre de: {paymentName}
+        Titular asociado a ContactHub: {paymentName}
       </p>
       <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
         Después de pagar, toca "Ya pagué" y envía el comprobante
@@ -363,7 +363,7 @@ function PaymentCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">{primaryMethod.title}</p>
-          <p className="mt-1 text-sm font-semibold text-white">{paymentName || 'Titular no configurado'}</p>
+          <p className="mt-1 text-sm font-semibold text-white">Titular asociado a ContactHub: {paymentName || 'Titular no configurado'}</p>
         </div>
         <span className="premium-chip rounded-full px-3 py-1 text-xs font-bold">Manual verificado</span>
       </div>
@@ -391,6 +391,10 @@ function PaymentCard({
           </div>
         </div>
       ) : null}
+
+      <div className="mt-4 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-3 text-xs leading-5 text-gray-300">
+        Paga solo cuando tengas claro el plan o carpeta. ContactHub nunca te pedira claves bancarias, codigos privados ni contrasenas externas. La activacion se revisa manualmente.
+      </div>
 
       {extraMethods.length ? (
         <div className="mt-3 grid gap-2">
@@ -440,6 +444,7 @@ function PaymentCard({
 
 export default function ChatWidget() {
   const { user } = useAuth();
+  const autofill = useAutofillProfile();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([localMessage(welcomeMessage, 'admin')]);
   const [text, setText] = useState('');
@@ -476,12 +481,12 @@ export default function ChatWidget() {
         { label: 'Recomiéndame un plan', type: 'helpTopic', value: 'recommend' },
         { label: 'Quiero pagar', type: 'payment' },
         { label: 'Volver a precios', type: 'prices' },
-        ...(hasWhatsApp ? [{ label: 'Hablar con Jesús', type: 'human' as const }] : []),
+        ...(hasWhatsApp ? [{ label: 'Contactar soporte', type: 'human' as const }] : []),
       ];
     }
     if (currentFlow === 'folders') {
       return [
-        ...officialChatFolderCategories.map((category) => ({ label: `${String(category.index).padStart(2, '0')}. ${category.shortName}`, type: 'folder' as const, value: String(category.index) })),
+        ...officialChatFolderCategories.map((category) => ({ label: `${String(category.index).padStart(2, '0')}. ${category.name}`, type: 'folder' as const, value: String(category.index) })),
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
@@ -556,7 +561,7 @@ export default function ChatWidget() {
     }
     if (currentFlow === 'human') {
       return [
-        ...(hasWhatsApp ? [{ label: 'Abrir WhatsApp', type: 'whatsapp' as const }] : []),
+        ...(hasWhatsApp ? [{ label: 'Soporte ContactHub por WhatsApp', type: 'whatsapp' as const }] : []),
         { label: 'Volver al inicio', type: 'main' },
       ];
     }
@@ -602,18 +607,18 @@ export default function ChatWidget() {
 
   function renderPlanMessage(plan: ChatPlan) {
     if (plan.id === 'elite-total') {
-      return 'Perfecto 🔥 Elegiste Elite Total. Este acceso desbloquea todo ContactHub. El precio es S/360. Puedes pagar por Yape y luego enviar tu comprobante para activar tu acceso.';
+      return 'Perfecto. Elegiste acceso completo. Esta opcion habilita todas las carpetas de ContactHub cuando el pago queda revisado. El precio es S/360. Puedes pagar por Yape y luego enviar tu comprobante para activacion manual.';
     }
-    return `Perfecto. Elegiste ${plan.name}. Incluye ${plan.folderText} por ${plan.price}. ${plan.description} Puedes pagar por Yape y luego enviar tu comprobante para activar tu acceso.`;
+    return `Perfecto. Elegiste ${plan.name}. Incluye ${plan.folderText} por ${plan.price}. ${plan.description} Puedes pagar por Yape y luego enviar tu comprobante para revision manual.`;
   }
 
   function renderFolderMessage(folder: ChatCategory) {
-    return [`Elegiste ${folder.name}.`, folder.description, `Qué puedes encontrar: ${folder.finds.join(', ')}.`, folder.price ? `Precio referencial: ${folder.price}.` : 'Esta carpeta tiene tratamiento especial y requiere revisión.', 'No mostramos teléfonos completos hasta que tengas acceso activo.'].join('\n');
+    return [`Elegiste ${folder.name}.`, `Referencia interna: ${folder.shortName}.`, folder.description, `Qué puedes encontrar: ${folder.finds.join(', ')}.`, folder.price ? `Precio referencial: ${folder.price}.` : 'Esta carpeta tiene tratamiento especial y requiere revisión.', 'No mostramos teléfonos completos hasta que tengas acceso activo.'].join('\n');
   }
 
   function openWhatsApp(value?: string) {
     if (value === 'receiptShort') {
-      const url = getWhatsAppUrl('Hola Jesús, acabo de hacer el pago por Yape. Te mando el comprobante.');
+      const url = getWhatsAppUrl('Hola, vengo desde ContactHub. Ya realice el pago y quiero enviar mi comprobante para activar mi acceso.');
       if (url) {
         window.open(url, '_blank', 'noopener,noreferrer');
         return;
@@ -623,10 +628,10 @@ export default function ChatWidget() {
     }
     const whatsappMessage =
       value === 'receipt'
-        ? 'Hola Jesús, vengo desde ContactHub. Ya realicé el pago por Yape y quiero enviar mi comprobante para activar mi acceso.'
+        ? 'Hola, vengo desde ContactHub. Ya realice el pago y quiero enviar mi comprobante para activar mi acceso.'
         : value === 'evidence'
-          ? 'Hola Jesús, vengo de ContactHub. Quiero enviar evidencia para ganar un contacto extra.'
-          : 'Hola Jesús, vengo desde ContactHub. Quiero consultar sobre un pago, carpeta o acceso.';
+          ? 'Hola, vengo desde ContactHub. Quiero enviar evidencia para ganar un contacto extra.'
+          : 'Hola, vengo desde ContactHub. Necesito ayuda con una consulta sobre carpetas, pagos o acceso.';
     const url = getWhatsAppUrl(whatsappMessage);
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -730,7 +735,7 @@ export default function ChatWidget() {
       await delay(2000);
       setIsTyping(false);
       await addAssistantMessage(
-        'âœ… Â¡Comprobante recibido! Gracias por tu confianza ðŸ™\n\nEstamos verificando tu pago. En pocos minutos activaremos tu acceso y te avisamos aquÃ­ mismo.\n\nðŸ’œ Si tienes alguna duda, escrÃ­benos.',
+        `✅ ¡Comprobante recibido! Quedó vinculado a tu cuenta${autofill.email ? ` (${autofill.email})` : ''}.\n\nEstamos verificando tu pago. En pocos minutos activaremos tu acceso y te avisamos aquí mismo.\n\nSi tienes alguna duda, escríbenos.`,
         'paid',
       );
     } catch (error) {
@@ -774,7 +779,7 @@ export default function ChatWidget() {
       return;
     }
     if (action.type === 'promos') {
-      await addAssistantMessage('Por ahora las promos pueden variar. Puedes consultar una recomendación según lo que buscas o hablar con Jesús para una promo disponible.', 'promos');
+      await addAssistantMessage('Por ahora las promos pueden variar. Puedes consultar una recomendacion segun lo que buscas o contactar soporte para revisar una opcion disponible.', 'promos');
       return;
     }
     if (action.type === 'folders') {
@@ -814,7 +819,7 @@ export default function ChatWidget() {
     if (action.type === 'helpTopic') {
       const responses: Record<string, string> = {
         ...helpTopics,
-        recommend: 'Si estás empezando, te recomiendo una carpeta de S/20. Si ya sabes que necesitas varias opciones, Starter o Fast Track suelen ser más prácticos. Si quieres todo desde el inicio, Elite Total es el camino directo.',
+        recommend: 'Si estas empezando, te recomiendo una carpeta de S/20. Si ya sabes que necesitas varias opciones, Starter o Fast Track suelen ser mas practicos. Si quieres revisar todo el catalogo, el acceso completo puede convenirte.',
         planIncludes: selectedPlan ? `${selectedPlan.name} incluye ${selectedPlan.folderText}. ${selectedPlan.description} Los teléfonos completos se muestran cuando el acceso queda activo.` : 'Cada plan habilita la cantidad de carpetas indicada. Los teléfonos completos se muestran cuando el acceso queda activo.',
         receiptChat: 'Puedes subir tu comprobante aquí mismo con el botón “Subir comprobante”. Si necesitas enviar imagen por WhatsApp, úsalo como último recurso.',
         missionStart: 'Puedes empezar con una misión simple: comparte ContactHub en una historia o estado, invita a alguien a registrarse o deja una opinión. Luego envías evidencia para revisión.',
@@ -831,7 +836,7 @@ export default function ChatWidget() {
       return;
     }
     if (action.type === 'human') {
-      await addAssistantMessage('Claro. Si necesitas atención directa, puedes escribirle a Jesús por WhatsApp. Úsalo para comprobantes, dudas específicas o ayuda con tu acceso.', 'human');
+      await addAssistantMessage('Claro. Si necesitas atencion directa, puedes contactar a soporte ContactHub por WhatsApp. Usalo para comprobantes, dudas especificas o ayuda con tu acceso.', 'human');
     }
   }
 
@@ -840,8 +845,8 @@ export default function ChatWidget() {
     await delay(1500);
     setIsTyping(false);
     const normalized = normalizeText(message);
-    if (hasAny(normalized, ['no quiero poner mi correo', 'no quiero poner correo', 'por que me piden gmail', 'porque me piden gmail', 'por que piden correo', 'porque piden correo', 'es seguro registrarme', 'tengo miedo de poner mi correo', 'miedo de poner correo', 'gmail'])) {
-      await addAssistantMessage('Te entiendo. Puedes explorar ContactHub sin registrarte. Solo pedimos correo cuando quieres guardar una prueba, desbloquear una carpeta o enviar comprobante. Tu correo sirve como llave para activar tus accesos.', 'privacy');
+    if (hasAny(normalized, ['no quiero poner mi correo', 'no quiero poner correo', 'por que me piden gmail', 'porque me piden gmail', 'por que piden correo', 'porque piden correo', 'es seguro registrarme', 'tengo miedo de poner mi correo', 'miedo de poner correo', 'gmail', 'estafa', 'me van a estafar', 'es confiable', 'es seguro', 'por que piden mi correo'])) {
+      await addAssistantMessage('Te entiendo. Puedes explorar ContactHub sin registrarte. Solo pedimos correo cuando quieres guardar una prueba, desbloquear una carpeta o enviar comprobante. Tu correo funciona como llave de acceso. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail.', 'privacy');
       return;
     }
     if (hasAny(normalized, ['donde veo mis 3 contactos gratis', 'mis contactos gratis', 'prueba gratis', 'como empiezo', 'no se que hacer', 'acabo de registrarme', 'recien me registre', 'recien me registré', 'recién me registre', 'recién me registré', 'que hago ahora', 'donde veo mis accesos', 'guia rapida'])) {
@@ -909,7 +914,7 @@ export default function ChatWidget() {
       return;
     }
     if (hasAny(normalized, ['jesus', 'persona', 'humano', 'whatsapp', 'asesor'])) {
-      await addAssistantMessage('Claro. Si necesitas atención directa, puedes escribirle a Jesús por WhatsApp. Úsalo para comprobantes, dudas específicas o ayuda con tu acceso.', 'human');
+      await addAssistantMessage('Claro. Si necesitas atencion directa, puedes contactar a soporte ContactHub por WhatsApp. Usalo para comprobantes, dudas especificas o ayuda con tu acceso.', 'human');
       return;
     }
     await addAssistantMessage('Creo que estás buscando orientación, pero necesito ubicar mejor tu meta. ¿Quieres aprender, trabajar, vender, conseguir servicios, buscar proveedores o explorar oportunidades?', 'main');
@@ -1018,7 +1023,7 @@ export default function ChatWidget() {
         <div className="dopamine-card neon-edge fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
           <div className="flex items-center justify-between border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-5 py-4">
             <div>
-              <p className="font-display text-lg font-bold text-white">Jesús - ContactHub</p>
+              <p className="font-display text-lg font-bold text-white">Soporte ContactHub</p>
               <p className="mt-1 flex items-center gap-2 text-xs text-brand-400">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
                 Guía de precios, carpetas, pagos y acceso
@@ -1048,7 +1053,7 @@ export default function ChatWidget() {
             {isTyping ? (
               <div className="flex justify-start">
                 <div className="rounded-2xl rounded-bl-md border border-brand-400/15 bg-[#0d2a1f] px-4 py-3 text-sm text-gray-300">
-                  Jesús está escribiendo<span className="animate-pulse">...</span>
+                  Soporte esta escribiendo<span className="animate-pulse">...</span>
                 </div>
               </div>
             ) : null}

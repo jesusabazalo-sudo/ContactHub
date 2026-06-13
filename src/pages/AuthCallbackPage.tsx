@@ -31,8 +31,13 @@ export default function AuthCallbackPage() {
         const tokenHash = searchParams.get('token_hash');
         const type = (searchParams.get('type') ?? 'signup') as EmailOtpType;
         const code = searchParams.get('code');
+        const urlError = searchParams.get('error_description') ?? searchParams.get('error') ?? hashParams.get('error_description') ?? hashParams.get('error');
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+
+        if (urlError) {
+          throw new Error(urlError);
+        }
 
         if (tokenHash) {
           const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
@@ -53,8 +58,8 @@ export default function AuthCallbackPage() {
 
         if (data.session) {
           setState('success');
-          setStatus('¡Cuenta confirmada! Redirigiendo...');
-          goTo('/', 1500);
+          setStatus('¡Cuenta confirmada! Redirigiendo a tus contactos...');
+          goTo('/mis-contactos', 1500);
           return;
         }
 

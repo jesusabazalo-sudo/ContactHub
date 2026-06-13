@@ -1,5 +1,6 @@
 import { ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getOfficialCategoryDisplayParts } from '../../data/officialCategories';
 import type { Category } from '../../types';
 import { getPhoneDisplay } from '../../utils/phone';
 import Badge from '../ui/Badge';
@@ -10,13 +11,14 @@ type CategoryCardProps = {
 };
 
 function statusLabel(category: Category) {
-  if (category.isPremiumOfficial || category.sortOrder === 25) return 'Premium';
+  if (category.isPremiumOfficial || category.sortOrder === 25) return 'Acceso amplio';
   if (category.isTop) return 'Destacada';
   if (category.isNew) return 'Nueva';
   return category.contactsCount > 0 ? 'Disponible' : 'Preparando';
 }
 
 export default function CategoryCard({ category, accessLevel = 0 }: CategoryCardProps) {
+  const display = getOfficialCategoryDisplayParts(category);
   const order = category.sortOrder ?? 0;
   const orderLabel = order ? String(order).padStart(2, '0') : '--';
   const items = (category.whatYouCanFind?.length ? category.whatYouCanFind : category.tags).slice(0, 4);
@@ -45,8 +47,15 @@ export default function CategoryCard({ category, accessLevel = 0 }: CategoryCard
         </div>
       </div>
 
-      <h3 className="relative mt-5 min-h-14 text-lg font-bold leading-6 text-white">{category.name}</h3>
-      <p className="relative mt-3 min-h-16 text-sm leading-6 text-gray-400">{category.shortDescription || category.description}</p>
+      <div className="relative mt-5 min-h-20">
+        <h3 className="text-xl font-extrabold leading-7 text-white">{display.displayTitle}</h3>
+        {display.displaySubtitle ? (
+          <span className="mt-2 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-200">
+            {display.displaySubtitle}
+          </span>
+        ) : null}
+      </div>
+      <p className="relative mt-3 min-h-16 text-sm font-medium leading-6 text-gray-300">{category.shortDescription || category.description}</p>
 
       <div className="relative mt-5 rounded-xl border border-brand-400/15 bg-ink-950/45 p-4">
         <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
@@ -90,7 +99,7 @@ export default function CategoryCard({ category, accessLevel = 0 }: CategoryCard
         <Link
           to={`/catalogo/${category.slug}`}
           className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-4 py-2 text-sm font-bold text-ink-950 transition group-hover:bg-white"
-          aria-label={`Ver ${category.name}`}
+          aria-label={`Ver ${display.displayTitle}`}
         >
           Ver muestra
           <ArrowRight className="h-4 w-4" />

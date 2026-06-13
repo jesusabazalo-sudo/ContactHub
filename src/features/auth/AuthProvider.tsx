@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { ensureAutofillProfile } from '../../lib/autofillProfile';
 import { getFriendlyAuthError, isExpiredSessionError } from '../../lib/authErrors';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
@@ -21,6 +22,16 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+function getSiteUrl() {
+  const configuredUrl = import.meta.env.VITE_SITE_URL?.trim();
+  const fallbackUrl = typeof window !== 'undefined' ? window.location.origin : 'https://contact-hub-knmq.vercel.app';
+  return (configuredUrl || fallbackUrl).replace(/\/+$/, '');
+}
+
+function getAuthCallbackUrl() {
+  return `${getSiteUrl()}/auth/callback`;
+}
 
 async function resolveAdminStatus(userId: string) {
   if (!supabase || !isSupabaseConfigured) return false;
@@ -101,6 +112,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!isMounted) return;
         setSession(data.session);
         setSessionExpired(false);
+        if (data.session?.user) void ensureAutofillProfile(data.session.user);
         await loadAdminStatus(data.session, true);
       } catch (error) {
         if (!isMounted) return;
@@ -152,6 +164,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setSession(nextSession);
 
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        if (nextSession?.user) void ensureAutofillProfile(nextSession.user);
         void loadAdminStatus(nextSession);
       }
     });
@@ -236,7 +249,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: getAuthCallbackUrl(),
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -257,7 +274,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: getAuthCallbackUrl(),
       },
     });
 
@@ -272,7 +289,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: `${getSiteUrl()}/auth`,
     });
 
     if (error) {

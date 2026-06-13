@@ -4,23 +4,23 @@ import SectionHeading from '../ui/SectionHeading';
 const steps = [
   {
     icon: Eye,
-    title: 'Explora gratis',
-    text: 'Crea tu cuenta y mira categorías, descripciones y teléfonos protegidos sin pagar todavía.',
+    title: 'Explora sin presion',
+    text: 'Mira categorias, descripciones y telefonos protegidos antes de registrarte o pagar.',
   },
   {
     icon: MessageSquareText,
-    title: 'Dinos tu meta',
-    text: 'Usa el chat para contar qué buscas lograr: aprender, vender, trabajar, conseguir proveedores o encontrar servicios.',
+    title: 'Cuenta tu meta',
+    text: 'Usa el chat para decir si buscas aprender, vender, trabajar, conseguir proveedores o encontrar servicios.',
   },
   {
     icon: KeyRound,
-    title: 'Desbloquea lo útil',
-    text: 'Elige la carpeta que te acerca a tu objetivo. El acceso se activa manualmente después de validar pago o recompensa.',
+    title: 'Activa lo que necesitas',
+    text: 'Elige carpeta, pack, prueba o recompensa. Los accesos se validan manualmente.',
   },
   {
     icon: Gift,
-    title: 'Gana contactos extra',
-    text: 'Si ahora no puedes pagar, completa misiones simples y envía evidencia para revisión del admin.',
+    title: 'Avanza con alternativas',
+    text: 'Si ahora no puedes pagar, revisa misiones y envia evidencia para que el admin la evalue.',
   },
 ];
 
@@ -28,7 +28,7 @@ export default function HowItWorks() {
   return (
     <section className="section-pad bg-ink-950">
       <div className="container-shell">
-        <SectionHeading align="center" title="Cómo avanzar dentro de ContactHub" />
+        <SectionHeading align="center" title="Un flujo simple y transparente" />
         <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {steps.map((step, index) => (
             <article key={step.title} className="card-hover rounded-lg border border-line bg-panel p-6">

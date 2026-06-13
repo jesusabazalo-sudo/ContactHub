@@ -91,7 +91,11 @@ export async function getCatalogCategories() {
 
     const withCounts = await Promise.all(
       (data ?? []).map(async (cat) => {
-        const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
+        const { count, error: countError } = await client
+          .from('contacts')
+          .select('id', { count: 'exact', head: true })
+          .eq('category_id', cat.id)
+          .eq('status', 'active');
         if (countError) console.error('getCatalogCategories count:', countError.message);
         return mapCategory(cat, count ?? 0);
       }),
@@ -153,9 +157,15 @@ export async function getCategoryContacts(categoryId: string, hasAccess: boolean
 export async function checkUserCategoryAccess(userId: string | undefined, categoryId: string, isAdmin = false): Promise<boolean> {
   if (isAdmin) return true;
   if (!supabase || !userId) return false;
-  const { data, error } = await supabase.from('user_category_access').select('id').eq('user_id', userId).eq('category_id', categoryId).eq('status', 'active').maybeSingle();
+  const { data, error } = await supabase
+    .from('user_category_access')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('category_id', categoryId)
+    .eq('status', 'active')
+    .limit(1);
   if (error) return false;
-  return !!data;
+  return (data ?? []).length > 0;
 }
 
 export async function checkUserTotalAccess(userId: string): Promise<boolean> {

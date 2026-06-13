@@ -16,6 +16,7 @@ import HomePage from './pages/HomePage';
 import LegalPage from './pages/LegalPage';
 import MyContactsPage from './pages/MyContactsPage';
 import PricingPage from './pages/PricingPage';
+import PublishServicePage from './pages/PublishServicePage';
 import PromosPage from './pages/PromosPage';
 import ServicesPage from './pages/ServicesPage';
 import AdminAccessPage from './pages/admin/AdminAccessPage';
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/catalogo/:slug" element={<CategoryDetailPage />} />
           <Route path="/precios" element={<PricingPage />} />
           <Route path="/promos" element={<PromosPage />} />
+          <Route path="/publica-tu-servicio" element={<PublishServicePage />} />
           <Route path="/mis-contactos" element={<AuthGuard><MyContactsPage /></AuthGuard>} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/guia" element={<GuidePage />} />

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
 import AdminShell from '../../components/admin/AdminShell';
+import ContactsMaintenancePanel from '../../components/admin/ContactsMaintenancePanel';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { buildOfficialCategoryOptions, officialCategories, type OfficialCategoryDisplay } from '../../data/officialCategories';
@@ -27,9 +28,23 @@ type ContactStatus = 'active' | 'inactive' | 'review' | 'rejected';
 type ContactQualityFilter = 'all' | 'complete' | 'pending' | 'no_phone' | 'verified';
 type AdminContactStats = {
   total: number;
+  publicable: number;
+  restricted: number;
   uncategorized: number;
   complete: number;
   noPhone: number;
+  placeholders: number;
+};
+
+type CategoryRepairItem = {
+  id: string;
+  target: CategoryOption;
+};
+
+type CategoryRepairPlan = {
+  scanned: number;
+  repairs: CategoryRepairItem[];
+  unresolved: number;
 };
 
 type ContactRow = {
@@ -38,10 +53,16 @@ type ContactRow = {
   name: string;
   description: string | null;
   phone: string | null;
+  raw_phone?: string | null;
+  phone_status?: 'valid' | 'needs_review' | null;
   phone_masked: string | null;
   whatsapp?: string | null;
   internal_note?: string | null;
   source?: string | null;
+  visibility?: 'public' | 'restricted' | null;
+  is_public?: boolean | null;
+  import_batch?: string | null;
+  import_note?: string | null;
   is_active?: boolean | null;
   deleted_at?: string | null;
   country_flag?: string | null;
@@ -72,7 +93,7 @@ const pageSize = 50;
 const suggestedFolderCapacity = 200;
 const adminContactsStateKey = 'contacthub_admin_contacts_state_v1';
 const baseContactSelect = 'id, name, phone, phone_masked, status, created_at, category_id, description, tags, risk_level, country_flag, country_code';
-const extendedContactSelect = `${baseContactSelect}, whatsapp, internal_note, source, is_active, deleted_at`;
+const extendedContactSelect = `${baseContactSelect}, whatsapp, internal_note, source, is_active, deleted_at, raw_phone, phone_status, visibility, is_public, import_batch, import_note`;
 
 const emptyForm: ContactForm = {
   name: '',
@@ -128,7 +149,7 @@ function getSupabaseErrorMessage(error: SupabaseDebugError) {
 }
 
 function isMissingColumnError(error: SupabaseDebugError) {
-  return /schema cache|column|whatsapp|internal_note|deleted_at|is_active|source/i.test(error.message ?? '');
+  return /schema cache|column|whatsapp|internal_note|deleted_at|is_active|source|raw_phone|phone_status|visibility|is_public|import_batch|import_note/i.test(error.message ?? '');
 }
 
 export function parseContactLine(line: string) {
@@ -178,6 +199,7 @@ function splitTags(tags: string) {
 function getCategoryLabel(category?: CategoryOption) {
   if (!category) return 'Sin categoría';
   const order = String(category.displayOrder ?? category.sort_order ?? '').padStart(2, '0');
+  if (order === '18') return `18. ${category.displayIcon ?? category.icon ?? '⚠️'} Contenido reservado o sensible — The Vault`;
   const title = category.displayTitle ?? category.name;
   const subtitle = category.displaySubtitle ?? category.short_description;
   return `${category.displayIcon ?? category.icon ?? '📁'} ${order}. ${title}${subtitle ? ` - ${subtitle}` : ''}`;
@@ -213,12 +235,16 @@ function defaultDescriptionFor(category?: CategoryOption) {
 }
 
 function getContactQuality(contact: ContactRow) {
-  if (!contact.phone) return { key: 'no_phone', label: 'Sin teléfono', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
+  if (!hasUsablePhone(contact.phone)) return { key: 'no_phone', label: 'Sin teléfono', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
   if (contact.deleted_at || contact.is_active === false || contact.status === 'inactive') return { key: 'archived', label: 'Archivado', className: 'bg-white/10 text-gray-300 border-white/15' };
   if (contact.status === 'review') return { key: 'pending', label: 'Pendiente', className: 'bg-yellow-500/15 text-yellow-200 border-yellow-400/25' };
   if (contact.status === 'rejected') return { key: 'rejected', label: 'Rechazado', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
   if (contact.phone && contact.description?.trim()) return { key: 'complete', label: 'Completo', className: 'bg-brand-400/15 text-brand-200 border-brand-400/25' };
   return { key: 'verified', label: 'Verificado', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
+}
+
+function hasUsablePhone(phone?: string | null) {
+  return Boolean(phone && !/revisar en documento original/i.test(phone));
 }
 
 const hiddenContactStatuses = new Set(['inactive', 'deleted', 'archived']);
@@ -232,6 +258,7 @@ function isVisibleContact(contact: Partial<ContactRow> & { status?: string | nul
 }
 
 function getWhatsappLink(phone: string | null | undefined) {
+  if (/revisar en documento original/i.test(phone ?? '')) return '';
   const clean = normalizePhoneForAdmin(phone ?? '').replace(/^\+/, '');
   return clean ? `https://wa.me/${clean}` : '';
 }
@@ -368,13 +395,33 @@ export default function AdminContactsPage() {
   const [bulkTag, setBulkTag] = useState('');
   const [bulkMoveCategory, setBulkMoveCategory] = useState('');
   const [bulkStatus, setBulkStatus] = useState<ContactStatus>('active');
-  const [adminStats, setAdminStats] = useState<AdminContactStats>({ total: 0, uncategorized: 0, complete: 0, noPhone: 0 });
+  const [adminStats, setAdminStats] = useState<AdminContactStats>({
+    total: 0,
+    publicable: 0,
+    restricted: 0,
+    uncategorized: 0,
+    complete: 0,
+    noPhone: 0,
+    placeholders: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [repairPlan, setRepairPlan] = useState<CategoryRepairPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const categoryById = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
+  const repairDestinationSummary = useMemo(() => {
+    if (!repairPlan) return [];
+    const counts = new Map<string, { category: CategoryOption; count: number }>();
+    repairPlan.repairs.forEach(({ target }) => {
+      const current = counts.get(target.id);
+      counts.set(target.id, { category: target, count: (current?.count ?? 0) + 1 });
+    });
+    return Array.from(counts.values()).sort(
+      (a, b) => (a.category.displayOrder ?? a.category.sort_order ?? 999) - (b.category.displayOrder ?? b.category.sort_order ?? 999),
+    );
+  }, [repairPlan]);
 
   const filteredContacts = useMemo(() => {
     const safeTag = tagFilter.trim().toLowerCase();
@@ -434,10 +481,40 @@ export default function AdminContactsPage() {
     return query.neq('status', 'inactive').neq('status', 'deleted').neq('status', 'archived');
   };
 
+  const fetchActiveContactRows = async (select: string) => {
+    if (!supabase) return { data: [] as Array<Record<string, unknown>>, error: null };
+    const rows: Array<Record<string, unknown>> = [];
+    const batchSize = 1000;
+
+    for (let offset = 0; ; offset += batchSize) {
+      const response = await (supabase as any)
+        .from('contacts')
+        .select(select)
+        .in('status', ['active', 'review'])
+        .order('id', { ascending: true })
+        .range(offset, offset + batchSize - 1);
+      if (response.error) return { data: rows, error: response.error as SupabaseDebugError };
+
+      const page = (response.data ?? []) as Array<Record<string, unknown>>;
+      rows.push(...page);
+      if (page.length < batchSize) break;
+    }
+
+    return { data: rows, error: null };
+  };
+
   const loadCategories = async () => {
     if (!supabase || !isSupabaseConfigured) {
       setCategories(buildOfficialCategoryRows([]) as CategoryOption[]);
-      setAdminStats({ total: 0, uncategorized: 0, complete: 0, noPhone: 0 });
+      setAdminStats({
+        total: 0,
+        publicable: 0,
+        restricted: 0,
+        uncategorized: 0,
+        complete: 0,
+        noPhone: 0,
+        placeholders: 0,
+      });
       return;
     }
 
@@ -456,15 +533,9 @@ export default function AdminContactsPage() {
     const officialRows = buildOfficialCategoryRows(realCategoryRows);
 
     const realIds = new Set(officialRows.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => category.id));
-    let { data: contactCounters, error: contactCountersError } = await (supabase as any)
-      .from('contacts')
-      .select('id, category_id, phone, description, status, is_active, deleted_at')
-      .limit(10000);
-    if (contactCountersError && isMissingColumnError(contactCountersError)) {
-      const fallbackCounters = await supabase.from('contacts').select('id, category_id, phone, description, status').limit(10000);
-      contactCounters = fallbackCounters.data;
-      contactCountersError = fallbackCounters.error;
-    }
+    const { data: contactCounters, error: contactCountersError } = await fetchActiveContactRows(
+      'id, category_id, phone, description, status',
+    );
     if (contactCountersError) console.warn('contact counters:', contactCountersError.message);
 
     const rowsForStats = ((contactCounters ?? []) as Array<Partial<ContactRow> & { status?: string | null }>).filter(isVisibleContact);
@@ -482,9 +553,12 @@ export default function AdminContactsPage() {
 
     setAdminStats({
       total: rowsForStats.length,
+      publicable: rowsForStats.filter((contact) => contact.status === 'active').length,
+      restricted: rowsForStats.filter((contact) => contact.status === 'review' || contact.visibility === 'restricted' || contact.is_public === false).length,
       uncategorized: rowsForStats.filter((contact) => !contact.category_id || !realIds.has(contact.category_id)).length,
-      complete: rowsForStats.filter((contact) => Boolean(contact.phone && contact.description?.trim())).length,
-      noPhone: rowsForStats.filter((contact) => !contact.phone).length,
+      complete: rowsForStats.filter((contact) => Boolean(hasUsablePhone(contact.phone) && contact.description?.trim())).length,
+      noPhone: rowsForStats.filter((contact) => !hasUsablePhone(contact.phone)).length,
+      placeholders: rowsForStats.filter((contact) => /^\+?0{6,}/.test(contact.phone ?? '')).length,
     });
 
     console.log('Categories loaded:', withCounts.length, withCounts[0]);
@@ -634,6 +708,15 @@ export default function AdminContactsPage() {
   }, []);
 
   useEffect(() => {
+    if (!categories.length || selectedCategory === 'all' || selectedCategory === 'uncategorized') return;
+    const selected = categoryById.get(selectedCategory);
+    if (!selected || isSyntheticCategoryId(selected.id)) {
+      setSelectedCategory('all');
+      setCurrentPage(0);
+    }
+  }, [categories, categoryById, selectedCategory]);
+
+  useEffect(() => {
     window.sessionStorage.setItem(
       adminContactsStateKey,
       JSON.stringify({
@@ -673,6 +756,17 @@ export default function AdminContactsPage() {
   function openEdit(contact: ContactRow) {
     setEditing(contact);
     setEditTags((contact.tags ?? []).join(', '));
+  }
+
+  function clearViewFilters() {
+    setSelectedCategory('all');
+    setSelectedStatus('all');
+    setQualityFilter('all');
+    setTagFilter('');
+    setSearch('');
+    setDebouncedSearch('');
+    setCurrentPage(0);
+    setSelectedIds([]);
   }
 
   function openAddContact() {
@@ -965,6 +1059,69 @@ export default function AdminContactsPage() {
     }
   }
 
+  async function repairReservedPhonePlaceholders() {
+    if (!supabase || !isSupabaseConfigured) {
+      toast.error('Falta conectar Supabase.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const table = (supabase as unknown as { from: (name: string) => any }).from('contacts');
+      const extendedPayload = {
+        phone: null,
+        raw_phone: 'REVISAR EN DOCUMENTO ORIGINAL',
+        phone_status: 'needs_review',
+        whatsapp: null,
+        phone_masked: 'Reservado para revisión',
+        visibility: 'restricted',
+        is_public: false,
+        import_batch: 'importacion_excel_1048_final',
+        import_note: 'Número no republicado por seguridad del directorio',
+        internal_note: 'Contacto reservado/importado para revisión admin',
+        status: 'review',
+        risk_level: 'review',
+        tags: ['revisión', 'reservado', 'admin'],
+        country_code: 'XX',
+        country_flag: '⚠️',
+      };
+
+      let response = await table
+        .update(extendedPayload)
+        .eq('source', 'importacion_excel_1048_final')
+        .like('phone', '+000%')
+        .select('id');
+
+      if (response.error && isMissingColumnError(response.error)) {
+        response = await table
+          .update({
+            phone: 'REVISAR EN DOCUMENTO ORIGINAL',
+            phone_masked: 'Reservado para revisión',
+            status: 'review',
+            risk_level: 'review',
+            tags: ['revisión', 'reservado', 'admin'],
+            country_code: 'XX',
+            country_flag: '⚠️',
+          })
+          .eq('source', 'importacion_excel_1048_final')
+          .like('phone', '+000%')
+          .select('id');
+      }
+
+      if (response.error) throw new Error(response.error.message);
+
+      const repaired = response.data?.length ?? 0;
+      toast.success(`${repaired} teléfonos reservados corregidos sin placeholders.`);
+      await reloadCurrentPage();
+    } catch (repairError) {
+      const message = repairError instanceof Error ? repairError.message : String(repairError);
+      console.error('repairReservedPhonePlaceholders failed:', message);
+      toast.error(`No pude corregirlos: ${message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function repairCategoryLinks() {
     if (!supabase || !isSupabaseConfigured) {
       toast.error('Falta conectar Supabase.');
@@ -980,12 +1137,12 @@ export default function AdminContactsPage() {
     setActionLoading(true);
     try {
       const legacySelect = `${baseContactSelect}, category_slug, folder_slug, category_name, folder_name, carpeta`;
-      let { data, error: repairReadError } = await (supabase as any).from('contacts').select(legacySelect).limit(10000);
+      let { data, error: repairReadError } = await fetchActiveContactRows(legacySelect);
       let hasLegacyColumns = true;
 
       if (repairReadError && isMissingColumnError(repairReadError)) {
         hasLegacyColumns = false;
-        const fallback = await supabase.from('contacts').select(baseContactSelect).limit(10000);
+        const fallback = await fetchActiveContactRows(baseContactSelect);
         data = fallback.data;
         repairReadError = fallback.error;
       }
@@ -997,16 +1154,26 @@ export default function AdminContactsPage() {
       }
 
       if (!hasLegacyColumns) {
-        toast.info('No encontré columnas antiguas de carpeta para inferir vínculos. Los contactos sin categoría quedan para reasignación manual.');
-        setSelectedCategory('uncategorized');
+        const invalidLinks = ((data ?? []) as Array<Record<string, unknown>>)
+          .filter((row) => {
+            const categoryId = String(row.category_id ?? '');
+            return !categoryId || !realIds.has(categoryId);
+          })
+          .length;
+        if (invalidLinks === 0) {
+          toast.success('Los vínculos actuales ya son válidos. No se modificó ningún contacto.');
+        } else {
+          toast.info(`${invalidLinks} contactos requieren revisión manual. No se modificó ni eliminó ningún registro.`);
+        }
         return;
       }
 
-      const repairs = ((data ?? []) as Array<Record<string, unknown>>)
+      const candidates = ((data ?? []) as Array<Record<string, unknown>>)
         .filter((row) => {
           const categoryId = String(row.category_id ?? '');
           return !categoryId || !realIds.has(categoryId);
-        })
+        });
+      const repairs = candidates
         .map((row) => {
           const target = getLegacyFolderValues(row)
             .map((value) => findCategoryByLegacyValue(value, realCategories))
@@ -1016,15 +1183,33 @@ export default function AdminContactsPage() {
         .filter((repair): repair is { id: string; target: CategoryOption } => Boolean(repair));
 
       if (!repairs.length) {
-        toast.info('No encontré contactos reparables automáticamente. Puedes usar “Sin categoría” y moverlos manualmente.');
-        setSelectedCategory('uncategorized');
+        toast.info(`No se encontraron vínculos reparables automáticamente. ${candidates.length} registros quedaron intactos para revisión manual.`);
         return;
       }
 
-      if (!window.confirm(`Se encontraron ${repairs.length} contactos reparables. ¿Quieres reasignarlos a sus carpetas oficiales ahora?`)) return;
+      setRepairPlan({
+        scanned: (data ?? []).length,
+        repairs,
+        unresolved: Math.max(0, candidates.length - repairs.length),
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
-      await Promise.all(repairs.map((repair) => updateContactCompat(repair.id, { category_id: repair.target.id })));
-      toast.success(`${repairs.length} vínculos de carpetas reparados.`);
+  async function confirmCategoryRepairs() {
+    if (!repairPlan) return;
+    setActionLoading(true);
+    try {
+      const results = await Promise.all(
+        repairPlan.repairs.map((repair) => updateContactCompat(repair.id, { category_id: repair.target.id })),
+      );
+      const repaired = results.filter(Boolean).length;
+      const failed = results.length - repaired;
+      setRepairPlan(null);
+      toast.success(
+        `${repaired} vínculos reparados. ${failed + repairPlan.unresolved} quedaron sin cambios para revisión manual.`,
+      );
       await loadCategories();
       await loadContacts();
     } finally {
@@ -1038,6 +1223,16 @@ export default function AdminContactsPage() {
   return (
     <AdminShell>
       <AdminNotice />
+      <div className="mb-6">
+        <ContactsMaintenancePanel
+          onArchived={async () => {
+            setSelectedIds([]);
+            setCurrentPage(0);
+            await loadCategories();
+            await loadContacts();
+          }}
+        />
+      </div>
       <section className="rounded-2xl border border-line bg-panel p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -1060,17 +1255,34 @@ export default function AdminContactsPage() {
               <RefreshCw className="h-4 w-4" />
               Recargar
             </button>
+            <button type="button" onClick={clearViewFilters} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-brand-400/35">
+              <XCircle className="h-4 w-4" />
+              Limpiar filtros
+            </button>
             <button type="button" disabled={actionLoading} onClick={() => void repairCategoryLinks()} className="focus-ring inline-flex items-center gap-2 rounded-full border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 text-sm font-bold text-yellow-100 hover:border-yellow-300/45 disabled:opacity-50">
-              Reparar vínculos de carpetas
+              Revisar vínculos de carpetas
+            </button>
+            <button type="button" disabled={actionLoading} onClick={() => void repairReservedPhonePlaceholders()} className="focus-ring inline-flex items-center gap-2 rounded-full border border-red-300/25 bg-red-300/10 px-4 py-2 text-sm font-bold text-red-100 hover:border-red-300/45 disabled:opacity-50">
+              Corregir teléfonos reservados
             </button>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <div className="rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Contactos</p>
-            <p className="mt-2 text-2xl font-black text-white">{totalCount}</p>
-            <p className="mt-1 text-xs text-gray-400">{selectedCategoryLabel}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Total admin</p>
+            <p className="mt-2 text-2xl font-black text-white">{adminStats.total}</p>
+            <p className="mt-1 text-xs text-gray-400">Vista actual: {totalCount}</p>
+          </div>
+          <div className="rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Publicables</p>
+            <p className="mt-2 text-2xl font-black text-white">{adminStats.publicable}</p>
+            <p className="mt-1 text-xs text-gray-400">estado activo</p>
+          </div>
+          <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Restringidos</p>
+            <p className="mt-2 text-2xl font-black text-white">{adminStats.restricted}</p>
+            <p className="mt-1 text-xs text-gray-400">solo revisión admin</p>
           </div>
           <div className="rounded-2xl border border-line bg-ink-950/55 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500">Sin categoría</p>
@@ -1078,16 +1290,33 @@ export default function AdminContactsPage() {
             <p className="mt-1 text-xs text-gray-400">para reasignar o limpiar</p>
           </div>
           <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Pendientes visibles</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Sin teléfono útil</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.noPhone}</p>
-            <p className="mt-1 text-xs text-gray-400">contactos sin teléfono</p>
+            <p className="mt-1 text-xs text-gray-400">incluye revisión reservada</p>
           </div>
           <div className="rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Completos visibles</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Completos</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.complete}</p>
             <p className="mt-1 text-xs text-gray-400">con teléfono y descripción</p>
           </div>
         </div>
+
+        {adminStats.placeholders > 0 ? (
+          <div className="mt-4 rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-red-100">
+            Detectamos {adminStats.placeholders} teléfonos placeholder. Usa “Corregir teléfonos reservados” antes de publicar datos.
+          </div>
+        ) : null}
+
+        {totalCount === 0 && adminStats.total > 0 ? (
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-brand-400/20 bg-brand-400/10 px-4 py-3 text-sm text-brand-50 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Los {adminStats.total} contactos siguen registrados. La vista “{selectedCategoryLabel}” no tiene resultados con los filtros actuales.
+            </span>
+            <button type="button" onClick={clearViewFilters} className="rounded-full bg-brand-400 px-4 py-2 text-xs font-black text-ink-950">
+              Mostrar todos
+            </button>
+          </div>
+        ) : null}
 
         <div className="mt-6 flex flex-wrap gap-2 border-b border-line pb-3">
           <button
@@ -1338,8 +1567,11 @@ export default function AdminContactsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-mono text-xs text-white">
-                        {contact.country_flag ?? '🌎'} {contact.phone ? formatPhone(contact.phone) : contact.phone_masked ?? maskPhone(null)}
+                        {contact.country_flag ?? '🌎'} {contact.phone ? formatPhone(contact.phone) : contact.raw_phone ?? contact.phone_masked ?? maskPhone(null)}
                       </div>
+                      {contact.phone_status === 'needs_review' ? (
+                        <p className="mt-1 text-[11px] font-semibold text-yellow-300">Teléfono original pendiente de revisión</p>
+                      ) : null}
                       <div className="mt-2 flex flex-wrap gap-2">
                         {whatsappLink ? (
                           <a href={whatsappLink} target="_blank" rel="noreferrer" className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-[11px] font-bold text-brand-100">
@@ -1348,7 +1580,7 @@ export default function AdminContactsPage() {
                         ) : (
                           <span className="rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-1 text-[11px] font-bold text-yellow-100">pendiente</span>
                         )}
-                        {contact.phone ? (
+                        {contact.phone && !/revisar en documento original/i.test(contact.phone) ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -1442,6 +1674,65 @@ export default function AdminContactsPage() {
               <button type="button" disabled={actionLoading || !bulkMoveCategory} onClick={() => void bulkMove()} className="rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Mover</button>
               <button type="button" disabled={actionLoading} onClick={() => void archiveSelected()} className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
                 Eliminar seleccionados
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {repairPlan ? (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/75 p-4">
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-yellow-300/25 bg-ink-900 p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-200">Vista previa segura</p>
+                <h3 className="mt-2 font-display text-2xl font-bold text-white">Reparar vínculos de carpetas</h3>
+              </div>
+              <button type="button" onClick={() => setRepairPlan(null)} className="rounded-full border border-line p-2 text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm leading-6 text-gray-300">
+              Esta acción intentará vincular contactos a carpetas oficiales. No eliminará contactos ni carpetas.
+            </p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-line bg-white/5 p-3">
+                <p className="text-xs text-gray-400">Analizados</p>
+                <p className="mt-1 text-xl font-black text-white">{repairPlan.scanned}</p>
+              </div>
+              <div className="rounded-xl border border-brand-400/25 bg-brand-400/10 p-3">
+                <p className="text-xs text-brand-100">Reparables</p>
+                <p className="mt-1 text-xl font-black text-white">{repairPlan.repairs.length}</p>
+              </div>
+              <div className="rounded-xl border border-yellow-400/25 bg-yellow-400/10 p-3">
+                <p className="text-xs text-yellow-100">Revisión manual</p>
+                <p className="mt-1 text-xl font-black text-white">{repairPlan.unresolved}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-line bg-ink-950/60 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-gray-400">Cambios propuestos</p>
+              <div className="mt-3 grid gap-2">
+                {repairDestinationSummary.slice(0, 8).map(({ category, count }) => (
+                  <div key={category.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm">
+                    <span className="min-w-0 truncate text-gray-200">{getCategoryLabel(category)}</span>
+                    <span className="shrink-0 rounded-full bg-brand-400/15 px-2 py-1 text-xs font-black text-brand-100">{count}</span>
+                  </div>
+                ))}
+                {repairDestinationSummary.length > 8 ? (
+                  <p className="text-xs text-gray-500">Y {repairDestinationSummary.length - 8} carpetas adicionales.</p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button type="button" disabled={actionLoading} onClick={() => setRepairPlan(null)} className="h-11 rounded-full border border-line bg-white/5 px-5 text-sm font-bold text-white disabled:opacity-50">
+                Cancelar
+              </button>
+              <button type="button" disabled={actionLoading} onClick={() => void confirmCategoryRepairs()} className="h-11 rounded-full bg-brand-400 px-5 text-sm font-black text-ink-950 disabled:opacity-50">
+                {actionLoading ? 'Reparando...' : `Confirmar ${repairPlan.repairs.length} cambios`}
               </button>
             </div>
           </div>

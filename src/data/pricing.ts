@@ -37,12 +37,12 @@ export const pricingPlans: PricingPlan[] = [
   },
   {
     id: 'elite-total',
-    name: 'Elite Total',
+    name: 'Acceso completo',
     price: 360,
     folderLimit: 'total',
     description: 'Acceso amplio para personas que quieren explorar ContactHub como una base completa de oportunidades.',
-    cta: 'Quiero Elite Total',
-    badge: 'Premium',
+    cta: 'Revisar acceso completo',
+    badge: 'Acceso amplio',
     isPremium: true,
   },
 ];

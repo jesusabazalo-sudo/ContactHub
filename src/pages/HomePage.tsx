@@ -9,6 +9,7 @@ import Hero from '../components/landing/Hero';
 import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
 import PromoSection from '../components/landing/PromoSection';
+import TrustExplainer from '../components/landing/TrustExplainer';
 import MissionsSection from '../components/missions/MissionsSection';
 import PublicReviews from '../components/reviews/PublicReviews';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../data/officialCategories';
@@ -86,6 +87,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <TrustExplainer />
       {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
       <Benefits />
       <CategoryPreview />

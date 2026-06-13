@@ -10,6 +10,7 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import { formatDate } from '../../lib/format';
 import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
+import { grantCategoryAccess } from '../../services/accessService';
 
 type ProfileRow = { id: string; email: string | null; full_name: string | null };
 type CategoryRow = {
@@ -195,17 +196,17 @@ export default function AdminRecompensasPage() {
     setIsSaving(true);
     try {
       const selectedCategories = categories.filter((category) => selectedCategoryIds.includes(category.id));
-      const rows = selectedCategories.map((category) => ({
-        user_id: selectedUser.id,
-        category_id: category.id,
-        granted_by: adminUser.id,
-        status: 'active' as const,
-      }));
-
-      const { error: accessError } = await client.from('user_category_access').upsert(rows, { onConflict: 'user_id,category_id' });
-      if (accessError) {
-        console.error('AdminRecompensas gift access:', accessError.message);
-        toast.error(accessError.message);
+      const accessResult = await grantCategoryAccess({
+        targetUserId: selectedUser.id,
+        targetUserEmail: selectedUser.email,
+        categoryIds: selectedCategoryIds,
+        grantedBy: adminUser.id,
+        accessType: 'gift',
+        source: 'admin_rewards',
+        note: sanitizeText(note, 500) || 'Regalo de carpetas desde Admin Recompensas.',
+      });
+      if (!accessResult.ok) {
+        toast.error(accessResult.error ?? 'No se pudo activar el regalo.');
         return;
       }
 
@@ -230,10 +231,10 @@ export default function AdminRecompensasPage() {
       });
       if (rewardError) console.error('AdminRecompensas reward:', rewardError.message);
 
-      toast.success(`✅ Regalo enviado a ${selectedUser.email ?? 'usuario'}`);
       setSelectedCategoryIds([]);
       setNote('');
       await loadData();
+      toast.success(`✅ Regalo confirmado para ${selectedUser.email ?? 'usuario'}`);
     } finally {
       setIsSaving(false);
     }

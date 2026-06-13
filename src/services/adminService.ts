@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import { applyOfficialCategoryDisplay, officialCategories, sortByOfficialOrder } from '../data/officialCategories';
+import { grantCategoryAccess } from './accessService';
 
 export type AdminProfile = {
   id: string;
@@ -23,8 +24,9 @@ export type AdminProfile = {
 };
 
 export type AdminCategory = { id: string; name: string; slug: string; contactsCount: number; isActive: boolean; sortOrder?: number | null; icon?: string | null; shortDescription?: string; tags?: string[]; whatYouCanFind?: string[] };
-export type AdminUserAccess = { categoryId: string; categoryName: string; status: 'active' | 'revoked'; createdAt: string; updatedAt: string };
-export type AdminFoundUser = { id: string; email: string | null; fullName: string | null; phone: string | null; createdAt: string; activeAccesses: AdminUserAccess[] };
+export type AdminUserAccess = { accessId: string; categoryId: string; categoryName: string; status: 'active' | 'revoked'; createdAt: string; updatedAt: string; accessType?: string | null; source?: string | null; note?: string | null };
+export type AdminUnlinkedAccess = { accessId: string; categoryId: string | null; createdAt: string; updatedAt: string; accessType?: string | null; source?: string | null; note?: string | null };
+export type AdminFoundUser = { id: string; email: string | null; fullName: string | null; phone: string | null; createdAt: string; activeAccesses: AdminUserAccess[]; unlinkedAccesses: AdminUnlinkedAccess[]; usedTrial?: boolean; receiptCount?: number; rewardCount?: number };
 export type AdminPlan = { id: string; name: string; price: number; folderLimit: number | null; isTotalAccess: boolean };
 export type PendingPurchase = { id: string; userId: string; userEmail: string | null; planName: string | null; categoryName: string | null; planId: string | null; categoryId: string | null; createdAt: string; notes: string | null };
 export type AdminActivity = { id: string; action: string; targetType: string | null; targetId: string | null; metadata: Record<string, unknown>; createdAt: string };
@@ -126,28 +128,17 @@ export async function getAdminUsers(): Promise<AdminProfile[]> {
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   if (!ready() || !supabase) return [];
   const client = supabase;
-  let categoriesResult: any = await client
+  const categoriesResult: any = await client
     .from('categories')
-    .select('id,name,slug,icon,short_description,tags,is_active,sort_order')
+    .select('id,name,slug,icon,short_description,tags,is_active')
     .eq('is_active', true)
-    .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
-
-  if (categoriesResult.error?.message?.toLowerCase().includes('sort_order')) {
-    console.error('getAdminCategories sort_order missing:', categoriesResult.error.message);
-    categoriesResult = await client
-      .from('categories')
-      .select('id,name,slug,icon,short_description,tags,is_active')
-      .eq('is_active', true)
-      .order('name', { ascending: true });
-  }
 
   const { data: cats, error } = categoriesResult;
   if (error) {
     console.error('getAdminCategories:', error.message);
     return [];
   }
-  console.log('Categories loaded:', cats?.length ?? 0, cats?.[0]);
   const withCounts = await Promise.all(
     (cats ?? []).map(async (cat: any) => {
       const { count, error: countError } = await client.from('contacts').select('id', { count: 'exact', head: true }).eq('category_id', cat.id).eq('status', 'active');
@@ -159,7 +150,7 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
         slug: cat.slug ?? '',
         contactsCount: count ?? 0,
         isActive: cat.is_active,
-        sortOrder: official.sortOrder ?? cat.sort_order ?? null,
+        sortOrder: official.sortOrder ?? null,
         icon: official.icon ?? cat.icon,
         shortDescription: official.shortDescription ?? cat.short_description ?? '',
         tags: official.tags ?? cat.tags ?? [],
@@ -238,7 +229,7 @@ export async function getPendingPurchases(): Promise<PendingPurchase[]> {
   const [profilesResult, plansResult, categoriesResult] = await Promise.all([
     supabase.from('profiles').select('id,email').in('id', userIds),
     planIds.length ? supabase.from('plans').select('id,name').in('id', planIds) : Promise.resolve({ data: [], error: null }),
-    categoryIds.length ? supabase.from('categories').select('id,name,slug,icon,sort_order').in('id', categoryIds) : Promise.resolve({ data: [], error: null }),
+    categoryIds.length ? supabase.from('categories').select('id,name,slug,icon').in('id', categoryIds) : Promise.resolve({ data: [], error: null }),
   ]);
   if (profilesResult.error) console.error('getPendingPurchases profiles:', profilesResult.error.message);
   if (plansResult.error) console.error('getPendingPurchases plans:', plansResult.error.message);
@@ -263,7 +254,7 @@ export async function getPendingPurchases(): Promise<PendingPurchase[]> {
 }
 
 export async function searchAdminUserByEmail(email: string): Promise<AdminFoundUser> {
-  const empty: AdminFoundUser = { id: '', email: null, fullName: null, phone: null, createdAt: '', activeAccesses: [] };
+  const empty: AdminFoundUser = { id: '', email: null, fullName: null, phone: null, createdAt: '', activeAccesses: [], unlinkedAccesses: [] };
   if (!ready() || !supabase) return empty;
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return empty;
@@ -272,69 +263,119 @@ export async function searchAdminUserByEmail(email: string): Promise<AdminFoundU
     if (profileError) console.error('searchAdminUserByEmail:', profileError.message);
     return empty;
   }
-  const { data: accesses, error: accessError } = await supabase.from('user_category_access').select('category_id,status,created_at,updated_at').eq('user_id', profile.id).eq('status', 'active').order('created_at', { ascending: false });
+  let accessResult: any = await supabase
+    .from('user_category_access')
+    .select('id,category_id,status,created_at,updated_at,access_type,source,note')
+    .eq('user_id', profile.id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
+
+  if (accessResult.error?.message?.toLowerCase().includes('schema cache') || accessResult.error?.message?.toLowerCase().includes('access_type')) {
+    accessResult = await supabase
+      .from('user_category_access')
+      .select('id,category_id,status,created_at,updated_at')
+      .eq('user_id', profile.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+  }
+  const { data: accesses, error: accessError } = accessResult as {
+    data: Array<{ id: string; category_id: string | null; status: 'active' | 'revoked'; created_at: string; updated_at: string; access_type?: string | null; source?: string | null; note?: string | null }> | null;
+    error: { message: string } | null;
+  };
   if (accessError) console.error('searchAdminUserByEmail access:', accessError.message);
-  const categoryIds = [...new Set((accesses ?? []).map((access) => access.category_id))];
-  const categoriesResult = categoryIds.length ? await supabase.from('categories').select('id,name,slug,icon,sort_order').in('id', categoryIds) : { data: [], error: null };
+  const categoryIds = [...new Set((accesses ?? []).map((access) => access.category_id).filter((categoryId): categoryId is string => Boolean(categoryId)))];
+  const [categoriesResult, trialResult, receiptResult, rewardResult] = await Promise.all([
+    categoryIds.length ? supabase.from('categories').select('id,name,slug,icon').in('id', categoryIds) : Promise.resolve({ data: [], error: null }),
+    supabase.from('trial_claims').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+    (supabase as unknown as { from: (table: string) => any }).from('chat_messages').select('id', { count: 'exact', head: true }).eq('user_id', profile.id).eq('has_attachment', true),
+    supabase.from('customer_rewards').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+  ]);
   if (categoriesResult.error) console.error('searchAdminUserByEmail categories:', categoriesResult.error.message);
+  if (trialResult.error) console.error('searchAdminUserByEmail trial:', trialResult.error.message);
+  if (receiptResult.error) console.error('searchAdminUserByEmail receipts:', receiptResult.error.message);
+  if (rewardResult.error) console.error('searchAdminUserByEmail rewards:', rewardResult.error.message);
   const categoryById = new Map((categoriesResult.data ?? []).map((category) => {
     const official = applyOfficialCategoryDisplay(category) as any;
     return [category.id, official.name];
   }));
+  const validAccesses = (accesses ?? []).filter((access) => Boolean(access.category_id && categoryById.has(access.category_id)));
+  const unlinkedAccesses = (accesses ?? []).filter((access) => !access.category_id || !categoryById.has(access.category_id));
   return {
     id: profile.id,
     email: profile.email,
     fullName: profile.full_name,
     phone: profile.phone,
     createdAt: profile.created_at,
-    activeAccesses: (accesses ?? []).map((access) => ({
-      categoryId: access.category_id,
-      categoryName: categoryById.get(access.category_id) ?? 'Carpeta pendiente de vincular',
+    activeAccesses: validAccesses.map((access) => ({
+      accessId: access.id,
+      categoryId: access.category_id as string,
+      categoryName: categoryById.get(access.category_id as string) as string,
       status: access.status,
       createdAt: access.created_at,
       updatedAt: access.updated_at,
+      accessType: access.access_type ?? null,
+      source: access.source ?? null,
+      note: access.note ?? null,
     })),
+    unlinkedAccesses: unlinkedAccesses.map((access) => ({
+      accessId: access.id,
+      categoryId: access.category_id,
+      createdAt: access.created_at,
+      updatedAt: access.updated_at,
+      accessType: access.access_type ?? null,
+      source: access.source ?? null,
+      note: access.note ?? null,
+    })),
+    usedTrial: (trialResult.count ?? 0) > 0,
+    receiptCount: receiptResult.count ?? 0,
+    rewardCount: rewardResult.count ?? 0,
   };
 }
 
-export async function grantCategoryAccessesByEmail(params: { email: string; categoryIds: string[]; adminUserId: string; source?: 'manual' | 'pending_request'; pendingPurchaseId?: string; notes?: string }) {
-  if (!ready() || !supabase) return { userId: '', email: null, categoryNames: [], message: activationWhatsAppMessage };
-  const normalizedEmail = params.email.trim().toLowerCase();
+export async function grantCategoryAccessesForUser(params: { targetUserId: string; targetUserEmail?: string | null; categoryIds: string[]; adminUserId: string; source?: 'manual' | 'pending_request'; pendingPurchaseId?: string; notes?: string }) {
+  if (!ready() || !supabase) throw new Error('Supabase no está configurado.');
   const categoryIds = [...new Set(params.categoryIds.filter(Boolean))];
-  if (!normalizedEmail || !categoryIds.length) return { userId: '', email: null, categoryNames: [], message: activationWhatsAppMessage };
+  if (!params.targetUserId || !params.adminUserId || !categoryIds.length) throw new Error('Faltan datos para activar el acceso.');
 
-  const [{ data: profile, error: profileError }, { data: categories, error: categoryError }] = await Promise.all([
-    supabase.from('profiles').select('id,email,full_name,phone,created_at').ilike('email', normalizedEmail).maybeSingle(),
-    supabase.from('categories').select('id,name,slug,icon,sort_order').in('id', categoryIds),
-  ]);
-  if (profileError || categoryError || !profile) {
-    if (profileError) console.error('grantCategoryAccessesByEmail profile:', profileError.message);
-    if (categoryError) console.error('grantCategoryAccessesByEmail categories:', categoryError.message);
-    return { userId: '', email: null, categoryNames: [], message: activationWhatsAppMessage };
+  const accessResult = await grantCategoryAccess({
+    targetUserId: params.targetUserId,
+    targetUserEmail: params.targetUserEmail,
+    categoryIds,
+    grantedBy: params.adminUserId,
+    accessType: params.source === 'pending_request' ? 'paid' : 'manual',
+    source: params.source ?? 'manual',
+    note: params.notes ?? 'Acceso activado manualmente por email.',
+  });
+  if (!accessResult.ok) {
+    console.error('grantCategoryAccessesForUser access:', accessResult.error);
+    throw new Error(accessResult.error ?? 'No se pudo activar el acceso.');
   }
-  const now = new Date().toISOString();
-  const accessRows = categoryIds.map((categoryId) => ({ user_id: profile.id, category_id: categoryId, granted_by: params.adminUserId, status: 'active' as const, updated_at: now }));
-  const { error: accessError } = await supabase.from('user_category_access').upsert(accessRows, { onConflict: 'user_id,category_id' });
-  if (accessError) {
-    console.error('grantCategoryAccessesByEmail access:', accessError.message);
-    return { userId: profile.id, email: profile.email, categoryNames: [], message: activationWhatsAppMessage };
+
+  if (params.pendingPurchaseId) {
+    const now = new Date().toISOString();
+    const { error: purchaseError } = await supabase
+      .from('purchases')
+      .update({ status: 'active', granted_by: params.adminUserId, granted_at: now, notes: params.notes ?? 'Acceso activado desde solicitud pendiente.', updated_at: now })
+      .eq('id', params.pendingPurchaseId)
+      .eq('user_id', params.targetUserId);
+    if (purchaseError) console.error('grantCategoryAccessesForUser purchase:', purchaseError.message);
   }
-  const purchaseRows = categoryIds.map((categoryId) => ({ user_id: profile.id, category_id: categoryId, status: 'active' as const, granted_by: params.adminUserId, granted_at: now, notes: params.notes ?? 'Acceso activado manualmente por email.' }));
-  const { error: purchaseError } = await supabase.from('purchases').insert(purchaseRows);
-  if (purchaseError) console.error('grantCategoryAccessesByEmail purchases:', purchaseError.message);
-  const { error: auditError } = await supabase.from('audit_logs').insert({ actor_id: params.adminUserId, action: 'admin_granted_category_access', target_type: 'user_category_access', target_id: profile.id, metadata: { email: profile.email, category_ids: categoryIds, source: params.source ?? 'manual' } });
-  if (auditError) console.error('grantCategoryAccessesByEmail audit:', auditError.message);
+
+  const { error: auditError } = await supabase.from('audit_logs').insert({
+    actor_id: params.adminUserId,
+    action: 'admin_granted_category_access',
+    target_type: 'user_category_access',
+    target_id: params.targetUserId,
+    metadata: { email: accessResult.targetUserEmail, category_ids: categoryIds, source: params.source ?? 'manual' },
+  });
+  if (auditError) console.error('grantCategoryAccessesForUser audit:', auditError.message);
+
   return {
-    userId: profile.id,
-    email: profile.email,
-    categoryNames: sortByOfficialOrder((categories ?? []).map((category) => applyOfficialCategoryDisplay(category) as any)).map((category) => category.name),
+    userId: accessResult.targetUserId,
+    email: accessResult.targetUserEmail,
+    categoryNames: accessResult.categoryNames,
     message: activationWhatsAppMessage,
   };
-}
-
-export async function activateCategoryAccessByEmail(params: { email: string; categoryId: string; adminUserId: string; source?: 'manual' | 'pending_request'; pendingPurchaseId?: string; notes?: string }) {
-  const result = await grantCategoryAccessesByEmail({ email: params.email, categoryIds: [params.categoryId], adminUserId: params.adminUserId, source: params.source, pendingPurchaseId: params.pendingPurchaseId, notes: params.notes });
-  return { userId: result.userId, email: result.email, categoryName: result.categoryNames[0] ?? 'Carpeta activada', message: result.message };
 }
 
 export async function cancelPendingPurchase(params: { purchaseId: string; adminUserId: string }) {

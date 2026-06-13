@@ -11,6 +11,7 @@ import { formatDate } from '../../lib/format';
 import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { getAdminCategories, getAdminUsers, type AdminCategory, type AdminProfile } from '../../services/adminService';
+import { grantCategoryAccess } from '../../services/accessService';
 
 type UserFilter = 'all' | 'active' | 'leads' | 'trial' | 'no_access';
 
@@ -129,17 +130,17 @@ export default function AdminUsersPage() {
     setIsGiftSaving(true);
     try {
       const selectedCategories = categories.filter((category) => giftCategoryIds.includes(category.id));
-      const accessRows = selectedCategories.map((category) => ({
-        user_id: giftUser.id,
-        category_id: category.id,
-        granted_by: adminUser.id,
-        status: 'active' as const,
-      }));
-
-      const { error: accessError } = await supabase.from('user_category_access').upsert(accessRows, { onConflict: 'user_id,category_id' });
-      if (accessError) {
-        console.error('AdminUsersPage gift access:', accessError.message);
-        toast.error(accessError.message);
+      const accessResult = await grantCategoryAccess({
+        targetUserId: giftUser.id,
+        targetUserEmail: giftUser.email,
+        categoryIds: giftCategoryIds,
+        grantedBy: adminUser.id,
+        accessType: 'gift',
+        source: 'admin_users',
+        note: sanitizeText(giftNote, 500) || 'Regalo aplicado desde Admin Usuarios.',
+      });
+      if (!accessResult.ok) {
+        toast.error(accessResult.error ?? 'No se pudo guardar el regalo.');
         return;
       }
 
@@ -154,11 +155,11 @@ export default function AdminUsersPage() {
         if (chatError) console.error('AdminUsersPage gift chat:', chatError.message);
       }
 
-      toast.success('Regalo aplicado y mensaje enviado.');
       setGiftUser(null);
       setGiftCategoryIds([]);
       setGiftNote('');
       await loadUsers();
+      toast.success(`Regalo confirmado para ${giftUser.email ?? 'el cliente'}.`);
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : 'No se pudo guardar el regalo.';
       toast.error(message);

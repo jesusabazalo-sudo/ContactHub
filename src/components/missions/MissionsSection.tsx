@@ -55,7 +55,7 @@ const missions: Mission[] = [
     description: 'Si ya hiciste una acción de apoyo, manda la captura para que el admin la revise.',
     reward: 'Descuento o contacto extra',
     icon: UploadCloud,
-    evidenceMessage: 'Hola Jesús, vengo de ContactHub. Quiero enviar evidencia para ganar un contacto extra.',
+    evidenceMessage: 'Hola, vengo desde ContactHub. Quiero enviar evidencia para ganar un contacto extra.',
   },
 ];
 
