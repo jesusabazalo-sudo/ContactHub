@@ -10,6 +10,7 @@ import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
 import PromoSection from '../components/landing/PromoSection';
 import TrustExplainer from '../components/landing/TrustExplainer';
+import WhatYouReceive from '../components/landing/WhatYouReceive';
 import MissionsSection from '../components/missions/MissionsSection';
 import PublicReviews from '../components/reviews/PublicReviews';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../data/officialCategories';
@@ -89,15 +90,16 @@ export default function HomePage() {
       <Hero />
       <TrustExplainer />
       {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
-      <Benefits />
-      <CategoryPreview />
       <HowItWorks />
+      <WhatYouReceive />
+      <CategoryPreview />
+      <Benefits />
+      <FinalCTA />
       <MissionsSection />
       <PromoSection />
       <PricingPreview />
       <FAQPreview />
       <PublicReviews />
-      <FinalCTA />
       {isTrialOpen ? <TrialModal onClose={() => setIsTrialOpen(false)} /> : null}
     </>
   );

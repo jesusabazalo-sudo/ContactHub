@@ -11,6 +11,7 @@ import { useAuth } from '../features/auth/AuthProvider';
 import { useAutofillProfile } from '../hooks/useAutofillProfile';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+import { buildContactWhatsAppMessage, buildWhatsAppLink } from '../lib/whatsapp';
 import { getMyContactsData, type MyContactsData, type UnlockedContact } from '../services/myContactsService';
 import { formatPhone } from '../utils/phone';
 
@@ -521,10 +522,15 @@ function ProfileDataCard({ autofill }: { autofill: ReturnType<typeof useAutofill
 }
 
 function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact; folderName?: string }) {
+  const whatsappUrl = buildWhatsAppLink(
+    contact.phone,
+    buildContactWhatsAppMessage(contact.name, folderName ?? 'ContactHub'),
+  );
+
   async function copyPhone() {
     try {
       await navigator.clipboard.writeText(formatPhone(contact.phone));
-      toast.success('Número copiado.');
+      toast.success('Número copiado');
     } catch {
       toast.error('No se pudo copiar el número.');
     }
@@ -556,6 +562,26 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        {whatsappUrl ? (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1db857] active:scale-[0.98]"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Consultar por WhatsApp
+          </a>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="inline-flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/35"
+          >
+            <MessageCircle className="h-4 w-4" />
+            WhatsApp no disponible
+          </button>
+        )}
         <button
           type="button"
           onClick={copyPhone}

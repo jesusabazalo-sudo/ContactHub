@@ -5,13 +5,13 @@ import SectionHeading from '../ui/SectionHeading';
 
 export default function PricingPreview() {
   return (
-    <section className="section-pad dopamine-surface bg-ink-950">
+    <section className="section-pad section-band">
       <div className="container-shell">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeading
             eyebrow="Planes"
-            title="Elige según tu meta, no por impulso"
-            description="Puedes preguntar primero por chat. Te orientamos antes de pagar y el acceso se activa manualmente cuando corresponde."
+            title="Opciones transparentes para avanzar a tu ritmo"
+            description="Compara con calma, pregunta por chat y activa solo las carpetas que realmente encajan con tu objetivo."
           />
           <Link to="/precios" className="text-sm font-bold text-brand-400 transition hover:text-white">
             Comparar todos los planes

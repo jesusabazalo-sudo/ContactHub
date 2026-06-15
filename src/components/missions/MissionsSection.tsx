@@ -164,7 +164,7 @@ export default function MissionsSection({ compact = false }: { compact?: boolean
   return (
     <section className={compact ? 'mt-8' : 'bg-ink-950 py-14'}>
       <div className={compact ? '' : 'container-shell'}>
-        <div className="rounded-2xl border border-line bg-panel p-6">
+        <div className="professional-card p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-400">Misiones</p>
@@ -186,7 +186,7 @@ export default function MissionsSection({ compact = false }: { compact?: boolean
               const isPending = savingMissionId === mission.id;
 
               return (
-                <article key={mission.id} className="card-hover rounded-2xl border border-line bg-ink-950/55 p-5">
+                <article key={mission.id} className="rounded-lg border border-line bg-ink-950/55 p-5 transition hover:border-brand-400/30">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-400/10 text-brand-400">
                       <Icon className="h-5 w-5" />

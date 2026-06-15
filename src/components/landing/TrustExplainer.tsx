@@ -1,110 +1,80 @@
-import { CheckCircle2, Eye, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, CreditCard, Eye, Headphones, KeyRound, LockKeyhole, MailCheck, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SectionHeading from '../ui/SectionHeading';
 
-const beforeRegister = [
-  'Puedes explorar el catalogo sin registrarte.',
-  'El correo solo se usa para guardar tus accesos.',
-  'Los pagos se revisan manualmente antes de activar carpetas.',
-  'Los telefonos completos solo se muestran con acceso activo.',
-  'No vendemos tu correo ni lo publicamos.',
-  'Puedes escribir por soporte si tienes dudas antes de pagar.',
+const trustItems = [
+  { icon: Eye, label: 'Explora antes de registrarte' },
+  { icon: KeyRound, label: 'Prueba gratuita disponible' },
+  { icon: LockKeyhole, label: 'Accesos protegidos por cuenta' },
+  { icon: CreditCard, label: 'Activación verificada' },
+  { icon: Headphones, label: 'Soporte dentro de la plataforma' },
 ];
 
-const steps = [
-  { title: 'Explora', text: 'Revisa categorias, descripciones y telefonos protegidos antes de crear cuenta.' },
-  { title: 'Elige', text: 'Selecciona una carpeta, pack, prueba gratis o mision segun lo que buscas lograr.' },
-  { title: 'Verificamos', text: 'Si pagas, subes tu comprobante y el acceso se activa despues de revision manual.' },
-  { title: 'Accedes', text: 'Cuando tu permiso esta activo, ves los telefonos completos de tus carpetas.' },
-];
-
-const receives = [
-  'Acceso a carpetas organizadas por tema y objetivo.',
-  'Contactos con telefono completo solo cuando corresponde.',
-  'Historial de accesos asociado a tu cuenta.',
-  'Soporte por chat para dudas, pagos y comprobantes.',
-];
-
-const notReceives = [
-  'No pedimos claves bancarias, codigos privados ni contrasenas de Gmail.',
-  'No prometemos resultados economicos ni ventas garantizadas.',
-  'No publicamos tu correo ni tus comprobantes.',
+const transparency = [
+  'Puedes conocer las categorías y su contenido general sin crear una cuenta.',
+  'El correo funciona como llave para guardar pruebas, accesos y comprobantes.',
+  'Los teléfonos completos solo aparecen cuando tienes permiso activo.',
+  'Los pagos y recompensas pasan por una revisión antes de activar accesos.',
+  'No pedimos contraseñas de Gmail, claves bancarias ni códigos privados.',
+  'No vendemos tu información ni publicamos tus datos personales.',
 ];
 
 export default function TrustExplainer() {
   return (
-    <section id="como-funciona" className="section-pad bg-ink-950">
-      <div className="container-shell">
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <article className="rounded-2xl border border-brand-400/20 bg-[#0d1d19]/90 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-brand-200">
+    <>
+      <section className="border-b border-line bg-[#07100e]">
+        <div className="container-shell grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-5">
+          {trustItems.map((item) => (
+            <div key={item.label} className="flex min-h-20 items-center gap-3 bg-[#07100e] px-4 py-4">
+              <item.icon className="h-4 w-4 shrink-0 text-brand-400" />
+              <span className="text-xs font-semibold leading-5 text-slate-300">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-pad bg-ink-950">
+        <div className="container-shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div>
+            <div className="professional-kicker w-fit">
               <ShieldCheck className="h-4 w-4" />
-              Antes de registrarte
+              Transparencia
             </div>
-            <h2 className="mt-5 font-display text-3xl font-bold leading-tight text-white">
-              Esto debes saber sobre ContactHub
-            </h2>
-            <p className="mt-4 text-sm leading-6 text-gray-300">
-              ContactHub es una plataforma para explorar contactos y oportunidades organizadas. La cuenta sirve para guardar accesos, pruebas y comprobantes. Puedes mirar primero y decidir con calma.
-            </p>
-            <div className="mt-5 grid gap-3">
-              {beforeRegister.map((item) => (
-                <div key={item} className="flex gap-3 rounded-xl border border-white/8 bg-white/[0.035] p-3 text-sm leading-5 text-gray-200">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
+            <SectionHeading
+              title="Antes de registrarte, esto debes saber"
+              description="Queremos que entiendas cómo funciona ContactHub y qué ocurre con tus datos antes de tomar una decisión."
+            />
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link to="/catalogo" className="focus-ring inline-flex justify-center rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
-                Explorar catalogo
+              <Link to="/legal#privacidad" className="focus-ring inline-flex min-h-11 items-center justify-center rounded-lg border border-white/15 bg-white/[0.04] px-5 text-sm font-bold text-white transition hover:border-brand-400/35">
+                Ver privacidad
               </Link>
-              <Link to="/faq" className="focus-ring inline-flex justify-center rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/40">
-                Ver preguntas frecuentes
+              <Link to="/faq" className="focus-ring inline-flex min-h-11 items-center justify-center rounded-lg px-5 text-sm font-bold text-brand-400 transition hover:bg-brand-400/[0.07]">
+                Preguntas frecuentes →
               </Link>
-            </div>
-          </article>
-
-          <div className="grid gap-5">
-            <article className="rounded-2xl border border-line bg-panel p-6">
-              <div className="flex items-center gap-3">
-                <Eye className="h-5 w-5 text-brand-400" />
-                <h3 className="font-display text-2xl font-bold text-white">Como funciona</h3>
-              </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {steps.map((step, index) => (
-                  <div key={step.title} className="rounded-xl border border-white/8 bg-white/[0.035] p-4">
-                    <span className="text-xs font-bold text-brand-300">0{index + 1}</span>
-                    <p className="mt-2 font-bold text-white">{step.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-gray-400">{step.text}</p>
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <article className="rounded-2xl border border-line bg-panel p-6">
-                <h3 className="font-display text-xl font-bold text-white">Que recibes realmente</h3>
-                <div className="mt-4 grid gap-3">
-                  {receives.map((item) => (
-                    <p key={item} className="text-sm leading-6 text-gray-300">- {item}</p>
-                  ))}
-                </div>
-              </article>
-              <article className="rounded-2xl border border-line bg-panel p-6">
-                <div className="flex items-center gap-3">
-                  <LockKeyhole className="h-5 w-5 text-brand-400" />
-                  <h3 className="font-display text-xl font-bold text-white">Uso responsable</h3>
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {notReceives.map((item) => (
-                    <p key={item} className="text-sm leading-6 text-gray-300">- {item}</p>
-                  ))}
-                </div>
-              </article>
             </div>
           </div>
+
+          <div className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
+            {transparency.map((item, index) => (
+              <div key={item} className="flex gap-3 bg-[#0a1512] p-5">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
+                <div>
+                  <span className="font-mono text-[11px] font-bold text-slate-600">0{index + 1}</span>
+                  <p className="mt-1 text-sm leading-6 text-slate-300">{item}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+        <div className="container-shell mt-8">
+          <div className="flex flex-col gap-3 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-4 sm:flex-row sm:items-center">
+            <MailCheck className="h-5 w-5 shrink-0 text-brand-400" />
+            <p className="text-sm leading-6 text-slate-300">
+              <strong className="text-white">Tu correo es tu llave de acceso.</strong> Lo usamos para identificar tu cuenta y proteger lo que desbloqueas.
+            </p>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

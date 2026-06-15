@@ -1,7 +1,8 @@
 import { Clipboard, LockKeyhole, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getPhoneDisplay, phoneToWhatsapp } from '../../utils/phone';
+import { buildContactWhatsAppMessage, buildWhatsAppLink } from '../../lib/whatsapp';
+import { getPhoneDisplay } from '../../utils/phone';
 
 type ContactCardContact = {
   id: string;
@@ -23,6 +24,7 @@ type ContactCardProps = {
   isAdmin?: boolean;
   isTrialUnlocked?: boolean;
   isRewardUnlocked?: boolean;
+  categoryName?: string;
   onEdit?: () => void;
   onDelete?: () => void;
   onDeactivate?: () => void;
@@ -34,32 +36,6 @@ function displayPhone(contact: ContactCardContact, accessLevel: 0 | 1 | 2) {
   return getPhoneDisplay(sourcePhone, accessLevel);
 }
 
-function getWhatsAppMessage(contactName: string) {
-  const messages = [
-    `Hola, vi tu oferta de "${contactName}" y me interesa saber más. ¿Podrías darme los detalles?`,
-    `Buenas, estaba buscando algo como lo que ofreces en "${contactName}". ¿Cuánto cuesta y cómo funciona?`,
-    `Hola! Me apareció tu oferta de "${contactName}" y quería consultarte algo. ¿Tienes un momento?`,
-    `Hola, vi que ofreces "${contactName}". ¿Aún está disponible? ¿Cómo puedo obtenerlo?`,
-    `Buenas! Tengo interés en "${contactName}". ¿Me puedes dar más información?`,
-    `Hola, encontré tu contacto y me interesa lo que ofreces: "${contactName}". ¿Cómo trabajamos?`,
-    `Hola! Quería preguntarte sobre "${contactName}". ¿Sigue disponible y cuál es el precio?`,
-  ];
-  return messages[Math.floor(Math.random() * messages.length)];
-}
-
-function openWhatsApp(phone: string | null | undefined, contactName: string) {
-  const cleanPhone = phoneToWhatsapp(phone);
-  if (!cleanPhone) {
-    toast.error('Este contacto no tiene un número válido.');
-    return;
-  }
-
-  const message = encodeURIComponent(getWhatsAppMessage(contactName));
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const url = isMobile ? `whatsapp://send?phone=${cleanPhone}&text=${message}` : `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${message}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
 export default function ContactCard({
   contact,
   canSeeFullPhone,
@@ -68,6 +44,7 @@ export default function ContactCard({
   isAdmin = false,
   isTrialUnlocked = false,
   isRewardUnlocked = false,
+  categoryName = 'ContactHub',
   onEdit,
   onDelete,
   onDeactivate,
@@ -78,6 +55,9 @@ export default function ContactCard({
   const visiblePhone = displayPhone(contact, resolvedAccessLevel);
   const countryFlag = contact.countryFlag ?? contact.country_flag ?? '';
   const showDirectActions = Boolean(canContactDirect ?? resolvedAccessLevel === 2);
+  const whatsappUrl = showDirectActions
+    ? buildWhatsAppLink(contact.phone, buildContactWhatsAppMessage(contact.name, categoryName))
+    : '';
 
   async function copyPhone() {
     if (!showDirectActions || !contact.phone) return;
@@ -108,6 +88,7 @@ export default function ContactCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-brand-400">{categoryName}</p>
           <div className="flex flex-wrap items-center gap-2">
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '4px', lineHeight: '1.3' }}>{contact.name}</h3>
             {isTrialUnlocked ? <span className="rounded-full bg-brand-400 px-2 py-1 text-[10px] font-black text-ink-950">PRUEBA GRATIS</span> : null}
@@ -145,19 +126,35 @@ export default function ContactCard({
               {isAdmin ? <span className="rounded-full border border-brand-400/30 bg-brand-400/15 px-2 py-1 text-[10px] font-black text-brand-200">ADMIN</span> : null}
               {!showDirectActions ? <span className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-black text-gray-400">🔒 Bloqueado</span> : null}
             </div>
-            {!showDirectActions ? <p className="mt-1 text-xs text-gray-500">Número completo disponible al desbloquear.</p> : null}
+            {!showDirectActions ? (
+              <p className="mt-1 text-xs text-gray-500">Número completo disponible al desbloquear.</p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500">Vista segura: este número no aparece en previews públicos.</p>
+            )}
           </div>
 
           {showDirectActions ? (
             <div className="grid gap-2">
-              <button
-                type="button"
-                onClick={() => openWhatsApp(contact.phone, contact.name)}
-                className="focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white transition duration-200 hover:bg-[#1db857] active:scale-[0.98]"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Escribir por WhatsApp
-              </button>
+              {whatsappUrl ? (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white transition duration-200 hover:bg-[#1db857] active:scale-[0.98]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Consultar por WhatsApp
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-sm font-bold text-white/35"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp no disponible
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => void copyPhone()}

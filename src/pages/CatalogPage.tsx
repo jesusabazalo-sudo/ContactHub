@@ -24,7 +24,7 @@ export default function CatalogPage() {
     setError(null);
     try {
       const cats = await getCatalogCategories();
-      console.log('Categories loaded:', cats.length, cats[0]);
+      if (import.meta.env.DEV) console.info('Categories loaded:', cats.length);
       setCategories(cats);
     } catch (loadError) {
       console.error('CatalogPage error:', loadError);
@@ -109,21 +109,23 @@ export default function CatalogPage() {
   if (error) return <FriendlyErrorState title="No se pudo cargar el catálogo." message={error} onRetry={loadCategories} />;
 
   return (
-    <section className="section-pad dopamine-surface bg-ink-950">
+    <section className="section-pad section-band min-h-screen">
       <div className="container-shell">
-        <SectionHeading
-          eyebrow="Catálogo"
-          title="Explora oportunidades según lo que quieres lograr"
-          description={`${APP_CONFIG.contactsClaim} contactos y oportunidades organizados por intención: aprender, vender, conseguir proveedores, encontrar servicios, mejorar un negocio o resolver una necesidad concreta.`}
-        />
-        <div className="dopamine-card neon-edge mt-8 rounded-2xl p-4 text-sm leading-6 text-gray-300">
-          Puedes registrarte gratis, revisar qué existe en cada carpeta y ver teléfonos ocultos. Los números completos se muestran solo con acceso, prueba o recompensa aprobada.
+        <div className="grid gap-8 border-b border-line pb-10 lg:grid-cols-[1fr_0.65fr] lg:items-end">
+          <SectionHeading
+            eyebrow="Catálogo"
+            title="Explora por lo que quieres lograr"
+            description={`${APP_CONFIG.contactsClaim} contactos y oportunidades organizados para aprender, vender, conseguir proveedores, encontrar servicios o resolver una necesidad concreta.`}
+          />
+          <div className="rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-slate-300">
+            Puedes explorar sin cuenta. Los números completos solo se muestran cuando tienes una prueba o un acceso activo.
+          </div>
         </div>
         <div className="mt-8">
           <CategoryFilters search={search} filter={filter} setSearch={setSearch} onFilterChange={setFilter} purchasedDisabled={!user} />
         </div>
         {filter === 'purchased' && user ? (
-          <div className="mt-6 rounded-lg border border-brand-400/20 bg-brand-400/10 p-4 text-sm leading-6 text-gray-300">
+          <div className="mt-6 rounded-lg border border-brand-400/20 bg-brand-400/[0.06] p-4 text-sm leading-6 text-gray-300">
             Mostrando solo tus carpetas desbloqueadas.
           </div>
         ) : null}

@@ -151,6 +151,7 @@ const mainActions: ChatAction[] = [
   { label: 'Cómo pago', type: 'payment' },
   { label: 'Subir comprobante', type: 'uploadReceipt' },
   { label: 'No entiendo algo', type: 'help' },
+  { label: 'Publicar mi servicio', type: 'catalog', value: '/publica-tu-servicio' },
   { label: 'Guía rápida', type: 'catalog', value: '/guia' },
   { label: 'Ganar contacto gratis', type: 'missions' },
   { label: 'Contactar soporte', type: 'human' },

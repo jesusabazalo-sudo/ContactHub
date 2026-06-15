@@ -1,44 +1,50 @@
-import { ArrowRight, MessageCircle } from 'lucide-react';
+import { ArrowRight, MessageCircle, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function openChat(message?: string) {
   window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
-  window.setTimeout(() => {
-    document.querySelector('[data-contacthub-chat]')?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, 50);
 }
 
 export default function FinalCTA() {
   return (
-    <section className="section-pad dopamine-surface bg-ink-950">
-      <div className="container-shell text-center">
-        <p className="text-sm font-semibold uppercase text-brand-400">Empieza con claridad</p>
-        <h2 className="mx-auto mt-4 max-w-3xl font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
-          Dime qué quieres lograr y te ayudamos a encontrar por dónde empezar.
-        </h2>
-        <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-gray-300">
-          No tienes que comprar algo a ciegas. Puedes crear tu cuenta gratis, explorar categorías, probar contactos y ganar recompensas con misiones.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            to="/auth"
-            className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
-          >
-            Crear cuenta gratis
+    <section className="border-y border-line bg-[#08120f]">
+      <div className="container-shell grid lg:grid-cols-2">
+        <div className="border-b border-line py-12 lg:border-b-0 lg:border-r lg:py-16 lg:pr-12">
+          <p className="professional-kicker w-fit">
+            <Send className="h-4 w-4" />
+            Publica tu servicio
+          </p>
+          <h2 className="mt-5 max-w-xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+            Haz que otras personas también puedan encontrarte.
+          </h2>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">
+            Si ofreces un servicio, recurso o solución útil, envíanos tu información. Revisamos cada publicación antes de incorporarla.
+          </p>
+          <Link to="/publica-tu-servicio" className="focus-ring mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-ink-950 transition hover:bg-emerald-100">
+            Publicar mi servicio
             <ArrowRight className="h-4 w-4" />
           </Link>
+        </div>
+
+        <div className="py-12 lg:py-16 lg:pl-12">
+          <p className="professional-kicker w-fit">
+            <MessageCircle className="h-4 w-4" />
+            Orientación
+          </p>
+          <h2 className="mt-5 max-w-xl font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+            ¿Aún no sabes qué carpeta elegir?
+          </h2>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">
+            Cuéntanos qué quieres lograr. El soporte de ContactHub puede orientarte antes de registrarte o pagar.
+          </p>
           <button
             type="button"
             onClick={() => openChat('Hola, quiero contar mi meta para que me orienten dentro de ContactHub.')}
-            className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/25 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-400/10"
+            className="focus-ring mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-400/30 bg-brand-400/[0.08] px-5 text-sm font-bold text-brand-400 transition hover:bg-brand-400/15"
           >
-            <MessageCircle className="h-4 w-4" />
-            Hablar por chat
+            Abrir chat de soporte
           </button>
         </div>
-        <p className="mx-auto mt-5 max-w-xl text-xs leading-5 text-gray-500">
-          Si ahora no puedes pagar, igual puedes empezar: explora el catálogo y completa misiones para ganar contactos extra.
-        </p>
       </div>
     </section>
   );

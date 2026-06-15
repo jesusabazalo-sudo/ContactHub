@@ -174,7 +174,7 @@ export default function PublicReviews() {
   return (
     <section className="bg-ink-950 py-14">
       <div className="container-shell">
-        <div className="mb-6 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-5">
+        <div className="mb-6 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5">
           <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-400">Confianza</p>
@@ -185,7 +185,7 @@ export default function PublicReviews() {
                   : 'Primeras experiencias de usuarios y casos de uso frecuentes. Los comentarios reales aparecerán aquí cuando sean aprobados.'}
               </p>
             </div>
-            <div className="rounded-2xl border border-line bg-ink-950/70 p-4 text-center">
+            <div className="rounded-lg border border-line bg-ink-950/70 p-4 text-center">
               <Stars value={reviews.length ? Math.round(average) : 5} />
               <p className="mt-2 font-display text-2xl font-bold text-white">{reviews.length ? `${average.toFixed(1)}/5` : 'Beta'}</p>
               <p className="text-xs text-gray-500">{reviews.length ? `${reviews.length} comentario(s)` : 'Sección en construcción'}</p>
@@ -208,7 +208,7 @@ export default function PublicReviews() {
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="grid gap-3 md:grid-cols-2">
             {visibleCards.slice(0, 4).map((card) => (
-              <article key={card.id} className="card-hover rounded-2xl border border-line bg-panel p-5">
+              <article key={card.id} className="professional-card p-5">
                 <div className="flex items-center justify-between gap-3">
                   <Stars value={card.rating} />
                   <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{card.label}</span>
@@ -222,7 +222,7 @@ export default function PublicReviews() {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-line bg-panel p-5 shadow-[0_18px_50px_rgba(0,0,0,0.25)]">
+          <div className="professional-card p-5">
             <h3 className="font-display text-xl font-bold text-white">Deja tu comentario</h3>
             <p className="mt-2 text-sm leading-6 text-gray-400">Queda pendiente hasta revisión. No publicamos testimonios falsos.</p>
             <div className="mt-4 grid gap-3">
@@ -250,7 +250,7 @@ export default function PublicReviews() {
                   }}
                   rows={2}
                   placeholder="Cuéntanos qué buscabas o cómo podemos mejorar…"
-                  className="chat-textarea focus-ring min-h-[76px] max-h-[140px] resize-none rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-sm leading-6 text-white shadow-inner shadow-black/20 placeholder:text-gray-500"
+                  className="chat-textarea focus-ring min-h-[76px] max-h-[140px] resize-none rounded-lg border border-line bg-ink-950/70 px-4 py-3 text-sm leading-6 text-white shadow-inner shadow-black/20 placeholder:text-gray-500"
                 />
                 <span className="text-xs text-gray-500">Ctrl + Enter también envía. Enter normal hace salto de línea.</span>
               </label>

@@ -271,6 +271,7 @@ export default function CategoryDetailPage() {
                     isAdmin={isAdmin}
                     isTrialUnlocked={isTrialUnlocked}
                     isRewardUnlocked={isRewardUnlocked}
+                    categoryName={category.name}
                   />
                 );
               })}

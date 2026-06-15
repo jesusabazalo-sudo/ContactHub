@@ -1,83 +1,116 @@
-import { ArrowRight, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FolderOpen, Search, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
-import Badge from '../ui/Badge';
 
-const stats = [
-  { label: 'Contactos y oportunidades', value: APP_CONFIG.contactsClaim },
-  { label: 'Categorias', value: APP_CONFIG.categoriesClaim },
-  { label: 'Desde', value: APP_CONFIG.startingPrice },
+const folders = [
+  { order: '01', name: 'Elite Business', detail: 'Negocios y proveedores', count: '42' },
+  { order: '02', name: 'IA Masters', detail: 'IA y herramientas digitales', count: '68' },
+  { order: '03', name: 'Knowledge Vault', detail: 'Educación y cursos', count: '56' },
+];
+
+const contacts = [
+  { name: 'Proveedor especializado', phone: '+51 9•• ••• •••', status: 'Protegido' },
+  { name: 'Servicio profesional', phone: '+51 9•• ••• •••', status: 'Protegido' },
 ];
 
 export default function Hero() {
   return (
-    <section className="hero-gradient dopamine-surface relative overflow-hidden bg-radial-grid">
-      <div className="pointer-events-none absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-400/10 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-10 right-10 h-64 w-64 rounded-full bg-accent-cyan/5 blur-3xl" />
-      <div className="container-shell grid min-h-[calc(100vh-4rem)] items-center gap-12 py-16 lg:grid-cols-[1fr_0.9fr] lg:py-20">
-        <div className="float-in max-w-4xl">
-          <Badge>Directorio organizado y acceso verificado</Badge>
-          <h1 className="mt-7 font-display text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-7xl">
-            Explora contactos y oportunidades con <span className="neon-text">claridad antes de pagar.</span>
+    <section className="hero-platform relative overflow-hidden border-b border-line">
+      <div className="container-shell relative z-10 pb-12 pt-16 sm:pt-20 lg:pb-16 lg:pt-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="professional-kicker mx-auto w-fit">
+            <ShieldCheck className="h-4 w-4" />
+            Plataforma organizada y acceso verificado
+          </div>
+          <h1 className="mt-7 font-display text-4xl font-bold leading-[1.06] text-white sm:text-5xl lg:text-7xl">
+            Encuentra contactos que te acerquen a tus metas.
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">
-            ContactHub organiza contactos por categorias para ayudarte a encontrar proveedores, servicios, cursos, negocios y oportunidades. Puedes revisar el catalogo primero; los telefonos completos solo se muestran con acceso activo.
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+            Explora proveedores, servicios, cursos y oportunidades organizadas en carpetas. Revisa qué existe antes de registrarte y desbloquea solo lo que realmente necesitas.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/catalogo" className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 px-6 py-3 text-sm font-bold text-ink-950 transition hover:bg-white">
-              Explorar catalogo
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link to="/catalogo" className="focus-ring btn-primary-glow inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 text-sm font-bold text-white transition hover:bg-brand-400">
+              Explorar catálogo
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a href="#como-funciona" className="focus-ring inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-brand-400/45 hover:bg-brand-400/10">
-              Ver como funciona
+            <a href="#como-funciona" className="focus-ring inline-flex min-h-12 items-center justify-center rounded-lg border border-white/15 bg-white/[0.04] px-6 text-sm font-bold text-white transition hover:border-brand-400/40 hover:bg-white/[0.07]">
+              Cómo funciona
             </a>
-            <button type="button" onClick={() => window.dispatchEvent(new Event('contacthub:open-trial'))} className="focus-ring inline-flex items-center justify-center rounded-full border border-brand-400/25 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-brand-400/55 hover:bg-brand-400/10">
-              Probar contactos gratis
+            <button type="button" onClick={() => window.dispatchEvent(new Event('contacthub:open-trial'))} className="focus-ring inline-flex min-h-12 items-center justify-center rounded-lg border border-brand-400/25 bg-brand-400/[0.07] px-6 text-sm font-bold text-brand-400 transition hover:border-brand-400/50 hover:bg-brand-400/10">
+              Probar 3 contactos gratis
             </button>
           </div>
-          <p className="mt-5 max-w-2xl text-sm leading-6 text-gray-400">
-            Sin cuenta puedes explorar. Con cuenta puedes guardar tu prueba gratis, asociar comprobantes y proteger tus accesos.
-          </p>
-          <div className="mt-10 grid max-w-2xl grid-cols-3 gap-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="count-up dopamine-card neon-edge rounded-xl p-4">
-                <div className="stat-number font-display text-2xl font-bold">{stat.value}</div>
-                <div className="mt-1 text-xs font-medium uppercase text-gray-500">{stat.label}</div>
-              </div>
-            ))}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-400">
+            <span>{APP_CONFIG.contactsClaim} contactos organizados</span>
+            <span>{APP_CONFIG.categoriesClaim} categorías</span>
+            <span>Acceso desde {APP_CONFIG.startingPrice}</span>
           </div>
         </div>
-        <div className="relative">
-          <div className="absolute -inset-6 rounded-[2rem] bg-brand-400/10 blur-3xl" />
-          <div className="dopamine-card neon-edge relative overflow-hidden rounded-3xl shadow-glow backdrop-blur-xl">
-            <div className="border-b border-line px-5 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">Explora antes de desbloquear</p>
-                  <p className="text-xs text-gray-500">Informacion organizada, telefonos protegidos y acceso manual verificado</p>
-                </div>
-                <ShieldCheck className="h-5 w-5 text-brand-400" />
+
+        <div className="platform-frame mx-auto mt-12 max-w-6xl">
+          <div className="flex flex-col gap-3 border-b border-line px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-brand-400/20 bg-brand-400/10 text-brand-400">
+                <FolderOpen className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-white">Vista previa de ContactHub</p>
+                <p className="text-xs text-slate-500">Información orientativa; los teléfonos siguen protegidos.</p>
               </div>
             </div>
-            <div className="space-y-4 p-5">
-              <div className="shimmer-soft flex items-center gap-3 rounded-2xl border border-brand-400/20 bg-white/[0.04] px-4 py-3">
+            <div className="flex items-center gap-2 text-xs font-semibold text-brand-400">
+              <span className="h-2 w-2 rounded-full bg-brand-500" />
+              Catálogo disponible
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-[0.95fr_1.3fr]">
+            <div className="border-b border-line p-4 lg:border-b-0 lg:border-r lg:p-6">
+              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-slate-500">
                 <Search className="h-4 w-4 text-brand-400" />
-                <span className="text-sm text-gray-400">Buscar cursos, proveedores, servicios, ventas...</span>
+                Buscar por meta, servicio o categoría
               </div>
-              {['Aprender algo', 'Buscar proveedores', 'Encontrar servicios', 'Explorar oportunidades'].map((item, index) => (
-                <div key={item} className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.025] p-3 transition hover:border-brand-400/25 hover:bg-brand-400/[0.06]">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-400/10 text-brand-400">
-                      <Sparkles className="h-4 w-4" />
+              <div className="mt-4 grid gap-2">
+                {folders.map((folder, index) => (
+                  <div key={folder.order} className={`flex items-center gap-3 rounded-lg border px-3 py-3 ${index === 0 ? 'border-brand-400/30 bg-brand-400/[0.08]' : 'border-white/[0.07] bg-white/[0.025]'}`}>
+                    <span className="font-mono text-xs font-bold text-brand-400">{folder.order}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-white">{folder.name}</p>
+                      <p className="truncate text-xs text-slate-500">{folder.detail}</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{item}</p>
-                      <p className="text-xs text-gray-500">Telefonos protegidos hasta desbloquear</p>
-                    </div>
+                    <span className="text-xs text-slate-500">{folder.count}</span>
                   </div>
-                  <span className="premium-chip rounded-full px-3 py-1 text-xs font-semibold">0{index + 1}</span>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 lg:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-400">Tu progreso de acceso</p>
+                  <p className="mt-2 text-xl font-bold text-white">Empieza explorando con tranquilidad</p>
                 </div>
-              ))}
+                <span className="rounded-lg border border-brand-400/20 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-400">0 de 24</span>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                <div className="h-full w-[8%] rounded-full bg-brand-500" />
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {contacts.map((contact) => (
+                  <div key={contact.name} className="rounded-lg border border-white/[0.08] bg-black/15 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-bold text-white">{contact.name}</p>
+                      <CheckCircle2 className="h-4 w-4 text-brand-400" />
+                    </div>
+                    <p className="mt-3 font-mono text-sm text-slate-400">{contact.phone}</p>
+                    <p className="mt-2 text-xs text-slate-500">{contact.status} hasta activar acceso</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4 text-xs text-slate-500">
+                <span>Sin datos privados expuestos</span>
+                <span className="font-semibold text-brand-400">Ver catálogo completo →</span>
+              </div>
             </div>
           </div>
         </div>

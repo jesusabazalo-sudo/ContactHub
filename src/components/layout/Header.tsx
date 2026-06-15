@@ -6,12 +6,12 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import MobileMenu from './MobileMenu';
 
 const links = [
-  { label: 'Índice', to: '/' },
-  { label: 'Promos', to: '/promos' },
+  { label: 'Inicio', to: '/' },
   { label: 'Catálogo', to: '/catalogo' },
+  { label: 'Cómo funciona', to: '/#como-funciona' },
   { label: 'Precios', to: '/precios' },
   { label: 'Publicar', to: '/publica-tu-servicio' },
-  { label: 'Preguntas', to: '/faq' },
+  { label: 'Ayuda', to: '/faq' },
 ];
 
 function HubLogoMark() {
@@ -58,11 +58,14 @@ export default function Header() {
 
   return (
     <>
-      <header className={`sticky top-0 z-40 border-b border-line bg-ink-950/82 backdrop-blur-xl transition-all ${isCompact ? 'navbar-compact' : ''}`}>
+      <header className={`sticky top-0 z-40 border-b border-line bg-[#050b0a]/90 backdrop-blur-xl transition-all ${isCompact ? 'navbar-compact' : ''}`}>
         <div className="container-shell flex h-16 items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3">
             <HubLogoMark />
-            <span className="font-display text-lg font-bold text-white">ContactHub</span>
+            <span>
+              <span className="block font-display text-base font-bold leading-none text-white">ContactHub</span>
+              <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500 lg:block">Contactos con propósito</span>
+            </span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -71,7 +74,7 @@ export default function Header() {
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
+                  `rounded-lg px-3 py-2 text-sm font-medium transition duration-200 ${
                     isActive ? 'bg-white/[0.08] text-white' : 'text-gray-300 hover:bg-white/[0.06] hover:text-white'
                   }`
                 }
@@ -101,8 +104,8 @@ export default function Header() {
                 <UserRound className="h-4 w-4" />
               </Link>
             )}
-            <Link to="/catalogo" className="focus-ring inline-flex items-center justify-center rounded-full bg-brand-400 px-5 py-2.5 text-sm font-bold text-ink-950 transition duration-200 hover:bg-white">
-              Déjame ver qué hay
+            <Link to="/catalogo" className="focus-ring inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition duration-200 hover:bg-brand-400">
+              Explorar catálogo
             </Link>
           </div>
 

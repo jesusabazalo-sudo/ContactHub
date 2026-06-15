@@ -22,12 +22,12 @@ function openSupportChat() {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-line bg-ink-950">
-      <div className="container-shell grid gap-10 py-12 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr]">
+    <footer className="border-t border-line bg-[#030706]">
+      <div className="container-shell grid gap-10 py-14 md:grid-cols-[1.3fr_0.7fr_0.7fr_0.8fr]">
         <div>
-          <div className="font-display text-xl font-bold text-white">{APP_CONFIG.name}</div>
+          <div className="font-display text-2xl font-bold text-white">{APP_CONFIG.name}</div>
           <p className="mt-3 max-w-md text-sm leading-6 text-gray-400">
-            Plataforma para explorar contactos y oportunidades organizadas por categorias. Los datos privados se protegen hasta que tengas acceso activo.
+            Contactos y oportunidades organizadas para ayudarte a aprender, vender, trabajar, encontrar servicios o avanzar con una meta concreta.
           </p>
           <p className="mt-4 max-w-md text-xs leading-5 text-gray-500">
             Usamos tu correo solo para gestionar tu cuenta, accesos, comprobantes y soporte. No vendemos tu informacion ni publicamos tu correo.
@@ -64,14 +64,17 @@ export default function Footer() {
           <button
             type="button"
             onClick={openSupportChat}
-            className="focus-ring mt-4 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950"
+            className="focus-ring mt-4 rounded-lg border border-brand-400/30 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-100 transition hover:bg-brand-400/20"
           >
             Abrir soporte
           </button>
         </div>
       </div>
       <div className="border-t border-line py-5">
-        <div className="container-shell text-sm text-gray-500">© 2025 ContactHub · Hecho en Peru</div>
+        <div className="container-shell flex flex-col gap-2 text-xs text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+          <span>© 2025 ContactHub · Hecho en Perú</span>
+          <span>Explora primero. Desbloquea cuando estés listo.</span>
+        </div>
       </div>
     </footer>
   );

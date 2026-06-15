@@ -1,27 +1,14 @@
-import { Compass, FolderKanban, LockKeyhole, MessageCircle } from 'lucide-react';
+import { BookOpen, Bot, BriefcaseBusiness, GraduationCap, PackageSearch, Palette, Wrench } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 
-const benefits = [
-  {
-    icon: Compass,
-    title: 'Empieza por tu meta',
-    text: 'No todos buscan un contacto. Algunos buscan aprender, vender, trabajar, resolver un problema o abrir una oportunidad. ContactHub te ayuda a ordenar esa búsqueda.',
-  },
-  {
-    icon: FolderKanban,
-    title: 'Todo está organizado',
-    text: 'Explora categorías claras, descripciones útiles y contactos protegidos. Ves qué existe antes de decidir qué desbloquear.',
-  },
-  {
-    icon: LockKeyhole,
-    title: 'Privacidad primero',
-    text: 'Los usuarios gratis pueden explorar sin ver números reales. Los teléfonos completos solo aparecen con acceso, prueba o recompensa aprobada.',
-  },
-  {
-    icon: MessageCircle,
-    title: 'Orientación cercana',
-    text: 'Si no sabes por dónde empezar, el chat te guía por metas: aprender, vender, conseguir proveedores, encontrar servicios o hacer crecer tu negocio.',
-  },
+const useCases = [
+  { icon: PackageSearch, title: 'Quiero encontrar proveedores', text: 'Explora opciones comerciales y servicios para una necesidad concreta.' },
+  { icon: GraduationCap, title: 'Quiero aprender algo', text: 'Ubica recursos, clases y personas relacionadas con formación.' },
+  { icon: BriefcaseBusiness, title: 'Quiero vender por internet', text: 'Encuentra herramientas y contactos para mover tu negocio.' },
+  { icon: Bot, title: 'Quiero herramientas de IA', text: 'Revisa automatización, productividad y recursos tecnológicos.' },
+  { icon: BookOpen, title: 'Quiero cursos y libros', text: 'Explora opciones educativas antes de desbloquear información.' },
+  { icon: Palette, title: 'Quiero crear contenido', text: 'Diseño, edición, audio y recursos para proyectos creativos.' },
+  { icon: Wrench, title: 'Quiero contactos para servicios', text: 'Encuentra oficios y soluciones prácticas organizadas por área.' },
 ];
 
 export default function Benefits() {
@@ -29,15 +16,16 @@ export default function Benefits() {
     <section className="section-pad bg-ink-950">
       <div className="container-shell">
         <SectionHeading
-          title="Contactos con propósito, no listas sueltas"
-          description="Explora lo que necesitas, desbloquea lo que te sirve y avanza con más claridad."
+          eyebrow="Casos de uso"
+          title="¿Para qué puede servirte ContactHub?"
+          description="Empieza por lo que quieres resolver; la categoría correcta aparece después."
         />
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {benefits.map((benefit) => (
-            <article key={benefit.title} className="card-hover rounded-lg border border-line bg-panel p-5">
-              <benefit.icon className="h-6 w-6 text-brand-400" />
-              <h3 className="mt-5 text-base font-bold text-white">{benefit.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-gray-400">{benefit.text}</p>
+        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {useCases.map((item, index) => (
+            <article key={item.title} className={`professional-card p-5 ${index === useCases.length - 1 ? 'lg:col-start-2' : ''}`}>
+              <item.icon className="h-5 w-5 text-brand-400" />
+              <h3 className="mt-4 text-sm font-bold text-white">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{item.text}</p>
             </article>
           ))}
         </div>

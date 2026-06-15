@@ -27,14 +27,13 @@ export default function CategoryCard({ category, accessLevel = 0 }: CategoryCard
 
   return (
     <article
-      className={`card-hover dopamine-card neon-edge group relative overflow-hidden rounded-2xl border p-5 transition duration-200 hover:-translate-y-1 ${
-        isPremium ? 'border-amber-300/35 bg-amber-300/10 shadow-[0_0_34px_rgba(250,204,21,0.16)]' : 'border-line hover:border-brand-400/40 hover:bg-white/[0.06]'
+      className={`card-hover professional-card group relative overflow-hidden p-5 transition duration-200 ${
+        isPremium ? 'border-amber-300/30 bg-amber-300/[0.06]' : 'hover:border-brand-400/35'
       }`}
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand-400/10 blur-3xl" />
       <div className="relative flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className={`inline-flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 font-display text-sm font-bold ${isPremium ? 'border-amber-300/30 bg-amber-300/15 text-amber-200' : 'border-brand-400/25 bg-brand-400/10 text-brand-200 shadow-[0_0_18px_rgba(34,197,94,0.12)]'}`}>
+          <span className={`inline-flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 font-display text-sm font-bold ${isPremium ? 'border-amber-300/30 bg-amber-300/10 text-amber-200' : 'border-brand-400/20 bg-brand-400/[0.07] text-brand-200'}`}>
             {orderLabel}
           </span>
           <span className="text-2xl" aria-hidden="true">
@@ -50,21 +49,21 @@ export default function CategoryCard({ category, accessLevel = 0 }: CategoryCard
       <div className="relative mt-5 min-h-20">
         <h3 className="text-xl font-extrabold leading-7 text-white">{display.displayTitle}</h3>
         {display.displaySubtitle ? (
-          <span className="mt-2 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-200">
+          <span className="mt-2 inline-flex rounded-lg border border-brand-400/20 bg-brand-400/[0.07] px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-brand-200">
             {display.displaySubtitle}
           </span>
         ) : null}
       </div>
       <p className="relative mt-3 min-h-16 text-sm font-medium leading-6 text-gray-300">{category.shortDescription || category.description}</p>
 
-      <div className="relative mt-5 rounded-xl border border-brand-400/15 bg-ink-950/45 p-4">
+      <div className="relative mt-5 border-t border-line pt-4">
         <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
           <Sparkles className="h-3.5 w-3.5 text-brand-400" />
           Qué puedes encontrar
         </p>
         <div className="flex flex-wrap gap-2">
           {items.map((item) => (
-            <span key={item} className="premium-chip rounded-full px-3 py-1 text-xs font-semibold">
+            <span key={item} className="premium-chip rounded-lg px-3 py-1 text-xs font-semibold">
               {item}
             </span>
           ))}
@@ -72,7 +71,7 @@ export default function CategoryCard({ category, accessLevel = 0 }: CategoryCard
       </div>
 
       {previewContacts.length ? (
-        <div className="relative mt-4 rounded-xl border border-accent-cyan/15 bg-white/[0.03] p-3">
+        <div className="relative mt-4 rounded-lg border border-white/[0.08] bg-black/15 p-3">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Muestra de contactos</p>
           <div className="grid gap-2">
             {previewContacts.map((contact) => (
@@ -98,10 +97,10 @@ export default function CategoryCard({ category, accessLevel = 0 }: CategoryCard
         </div>
         <Link
           to={`/catalogo/${category.slug}`}
-          className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-4 py-2 text-sm font-bold text-ink-950 transition group-hover:bg-white"
+          className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-400"
           aria-label={`Ver ${display.displayTitle}`}
         >
-          Ver muestra
+          Explorar
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

@@ -24,12 +24,12 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
 
   return (
     <article
-      className={`card-hover dopamine-card relative rounded-2xl border p-5 transition duration-200 hover:-translate-y-1 ${
+      className={`card-hover professional-card relative p-5 transition duration-200 ${
         plan.isRecommended
-          ? 'border-brand-400/45 bg-brand-400/10 shadow-glow'
+          ? 'border-brand-400/45 bg-brand-400/[0.07]'
           : plan.isPremium
-            ? 'border-brand-300/25 bg-brand-400/[0.06]'
-            : 'border-line bg-panel'
+            ? 'border-brand-300/25 bg-brand-400/[0.04]'
+            : ''
       }`}
     >
       <div className="flex min-h-7 items-start justify-between gap-3">
@@ -56,7 +56,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
           Orientacion por chat antes de pagar
         </div>
       </div>
-      <div className="mt-5 rounded-2xl border border-line bg-white/[0.035] p-4 text-xs leading-5 text-gray-400">
+      <div className="mt-5 border-t border-line pt-4 text-xs leading-5 text-gray-400">
         <p className="font-bold text-white">Antes de pagar</p>
         <p className="mt-2">Incluye acceso a las carpetas indicadas y telefonos completos cuando el permiso queda activo.</p>
         <p className="mt-2">No incluye resultados garantizados, claves privadas ni acceso automatico sin revision.</p>
@@ -64,7 +64,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
       <button
         type="button"
         onClick={openChat}
-        className="focus-ring btn-primary-glow mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+        className="focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-400"
       >
         <MessageCircle className="h-4 w-4" />
         {plan.cta}

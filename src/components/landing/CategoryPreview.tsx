@@ -33,21 +33,24 @@ export default function CategoryPreview() {
   }, []);
 
   const featuredCategories = useMemo(
-    () => categories.filter((category) => category.isFeatured || category.isTop).slice(0, 9),
+    () => {
+      const highlighted = categories.filter((category) => category.isFeatured || category.isTop);
+      return (highlighted.length >= 6 ? highlighted : categories).slice(0, 6);
+    },
     [categories],
   );
 
   return (
-    <section className="section-pad bg-ink-900">
+    <section className="section-pad section-band">
       <div className="container-shell">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <SectionHeading
-            eyebrow="Catálogo privado"
-            title="Carpetas organizadas para encontrar lo que sí te sirve"
-            description="La muestra pública enseña la estructura. Los datos completos viven en Supabase y solo se desbloquean con acceso activo."
+            eyebrow="Categorías principales"
+            title="Empieza por el área que más se acerca a tu meta"
+            description="Cada carpeta explica qué puedes encontrar y protege los datos privados hasta que tengas un acceso activo."
           />
           <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm font-bold text-brand-400 transition hover:text-white">
-            Ver catálogo completo
+            Explorar todas las categorías
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

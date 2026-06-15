@@ -1,43 +1,51 @@
-import { Eye, Gift, KeyRound, MessageSquareText } from 'lucide-react';
+import { Eye, FolderSearch, KeyRound, UserRoundCheck } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 
 const steps = [
   {
     icon: Eye,
-    title: 'Explora sin presion',
-    text: 'Mira categorias, descripciones y telefonos protegidos antes de registrarte o pagar.',
+    title: 'Explora las categorías',
+    text: 'Revisa nombres, descripciones, ejemplos y teléfonos protegidos sin necesidad de registrarte.',
   },
   {
-    icon: MessageSquareText,
-    title: 'Cuenta tu meta',
-    text: 'Usa el chat para decir si buscas aprender, vender, trabajar, conseguir proveedores o encontrar servicios.',
+    icon: FolderSearch,
+    title: 'Elige según tu objetivo',
+    text: 'Ubica la carpeta que mejor encaja con lo que quieres aprender, vender, resolver o construir.',
   },
   {
     icon: KeyRound,
-    title: 'Activa lo que necesitas',
-    text: 'Elige carpeta, pack, prueba o recompensa. Los accesos se validan manualmente.',
+    title: 'Prueba o desbloquea',
+    text: 'Usa tu prueba gratuita o activa una carpeta. Cada permiso queda asociado de forma segura a tu cuenta.',
   },
   {
-    icon: Gift,
-    title: 'Avanza con alternativas',
-    text: 'Si ahora no puedes pagar, revisa misiones y envia evidencia para que el admin la evalue.',
+    icon: UserRoundCheck,
+    title: 'Consulta desde tu cuenta',
+    text: 'Tus contactos completos aparecen en Mis contactos cuando el acceso queda verificado y activo.',
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section id="como-funciona" className="section-pad section-band">
       <div className="container-shell">
-        <SectionHeading align="center" title="Un flujo simple y transparente" />
-        <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <SectionHeading
+          eyebrow="Cómo funciona"
+          align="center"
+          title="Un camino claro, sin pasos escondidos"
+          description="Primero entiendes qué existe. Después eliges cuánto avanzar."
+        />
+        <div className="relative mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="absolute left-[12%] right-[12%] top-8 hidden h-px bg-gradient-to-r from-transparent via-brand-400/25 to-transparent xl:block" />
           {steps.map((step, index) => (
-            <article key={step.title} className="card-hover rounded-lg border border-line bg-panel p-6">
+            <article key={step.title} className="professional-card relative p-6">
               <div className="flex items-center justify-between">
-                <step.icon className="h-6 w-6 text-brand-400" />
-                <span className="font-display text-3xl font-bold text-white/10">0{index + 1}</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-400/20 bg-brand-400/[0.08] text-brand-400">
+                  <step.icon className="h-5 w-5" />
+                </span>
+                <span className="font-mono text-sm font-bold text-slate-600">0{index + 1}</span>
               </div>
-              <h3 className="mt-6 text-xl font-bold text-white">{step.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-gray-400">{step.text}</p>
+              <h3 className="mt-6 text-lg font-bold text-white">{step.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{step.text}</p>
             </article>
           ))}
         </div>

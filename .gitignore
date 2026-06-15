@@ -7,3 +7,4 @@ dist
 *.tsbuildinfo
 .codex-dev*.log
 devserver.log
+devserver-error.log
