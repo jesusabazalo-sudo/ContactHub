@@ -9,6 +9,7 @@ import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { buildOfficialCategoryOptions, officialCategories, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
+import { normalizeSearchText, searchContacts } from '../../lib/searchUtils';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { deleteContact, deleteContactsBulk, getCountryCode, getFlag, updateContact } from '../../services/adminContactsService';
 import { formatPhone, maskPhone } from '../../utils/phone';
@@ -424,32 +425,17 @@ export default function AdminContactsPage() {
   }, [repairPlan]);
 
   const filteredContacts = useMemo(() => {
-    const safeTag = tagFilter.trim().toLowerCase();
-    const safeSearch = debouncedSearch.trim().toLowerCase();
-    return contacts.filter((contact) => {
+    const safeTag = normalizeSearchText(tagFilter);
+    const qualityFiltered = contacts.filter((contact) => {
       const quality = getContactQuality(contact).key;
       if (qualityFilter === 'complete' && quality !== 'complete') return false;
       if (qualityFilter === 'pending' && quality !== 'pending') return false;
       if (qualityFilter === 'no_phone' && quality !== 'no_phone') return false;
       if (qualityFilter === 'verified' && quality !== 'verified' && quality !== 'complete') return false;
-      if (safeTag && !(contact.tags ?? []).some((tag) => tag.toLowerCase().includes(safeTag))) return false;
-      if (safeSearch) {
-        const haystack = [
-          contact.name,
-          contact.phone,
-          contact.whatsapp,
-          contact.description,
-          contact.category_name,
-          contact.status,
-          ...(contact.tags ?? []),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(safeSearch)) return false;
-      }
+      if (safeTag && !(contact.tags ?? []).some((tag) => normalizeSearchText(tag).includes(safeTag))) return false;
       return true;
     });
+    return searchContacts(debouncedSearch, qualityFiltered);
   }, [contacts, qualityFilter, tagFilter, debouncedSearch]);
 
   const folderPickerOptions = useMemo(() => {
@@ -570,14 +556,13 @@ export default function AdminContactsPage() {
     let query = supabase
       .from('contacts')
       .select(select)
-      .order('created_at', { ascending: false })
-      .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
+      .order('created_at', { ascending: false });
 
     const searchTerm = debouncedSearch.trim();
     if (searchTerm) {
-      const searchFields = [`name.ilike.%${searchTerm}%`, `phone.ilike.%${searchTerm}%`, `description.ilike.%${searchTerm}%`, `status.ilike.%${searchTerm}%`];
-      if (includeOptionalSearch) searchFields.push(`whatsapp.ilike.%${searchTerm}%`);
-      query = query.or(searchFields.join(','));
+      query = query.limit(10000);
+    } else {
+      query = query.range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
     }
     if (selectedCategory && selectedCategory !== 'all' && !isUncategorizedFilter(selectedCategory) && !isSyntheticCategoryId(selectedCategory)) query = query.eq('category_id', selectedCategory);
     query = applyStatusVisibility(query);
@@ -587,12 +572,6 @@ export default function AdminContactsPage() {
   const buildUncategorizedContactsQuery = (select: string, includeOptionalSearch = false) => {
     if (!supabase) throw new Error('Supabase no está configurado.');
     let query = supabase.from('contacts').select(select).order('created_at', { ascending: false }).limit(10000);
-    const searchTerm = debouncedSearch.trim();
-    if (searchTerm) {
-      const searchFields = [`name.ilike.%${searchTerm}%`, `phone.ilike.%${searchTerm}%`, `description.ilike.%${searchTerm}%`, `status.ilike.%${searchTerm}%`];
-      if (includeOptionalSearch) searchFields.push(`whatsapp.ilike.%${searchTerm}%`);
-      query = query.or(searchFields.join(','));
-    }
     query = applyStatusVisibility(query);
     return query;
   };
@@ -650,9 +629,7 @@ export default function AdminContactsPage() {
           return !row.category_id || !realIds.has(row.category_id);
         })
         : activeRows;
-      const pagedRows = isUncategorized ? visibleRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize) : visibleRows;
-
-      const enriched = pagedRows.map((contact) => {
+      const enrichedRows = visibleRows.map((contact) => {
         const row = contact as Partial<ContactRow>;
         return {
           ...row,
@@ -673,12 +650,17 @@ export default function AdminContactsPage() {
         };
       }) as ContactRow[];
 
+      const searchedRows = searchContacts(debouncedSearch, enrichedRows);
+      const enriched = isUncategorized || debouncedSearch.trim()
+        ? searchedRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+        : searchedRows;
+
       setContacts(enriched);
       hasLoadedContactsRef.current = true;
       setSelectedIds([]);
 
-      if (isUncategorized) {
-        setTotalCount(visibleRows.length);
+      if (isUncategorized || debouncedSearch.trim()) {
+        setTotalCount(searchedRows.length);
         return;
       }
 

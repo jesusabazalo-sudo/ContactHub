@@ -6,6 +6,8 @@ import LoadingState from '../components/system/LoadingState';
 import SectionHeading from '../components/ui/SectionHeading';
 import { APP_CONFIG } from '../config/app';
 import { useAuth } from '../features/auth/AuthProvider';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { searchCategories } from '../lib/searchUtils';
 import { supabase } from '../lib/supabaseClient';
 import { getCatalogCategories, getCatalogCategoryPreviews } from '../services/catalogService';
 import type { Category } from '../types';
@@ -18,6 +20,7 @@ export default function CatalogPage() {
   const [filter, setFilter] = useState<CatalogFilter>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   async function loadCategories() {
     setIsLoading(true);
@@ -84,16 +87,7 @@ export default function CatalogPage() {
   }, [categoryIdsKey, isAdmin, purchasedIdsKey, user]);
 
   const filteredCategories = useMemo(() => {
-    const searchLower = search.toLowerCase();
-
-    return categories.filter((category) => {
-      const matchesSearch =
-        searchLower.length === 0 ||
-        category.name.toLowerCase().includes(searchLower) ||
-        category.description?.toLowerCase().includes(searchLower) ||
-        category.shortDescription?.toLowerCase().includes(searchLower) ||
-        category.tags?.some((tag) => tag.toLowerCase().includes(searchLower));
-
+    return searchCategories(debouncedSearch, categories).filter((category) => {
       const matchesFilter =
         filter === 'all' ||
         (filter === 'top' && category.isTop) ||
@@ -101,9 +95,9 @@ export default function CatalogPage() {
         (filter === 'featured' && category.isFeatured) ||
         (filter === 'purchased' && purchasedCategoryIds.has(category.id));
 
-      return matchesSearch && matchesFilter;
+      return matchesFilter;
     });
-  }, [categories, filter, purchasedCategoryIds, search]);
+  }, [categories, debouncedSearch, filter, purchasedCategoryIds]);
 
   if (isLoading) return <LoadingState title="Cargando catálogo" message="Estamos leyendo categorías y conteos reales desde Supabase." />;
   if (error) return <FriendlyErrorState title="No se pudo cargar el catálogo." message={error} onRetry={loadCategories} />;
@@ -123,12 +117,19 @@ export default function CatalogPage() {
         </div>
         <div className="mt-8">
           <CategoryFilters search={search} filter={filter} setSearch={setSearch} onFilterChange={setFilter} purchasedDisabled={!user} />
+          {search !== debouncedSearch ? <p className="mt-3 text-xs font-semibold text-brand-300">Buscando...</p> : null}
         </div>
         {filter === 'purchased' && user ? (
           <div className="mt-6 rounded-lg border border-brand-400/20 bg-brand-400/[0.06] p-4 text-sm leading-6 text-gray-300">
             Mostrando solo tus carpetas desbloqueadas.
           </div>
         ) : null}
+        <div className="mt-6 flex flex-col gap-2 rounded-lg border border-line bg-panel px-4 py-3 text-sm text-gray-300 sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            {filteredCategories.length} carpeta(s) encontradas{debouncedSearch ? ` para "${debouncedSearch}"` : ''}.
+          </span>
+          <span className="text-xs font-semibold text-gray-500">Busca por nombre, descripción, tags o casos de uso.</span>
+        </div>
         <div className="mt-8">
           <CatalogGrid
             categories={filteredCategories}

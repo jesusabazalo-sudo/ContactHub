@@ -67,11 +67,16 @@ export default function TrustExplainer() {
           </div>
         </div>
         <div className="container-shell mt-8">
-          <div className="flex flex-col gap-3 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-4 sm:flex-row sm:items-center">
+          <div className="grid gap-3 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-4 md:grid-cols-[auto_1fr] md:items-start">
             <MailCheck className="h-5 w-5 shrink-0 text-brand-400" />
-            <p className="text-sm leading-6 text-slate-300">
-              <strong className="text-white">Tu correo es tu llave de acceso.</strong> Lo usamos para identificar tu cuenta y proteger lo que desbloqueas.
-            </p>
+            <div className="space-y-2 text-sm leading-6 text-slate-300">
+              <p>
+                <strong className="text-white">Tu correo es tu llave de acceso.</strong> Lo usamos para identificar tu cuenta y proteger lo que desbloqueas.
+              </p>
+              <p>
+                ContactHub organiza información de contacto. No garantiza respuestas, ventas ni resultados específicos; te ayuda a ahorrar tiempo encontrando contactos organizados.
+              </p>
+            </div>
           </div>
         </div>
       </section>

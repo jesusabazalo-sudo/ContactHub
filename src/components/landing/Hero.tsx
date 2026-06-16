@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, FolderOpen, Search, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
+import GlobalSearch from '../search/GlobalSearch';
 
 const folders = [
   { order: '01', name: 'Elite Business', detail: 'Negocios y proveedores', count: '42' },
@@ -26,8 +27,9 @@ export default function Hero() {
             Encuentra contactos que te acerquen a tus metas.
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Explora proveedores, servicios, cursos y oportunidades organizadas en carpetas. Revisa qué existe antes de registrarte y desbloquea solo lo que realmente necesitas.
+            Explora categorías, prueba contactos gratis y desbloquea solo la información que realmente necesitas.
           </p>
+          <GlobalSearch />
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link to="/catalogo" className="focus-ring btn-primary-glow inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 text-sm font-bold text-white transition hover:bg-brand-400">
               Explorar catálogo

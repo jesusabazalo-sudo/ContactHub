@@ -9,7 +9,9 @@ import LoadingState from '../components/system/LoadingState';
 import ProgressBar from '../components/ui/ProgressBar';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useAutofillProfile } from '../hooks/useAutofillProfile';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../lib/sanitize';
+import { searchContacts } from '../lib/searchUtils';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import { buildContactWhatsAppMessage, buildWhatsAppLink } from '../lib/whatsapp';
 import { getMyContactsData, type MyContactsData, type UnlockedContact } from '../services/myContactsService';
@@ -30,6 +32,7 @@ export default function MyContactsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const debouncedQuery = useDebouncedValue(query, 350);
 
   async function loadMyContacts(options?: { silent?: boolean }) {
     if (!user?.id) {
@@ -111,17 +114,12 @@ export default function MyContactsPage() {
 
   const filteredContacts = useMemo(() => {
     const contacts = data?.contacts ?? [];
-    const normalizedQuery = sanitizeText(query, 80).toLowerCase();
-
-    return contacts.filter((contact) => {
-      const matchesCategory = activeCategoryId === 'all' || contact.categoryId === activeCategoryId;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        [contact.name, contact.description, contact.phone, contact.phoneMasked, ...contact.tags].join(' ').toLowerCase().includes(normalizedQuery);
-
-      return matchesCategory && matchesQuery;
-    });
-  }, [activeCategoryId, data?.contacts, query]);
+    const foldersById = new Map((data?.folders ?? []).map((folder) => [folder.id, folder.name]));
+    const categoryContacts = contacts
+      .filter((contact) => activeCategoryId === 'all' || contact.categoryId === activeCategoryId)
+      .map((contact) => ({ ...contact, categoryName: foldersById.get(contact.categoryId) ?? '' }));
+    return searchContacts(debouncedQuery, categoryContacts);
+  }, [activeCategoryId, data?.contacts, data?.folders, debouncedQuery]);
 
   if (isLoading) {
     return <LoadingState title="Cargando tus contactos" message="Estamos revisando tus carpetas desbloqueadas en Supabase." />;
@@ -262,9 +260,10 @@ export default function MyContactsPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
-                placeholder="Buscar por nombre, descripción, teléfono o tag"
+                placeholder="Buscar por nombre, descripción, teléfono, carpeta o tag"
                 className="focus-ring h-12 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white placeholder:text-gray-500"
               />
+              {query !== debouncedQuery ? <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-300">Buscando...</span> : null}
             </label>
             <div className="flex flex-wrap gap-2">
               <button

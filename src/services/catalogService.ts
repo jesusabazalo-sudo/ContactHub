@@ -101,7 +101,9 @@ export async function getCatalogCategories() {
       }),
     );
 
-    return withCounts.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name));
+    return withCounts
+      .filter((category) => category.sortOrder !== 18)
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name));
   } catch (err) {
     console.error('getCatalogCategories catch:', err);
     return [];
@@ -115,7 +117,9 @@ export async function getCategoryBySlug(slug: string) {
     console.error('getCategoryBySlug:', error.message);
     return null;
   }
-  return data ? mapCategory(data, 0) : null;
+  if (!data) return null;
+  const category = mapCategory(data, 0);
+  return category.sortOrder === 18 ? null : category;
 }
 
 export async function getCategoryContacts(categoryId: string, hasAccess: boolean, isRegistered = false) {
@@ -124,17 +128,6 @@ export async function getCategoryContacts(categoryId: string, hasAccess: boolean
     const { data, error } = await supabase.from('contact_unlocked_secure').select('*').eq('category_id', categoryId).limit(200);
     if (!error && data) return data.map((row) => mapContact(row, true));
     if (error) console.error('getCategoryContacts unlocked:', error.message);
-  }
-
-  if (isRegistered) {
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('id, name, phone, phone_masked, description, category_id, country_flag, country_code, tags, status, created_at')
-      .eq('category_id', categoryId)
-      .eq('status', 'active')
-      .limit(200);
-    if (!error && data) return data.map((row) => mapContact(row, false));
-    if (error) console.error('getCategoryContacts registered preview:', error.message);
   }
 
   const { data: preview, error: previewError } = await supabase.from('contact_public_preview').select('*').eq('category_id', categoryId).limit(200);
@@ -192,7 +185,7 @@ export async function getCatalogCategoryPreviews(params: { categoryIds: string[]
     params.categoryIds.map(async (categoryId) => {
       const canReadFull = params.fullAccessCategoryIds.has(categoryId);
 
-      if (canReadFull || params.isRegistered) {
+      if (canReadFull) {
         const { data, error } = await client
           .from('contacts')
           .select('id, name, phone, phone_masked, description, category_id, country_flag, tags')

@@ -158,7 +158,13 @@ function TrialModal({ onClose }: { onClose: () => void }) {
           : categoriesWithSort;
         const { data, error: categoriesError } = categoriesResult;
         if (categoriesError) throw categoriesError;
-        setCategories(sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))));
+        setCategories(
+          sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))).filter((category) => {
+            const order = (category as TrialCategory & { sortOrder?: number | null; sort_order?: number | null }).sortOrder
+              ?? (category as TrialCategory & { sortOrder?: number | null; sort_order?: number | null }).sort_order;
+            return order !== 18;
+          }),
+        );
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la prueba.');
       } finally {
