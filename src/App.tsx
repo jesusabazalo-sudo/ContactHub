@@ -16,9 +16,12 @@ import HomePage from './pages/HomePage';
 import LegalPage from './pages/LegalPage';
 import MyContactsPage from './pages/MyContactsPage';
 import PricingPage from './pages/PricingPage';
+import PrivacyPage from './pages/PrivacyPage';
 import PublishServicePage from './pages/PublishServicePage';
 import PromosPage from './pages/PromosPage';
 import ServicesPage from './pages/ServicesPage';
+import SupportPage from './pages/SupportPage';
+import TermsPage from './pages/TermsPage';
 import AdminAccessPage from './pages/admin/AdminAccessPage';
 import AdminContactsPage from './pages/admin/AdminContactsPage';
 import AdminCustomersPage from './pages/admin/AdminCustomersPage';
@@ -50,6 +53,9 @@ export default function App() {
           <Route path="/guia" element={<GuidePage />} />
           <Route path="/servicios" element={<ServicesPage />} />
           <Route path="/legal" element={<LegalPage />} />
+          <Route path="/politica-privacidad" element={<PrivacyPage />} />
+          <Route path="/terminos" element={<TermsPage />} />
+          <Route path="/soporte" element={<SupportPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="/admin" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
           <Route path="/admin/usuarios" element={<AdminGuard><AdminUsersPage /></AdminGuard>} />

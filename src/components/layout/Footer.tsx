@@ -11,9 +11,10 @@ const exploreLinks = [
 
 const trustLinks = [
   { label: 'Preguntas frecuentes', to: '/faq' },
-  { label: 'Privacidad', to: '/legal#privacidad' },
+  { label: 'Privacidad', to: '/politica-privacidad' },
   { label: 'Uso de datos', to: '/legal#uso-de-datos' },
-  { label: 'Terminos y legal', to: '/legal' },
+  { label: 'Términos', to: '/terminos' },
+  { label: 'Soporte', to: '/soporte' },
 ];
 
 function openSupportChat() {

@@ -28,13 +28,33 @@ export type MyContactsData = {
   folders: UnlockedFolder[];
   categories: UnlockedFolder[];
   contacts: UnlockedContact[];
+  accessHistory: UnlockedAccess[];
   totalUnlocked: number;
+};
+
+export type UnlockedAccess = {
+  categoryId: string;
+  status: string;
+  createdAt: string | null;
+  accessType: string;
+  source: string | null;
+  note: string | null;
+};
+
+type UserAccessRow = {
+  category_id: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  access_type?: string | null;
+  source?: string | null;
+  note?: string | null;
 };
 
 const EMPTY_MY_CONTACTS: MyContactsData = {
   folders: [],
   categories: [],
   contacts: [],
+  accessHistory: [],
   totalUnlocked: 0,
 };
 
@@ -53,11 +73,21 @@ export async function getMyContactsData(userId: string): Promise<MyContactsData>
     throw new Error('Supabase no esta configurado para consultar tus accesos.');
   }
 
-  const { data: accesses, error: accessError } = await supabase
+  let { data: accesses, error: accessError } = (await (supabase
     .from('user_category_access')
-    .select('category_id, status')
+    .select('category_id, status, created_at, access_type, source, note')
     .eq('user_id', userId)
-    .eq('status', 'active');
+    .eq('status', 'active') as any)) as { data: UserAccessRow[] | null; error: any };
+
+  if (accessError && /column|schema cache|access_type|source|note/i.test(accessError.message ?? '')) {
+    const fallback = (await (supabase
+      .from('user_category_access')
+      .select('category_id, status, created_at')
+      .eq('user_id', userId)
+      .eq('status', 'active') as any)) as { data: UserAccessRow[] | null; error: any };
+    accesses = fallback.data;
+    accessError = fallback.error;
+  }
 
   if (accessError) {
     logQueryError('access', accessError);
@@ -141,6 +171,14 @@ export async function getMyContactsData(userId: string): Promise<MyContactsData>
     folders,
     categories: folders,
     contacts,
+    accessHistory: (accesses ?? []).filter((access): access is UserAccessRow & { category_id: string } => Boolean(access.category_id)).map((access) => ({
+      categoryId: access.category_id,
+      status: access.status ?? 'active',
+      createdAt: access.created_at ?? null,
+      accessType: access.access_type ?? 'manual',
+      source: access.source ?? null,
+      note: access.note ?? null,
+    })),
     totalUnlocked: folders.length,
   };
 }

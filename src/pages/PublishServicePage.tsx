@@ -17,7 +17,9 @@ type PublishForm = {
   description: string;
   city: string;
   socialUrl: string;
+  priceReference: string;
   additionalMessage: string;
+  acceptedReview: boolean;
 };
 
 type ServiceSubmissionPayload = {
@@ -45,7 +47,9 @@ const initialForm: PublishForm = {
   description: '',
   city: '',
   socialUrl: '',
+  priceReference: '',
   additionalMessage: '',
+  acceptedReview: false,
 };
 
 export default function PublishServicePage() {
@@ -101,9 +105,17 @@ export default function PublishServicePage() {
       description: sanitizeText(form.description, 900),
       city: sanitizeText(form.city, 120),
       social_url: form.socialUrl.trim().slice(0, 500),
-      additional_message: sanitizeText(form.additionalMessage, 500),
+      additional_message: sanitizeText(
+        [form.priceReference ? `Precio referencial: ${form.priceReference}` : '', form.additionalMessage].filter(Boolean).join('\n'),
+        500,
+      ),
       status: 'pending_review',
     };
+
+    if (!form.acceptedReview) {
+      toast.error('Acepta la revisión de ContactHub antes de enviar.');
+      return;
+    }
 
     if (!payload.business_name || !payload.whatsapp || !payload.offer || !payload.description) {
       toast.error('Completa negocio, WhatsApp, qué vendes y descripción.');
@@ -142,9 +154,9 @@ export default function PublishServicePage() {
       <div className="container-shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
           <p className="professional-kicker w-fit">Publica tu servicio</p>
-          <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-white">Cuéntanos qué ofreces y lo revisamos.</h1>
+          <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-white">¿Vendes un producto o servicio? Postula tu contacto para aparecer en ContactHub.</h1>
           <p className="mt-4 text-base leading-7 text-slate-300">
-            Postula tu negocio, servicio o recurso para aparecer en ContactHub. Puedes editar los datos autorrellenados antes de enviar.
+            Revisamos cada solicitud antes de publicarla para mantener la calidad y seguridad de la plataforma. Puedes editar los datos autorrellenados antes de enviar.
           </p>
           <div className="mt-6 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-slate-300">
             <p className="font-bold text-white">Revisión antes de publicar</p>
@@ -198,6 +210,9 @@ export default function PublishServicePage() {
               <Field label="Red social o web (opcional)">
                 <input value={form.socialUrl} onChange={(event) => update('socialUrl', event.target.value.slice(0, 500))} placeholder="https://..." className="publish-input" />
               </Field>
+              <Field label="Precio referencial (opcional)">
+                <input value={form.priceReference} onChange={(event) => update('priceReference', sanitizeTextInput(event.target.value, 120))} placeholder="Ej: desde S/50" className="publish-input" />
+              </Field>
             </div>
 
             <Field label="Descripción *" className="mt-4">
@@ -206,6 +221,16 @@ export default function PublishServicePage() {
             <Field label="Mensaje adicional (opcional)" className="mt-4">
               <textarea rows={3} value={form.additionalMessage} onChange={(event) => update('additionalMessage', sanitizeTextInput(event.target.value, 500))} placeholder="Algún detalle que debamos considerar durante la revisión." className="publish-input min-h-20 py-3" />
             </Field>
+
+            <label className="mt-5 flex gap-3 rounded-lg border border-line bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
+              <input
+                type="checkbox"
+                checked={form.acceptedReview}
+                onChange={(event) => update('acceptedReview', event.target.checked)}
+                className="mt-1 h-4 w-4 accent-brand-400"
+              />
+              <span>Acepto que ContactHub revise mi información y, si es aprobada, pueda mostrar mi contacto dentro de una categoría relacionada.</span>
+            </label>
 
             <button type="submit" disabled={isSaving} className="focus-ring btn-primary-glow mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 text-sm font-bold text-white transition hover:bg-brand-400 disabled:opacity-60">
               <Send className="h-4 w-4" />

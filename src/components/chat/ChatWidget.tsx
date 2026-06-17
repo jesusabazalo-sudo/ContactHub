@@ -146,15 +146,16 @@ const officialChatFolderCategories: ChatCategory[] = officialCategories.map((cat
 }));
 
 const mainActions: ChatAction[] = [
-  { label: 'Ver precios y promos', type: 'prices' },
-  { label: 'Quiero una carpeta', type: 'folders' },
+  { label: 'Qué es ContactHub', type: 'helpTopic', value: 'what' },
+  { label: 'Ver precios', type: 'prices' },
   { label: 'Cómo pago', type: 'payment' },
+  { label: 'Ya pagué', type: 'paid' },
+  { label: 'Dónde veo mis contactos', type: 'helpTopic', value: 'whereContacts' },
+  { label: 'Quiero una carpeta', type: 'folders' },
   { label: 'Subir comprobante', type: 'uploadReceipt' },
-  { label: 'No entiendo algo', type: 'help' },
+  { label: 'No entiendo', type: 'help' },
   { label: 'Publicar mi servicio', type: 'catalog', value: '/publica-tu-servicio' },
-  { label: 'Guía rápida', type: 'catalog', value: '/guia' },
-  { label: 'Ganar contacto gratis', type: 'missions' },
-  { label: 'Contactar soporte', type: 'human' },
+  { label: 'Soporte por WhatsApp', type: 'human' },
 ];
 
 const helpTopics: Record<string, string> = {
@@ -164,6 +165,10 @@ const helpTopics: Record<string, string> = {
   unlock: 'Después del pago o recompensa aprobada, activamos tu acceso. Desde ese momento puedes ver los contactos completos de la carpeta correspondiente.',
   pay: 'Puedes pagar por Yape. Escanea el QR o copia el número si está disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.',
   trust: 'Puedes explorar antes de registrarte o pagar. El correo solo guarda tus accesos, pruebas y comprobantes. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail. El acceso se activa de forma manual y verificada.',
+  whereContacts: 'Cuando tu acceso queda activo, entra a Mis contactos. Ahí verás tus carpetas desbloqueadas, progreso, buscador interno y teléfonos completos solo de tus carpetas activas.',
+  delay: 'La activación es manual y verificada. Cuando envías comprobante, soporte lo revisa y te avisa en el chat cuando el acceso queda listo.',
+  explore: 'Sí. Puedes explorar el catálogo sin registrarte. Solo necesitas cuenta para guardar prueba gratis, desbloquear carpetas o enviar comprobantes.',
+  publish: 'Puedes postular tu producto o servicio desde Publicar mi servicio. La solicitud queda en revisión y no se publica automáticamente.',
   free: 'Sí. Puedes registrarte, explorar el catálogo y ganar contactos extra completando misiones como compartir ContactHub y enviar evidencia.',
 };
 
@@ -529,12 +534,17 @@ export default function ChatWidget() {
         { label: 'Qué es ContactHub', type: 'helpTopic', value: 'what' },
         { label: 'Qué recibo al pagar', type: 'helpTopic', value: 'receive' },
         { label: 'Cómo funciona la prueba gratis', type: 'helpTopic', value: 'trial' },
-        { label: 'Cómo se desbloquean contactos', type: 'helpTopic', value: 'unlock' },
-        { label: 'Cómo pago', type: 'payment' },
-        { label: 'Puedo usarlo gratis', type: 'helpTopic', value: 'free' },
-        { label: 'Volver al inicio', type: 'main' },
-      ];
-    }
+    { label: 'Cómo se desbloquean contactos', type: 'helpTopic', value: 'unlock' },
+    { label: 'Cómo pago', type: 'payment' },
+    { label: 'Puedo usarlo gratis', type: 'helpTopic', value: 'free' },
+    { label: 'Esto es confiable', type: 'helpTopic', value: 'trust' },
+    { label: 'Dónde veo mis contactos', type: 'helpTopic', value: 'whereContacts' },
+    { label: 'Cuánto demora', type: 'helpTopic', value: 'delay' },
+    { label: 'Puedo explorar antes de pagar', type: 'helpTopic', value: 'explore' },
+    { label: 'Puedo publicar mi servicio', type: 'helpTopic', value: 'publish' },
+    { label: 'Volver al inicio', type: 'main' },
+  ];
+}
     if (currentFlow === 'missions') {
       return [
         { label: 'Quiero hacer una misión', type: 'helpTopic', value: 'missionStart' },

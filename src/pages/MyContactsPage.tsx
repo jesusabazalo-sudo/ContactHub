@@ -252,6 +252,40 @@ export default function MyContactsPage() {
           </div>
         </div>
 
+        <div className="dopamine-card mt-8 rounded-2xl p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-white">Historial de accesos</h2>
+              <p className="mt-1 text-sm text-gray-400">Permisos activos leídos desde user_category_access.</p>
+            </div>
+            <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-xs font-bold text-gray-300">
+              {data.accessHistory.length} registro(s)
+            </span>
+          </div>
+          <div className="grid gap-3">
+            {data.accessHistory.map((access) => {
+              const folder = data.folders.find((item) => item.id === access.categoryId);
+              return (
+                <div key={`${access.categoryId}-${access.createdAt ?? 'active'}`} className="grid gap-3 rounded-xl border border-line bg-white/[0.025] p-4 md:grid-cols-[1fr_auto] md:items-center">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-white">{folder?.name ?? 'Carpeta activa'}</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {access.createdAt ? new Date(access.createdAt).toLocaleDateString('es-PE') : 'Fecha no disponible'} · {access.accessType || 'manual'} · {access.status}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => folder?.id && setActiveCategoryId(folder.id)}
+                    className="focus-ring rounded-lg border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-100 transition hover:bg-brand-400/20"
+                  >
+                    Ver contactos
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="dopamine-card mt-8 rounded-2xl p-4">
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
             <label className="relative block">
