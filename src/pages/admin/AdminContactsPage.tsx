@@ -26,7 +26,9 @@ type CategoryOption = {
 } & OfficialCategoryDisplay;
 
 type ContactStatus = 'active' | 'inactive' | 'review' | 'rejected';
-type ContactQualityFilter = 'all' | 'complete' | 'pending' | 'no_phone' | 'verified';
+type ContactPhoneStatus = 'valid' | 'needs_review' | 'missing' | 'invalid' | 'placeholder_bug';
+type ContactVisibility = 'public' | 'restricted' | 'admin_only';
+type ContactQualityFilter = 'all' | 'publicable' | 'restricted' | 'complete' | 'pending' | 'no_phone' | 'verified';
 type AdminContactStats = {
   total: number;
   publicable: number;
@@ -55,12 +57,12 @@ type ContactRow = {
   description: string | null;
   phone: string | null;
   raw_phone?: string | null;
-  phone_status?: 'valid' | 'needs_review' | null;
+  phone_status?: ContactPhoneStatus | null;
   phone_masked: string | null;
   whatsapp?: string | null;
   internal_note?: string | null;
   source?: string | null;
-  visibility?: 'public' | 'restricted' | null;
+  visibility?: ContactVisibility | null;
   is_public?: boolean | null;
   import_batch?: string | null;
   import_note?: string | null;
@@ -235,17 +237,69 @@ function defaultDescriptionFor(category?: CategoryOption) {
   return `Contacto relacionado con ${subtitle}. Revisa los detalles antes de publicarlo como completo.`;
 }
 
-function getContactQuality(contact: ContactRow) {
-  if (!hasUsablePhone(contact.phone)) return { key: 'no_phone', label: 'Sin teléfono', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
-  if (contact.deleted_at || contact.is_active === false || contact.status === 'inactive') return { key: 'archived', label: 'Archivado', className: 'bg-white/10 text-gray-300 border-white/15' };
-  if (contact.status === 'review') return { key: 'pending', label: 'Pendiente', className: 'bg-yellow-500/15 text-yellow-200 border-yellow-400/25' };
-  if (contact.status === 'rejected') return { key: 'rejected', label: 'Rechazado', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
-  if (contact.phone && contact.description?.trim()) return { key: 'complete', label: 'Completo', className: 'bg-brand-400/15 text-brand-200 border-brand-400/25' };
-  return { key: 'verified', label: 'Verificado', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
+function isPlaceholderPhone(phone?: string | null) {
+  const digits = (phone ?? '').replace(/\D/g, '');
+  return Boolean(digits && (/^0{6,}/.test(digits) || /^\+?0{6,}/.test(phone ?? '')));
 }
 
 function hasUsablePhone(phone?: string | null) {
-  return Boolean(phone && !/revisar en documento original/i.test(phone));
+  const digits = (phone ?? '').replace(/\D/g, '');
+  return Boolean(phone && !/revisar en documento original/i.test(phone) && digits.length >= 7 && !isPlaceholderPhone(phone));
+}
+
+function inferPhoneStatus(contact: Partial<ContactRow>): ContactPhoneStatus {
+  if (contact.phone_status) return contact.phone_status;
+  const phone = contact.phone ?? '';
+  if (isPlaceholderPhone(phone)) return 'placeholder_bug';
+  if (!phone && contact.raw_phone) return 'needs_review';
+  if (!phone) return 'missing';
+  return hasUsablePhone(phone) ? 'valid' : 'invalid';
+}
+
+function isRestrictedContact(contact: Partial<ContactRow>) {
+  return (
+    contact.status === 'review'
+    || contact.status === 'rejected'
+    || contact.visibility === 'restricted'
+    || contact.visibility === 'admin_only'
+    || contact.is_public === false
+  );
+}
+
+function isPublicableContact(contact: Partial<ContactRow>) {
+  return (
+    contact.status === 'active'
+    && hasUsablePhone(contact.phone)
+    && inferPhoneStatus(contact) === 'valid'
+    && (contact.visibility ?? 'public') === 'public'
+    && contact.is_public !== false
+  );
+}
+
+function isCompleteContact(contact: Partial<ContactRow>) {
+  return Boolean(isPublicableContact(contact) && contact.description?.trim());
+}
+
+function matchesQualityFilter(contact: ContactRow, filter: ContactQualityFilter) {
+  const quality = getContactQuality(contact).key;
+  if (filter === 'all') return true;
+  if (filter === 'publicable') return isPublicableContact(contact);
+  if (filter === 'restricted') return isRestrictedContact(contact);
+  if (filter === 'complete') return isCompleteContact(contact);
+  if (filter === 'pending') return quality === 'pending';
+  if (filter === 'no_phone') return quality === 'no_phone';
+  if (filter === 'verified') return quality === 'verified' || quality === 'complete' || quality === 'publicable';
+  return true;
+}
+
+function getContactQuality(contact: ContactRow) {
+  const phoneStatus = inferPhoneStatus(contact);
+  if (phoneStatus !== 'valid' || !hasUsablePhone(contact.phone)) return { key: 'no_phone', label: phoneStatus === 'placeholder_bug' ? 'Placeholder' : 'Sin teléfono', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
+  if (contact.deleted_at || contact.is_active === false || contact.status === 'inactive') return { key: 'archived', label: 'Archivado', className: 'bg-white/10 text-gray-300 border-white/15' };
+  if (isRestrictedContact(contact)) return { key: 'pending', label: contact.status === 'rejected' ? 'Rechazado' : 'Restringido', className: 'bg-yellow-500/15 text-yellow-200 border-yellow-400/25' };
+  if (isCompleteContact(contact)) return { key: 'complete', label: 'Completo', className: 'bg-brand-400/15 text-brand-200 border-brand-400/25' };
+  if (isPublicableContact(contact)) return { key: 'publicable', label: 'Publicable', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
+  return { key: 'verified', label: 'Verificado', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
 }
 
 const hiddenContactStatuses = new Set(['inactive', 'deleted', 'archived']);
@@ -264,8 +318,61 @@ function getWhatsappLink(phone: string | null | undefined) {
   return clean ? `https://wa.me/${clean}` : '';
 }
 
+function normalizeAdminPhoneStatus(phone: string, requestedStatus?: ContactPhoneStatus | null): ContactPhoneStatus {
+  if (requestedStatus === 'placeholder_bug' || isPlaceholderPhone(phone)) return 'placeholder_bug';
+  if (requestedStatus && requestedStatus !== 'valid') return requestedStatus;
+  if (!phone) return 'missing';
+  return hasUsablePhone(phone) ? 'valid' : 'invalid';
+}
+
+function getSafePublicationState(params: {
+  phone: string;
+  requestedStatus: ContactStatus;
+  requestedVisibility?: ContactVisibility | null;
+  requestedIsPublic?: boolean | null;
+  requestedPhoneStatus?: ContactPhoneStatus | null;
+}) {
+  const phoneStatus = normalizeAdminPhoneStatus(params.phone, params.requestedPhoneStatus);
+  if (params.requestedStatus === 'inactive') {
+    return {
+      status: 'inactive' as ContactStatus,
+      visibility: 'admin_only' as ContactVisibility,
+      isPublic: false,
+      phoneStatus,
+    };
+  }
+  const canBePublic = (
+    params.requestedStatus === 'active'
+    && phoneStatus === 'valid'
+    && hasUsablePhone(params.phone)
+    && (params.requestedVisibility ?? 'public') === 'public'
+  );
+
+  return {
+    status: canBePublic ? params.requestedStatus : (params.requestedStatus === 'rejected' ? 'rejected' : 'review') as ContactStatus,
+    visibility: canBePublic ? 'public' as ContactVisibility : (params.requestedVisibility === 'restricted' ? 'restricted' : 'admin_only') as ContactVisibility,
+    isPublic: canBePublic && params.requestedIsPublic !== false,
+    phoneStatus,
+  };
+}
+
 function omitNewOptionalColumns(payload: Record<string, unknown>) {
-  const { whatsapp, internal_note, is_active, deleted_at, ...fallback } = payload;
+  const {
+    whatsapp,
+    internal_note,
+    is_active,
+    deleted_at,
+    raw_phone,
+    phone_status,
+    visibility,
+    is_public,
+    import_batch,
+    import_note,
+    review_reason,
+    reviewed_at,
+    reviewed_by,
+    ...fallback
+  } = payload;
   return fallback;
 }
 
@@ -424,19 +531,7 @@ export default function AdminContactsPage() {
     );
   }, [repairPlan]);
 
-  const filteredContacts = useMemo(() => {
-    const safeTag = normalizeSearchText(tagFilter);
-    const qualityFiltered = contacts.filter((contact) => {
-      const quality = getContactQuality(contact).key;
-      if (qualityFilter === 'complete' && quality !== 'complete') return false;
-      if (qualityFilter === 'pending' && quality !== 'pending') return false;
-      if (qualityFilter === 'no_phone' && quality !== 'no_phone') return false;
-      if (qualityFilter === 'verified' && quality !== 'verified' && quality !== 'complete') return false;
-      if (safeTag && !(contact.tags ?? []).some((tag) => normalizeSearchText(tag).includes(safeTag))) return false;
-      return true;
-    });
-    return searchContacts(debouncedSearch, qualityFiltered);
-  }, [contacts, qualityFilter, tagFilter, debouncedSearch]);
+  const filteredContacts = useMemo(() => contacts, [contacts]);
 
   const folderPickerOptions = useMemo(() => {
     const term = folderPickerSearch.trim().toLowerCase();
@@ -519,9 +614,12 @@ export default function AdminContactsPage() {
     const officialRows = buildOfficialCategoryRows(realCategoryRows);
 
     const realIds = new Set(officialRows.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => category.id));
-    const { data: contactCounters, error: contactCountersError } = await fetchActiveContactRows(
-      'id, category_id, phone, description, status',
-    );
+    let { data: contactCounters, error: contactCountersError } = await fetchActiveContactRows(extendedContactSelect);
+    if (contactCountersError && isMissingColumnError(contactCountersError)) {
+      const fallback = await fetchActiveContactRows(baseContactSelect);
+      contactCounters = fallback.data;
+      contactCountersError = fallback.error;
+    }
     if (contactCountersError) console.warn('contact counters:', contactCountersError.message);
 
     const rowsForStats = ((contactCounters ?? []) as Array<Partial<ContactRow> & { status?: string | null }>).filter(isVisibleContact);
@@ -539,12 +637,12 @@ export default function AdminContactsPage() {
 
     setAdminStats({
       total: rowsForStats.length,
-      publicable: rowsForStats.filter((contact) => contact.status === 'active').length,
-      restricted: rowsForStats.filter((contact) => contact.status === 'review' || contact.visibility === 'restricted' || contact.is_public === false).length,
+      publicable: rowsForStats.filter(isPublicableContact).length,
+      restricted: rowsForStats.filter(isRestrictedContact).length,
       uncategorized: rowsForStats.filter((contact) => !contact.category_id || !realIds.has(contact.category_id)).length,
-      complete: rowsForStats.filter((contact) => Boolean(hasUsablePhone(contact.phone) && contact.description?.trim())).length,
-      noPhone: rowsForStats.filter((contact) => !hasUsablePhone(contact.phone)).length,
-      placeholders: rowsForStats.filter((contact) => /^\+?0{6,}/.test(contact.phone ?? '')).length,
+      complete: rowsForStats.filter(isCompleteContact).length,
+      noPhone: rowsForStats.filter((contact) => inferPhoneStatus(contact) !== 'valid' || !hasUsablePhone(contact.phone)).length,
+      placeholders: rowsForStats.filter((contact) => inferPhoneStatus(contact) === 'placeholder_bug').length,
     });
 
     console.log('Categories loaded:', withCounts.length, withCounts[0]);
@@ -559,7 +657,8 @@ export default function AdminContactsPage() {
       .order('created_at', { ascending: false });
 
     const searchTerm = debouncedSearch.trim();
-    if (searchTerm) {
+    const needsClientSideFiltering = Boolean(searchTerm || tagFilter.trim() || qualityFilter !== 'all');
+    if (needsClientSideFiltering) {
       query = query.limit(10000);
     } else {
       query = query.range(currentPage * pageSize, (currentPage + 1) * pageSize - 1);
@@ -650,17 +749,21 @@ export default function AdminContactsPage() {
         };
       }) as ContactRow[];
 
-      const searchedRows = searchContacts(debouncedSearch, enrichedRows);
-      const enriched = isUncategorized || debouncedSearch.trim()
-        ? searchedRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
-        : searchedRows;
+      const safeTag = normalizeSearchText(tagFilter);
+      const locallyFilteredRows = searchContacts(debouncedSearch, enrichedRows)
+        .filter((contact) => matchesQualityFilter(contact, qualityFilter))
+        .filter((contact) => !safeTag || (contact.tags ?? []).some((tag) => normalizeSearchText(tag).includes(safeTag)));
+      const needsLocalPagination = Boolean(isUncategorized || debouncedSearch.trim() || tagFilter.trim() || qualityFilter !== 'all');
+      const enriched = needsLocalPagination
+        ? locallyFilteredRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+        : locallyFilteredRows;
 
       setContacts(enriched);
       hasLoadedContactsRef.current = true;
       setSelectedIds([]);
 
-      if (isUncategorized || debouncedSearch.trim()) {
-        setTotalCount(searchedRows.length);
+      if (needsLocalPagination) {
+        setTotalCount(locallyFilteredRows.length);
         return;
       }
 
@@ -749,6 +852,29 @@ export default function AdminContactsPage() {
     setDebouncedSearch('');
     setCurrentPage(0);
     setSelectedIds([]);
+  }
+
+  function applyMetricFilter(filter: 'total' | 'publicable' | 'restricted' | 'uncategorized' | 'no_phone' | 'complete') {
+    setActiveSubtab('list');
+    setSelectedStatus('all');
+    setSearch('');
+    setDebouncedSearch('');
+    setTagFilter('');
+    setCurrentPage(0);
+    setSelectedIds([]);
+
+    if (filter === 'uncategorized') {
+      setSelectedCategory('uncategorized');
+      setQualityFilter('all');
+      return;
+    }
+
+    setSelectedCategory('all');
+    if (filter === 'total') setQualityFilter('all');
+    if (filter === 'publicable') setQualityFilter('publicable');
+    if (filter === 'restricted') setQualityFilter('restricted');
+    if (filter === 'no_phone') setQualityFilter('no_phone');
+    if (filter === 'complete') setQualityFilter('complete');
   }
 
   function openAddContact() {
@@ -846,28 +972,82 @@ export default function AdminContactsPage() {
     try {
       const phone = normalizePhoneForAdmin(editing.phone ?? '');
       const detected = detectPhoneCountry(phone);
-      const status = phone ? editing.status : 'review';
+      const publication = getSafePublicationState({
+        phone,
+        requestedStatus: editing.status,
+        requestedVisibility: editing.visibility,
+        requestedIsPublic: editing.is_public,
+        requestedPhoneStatus: editing.phone_status,
+      });
       const ok = await updateContactCompat(editing.id, {
         name: sanitizeText(editing.name, 160),
-        phone,
+        phone: phone || null,
+        raw_phone: sanitizeText(editing.raw_phone ?? '', 80) || null,
         whatsapp: normalizePhoneForAdmin(editing.whatsapp ?? phone),
-        phone_masked: phone ? maskPhone(phone) : maskPhone(null),
+        phone_masked: phone ? maskPhone(phone) : 'Requiere revisión',
+        phone_status: publication.phoneStatus,
         category_id: editing.category_id,
         description: sanitizeText(editing.description ?? '', 500),
         tags: splitTags(editTags),
-        status,
+        status: publication.status,
+        visibility: publication.visibility,
+        is_public: publication.isPublic,
         country_flag: detected.country_flag,
         country_code: detected.country_code,
         internal_note: sanitizeText(editing.internal_note ?? '', 700),
+        import_note: sanitizeText(editing.import_note ?? '', 700),
         source: sanitizeText(editing.source ?? 'manual', 80),
-        is_active: status !== 'inactive',
+        is_active: publication.status !== 'inactive',
       });
       if (!ok) {
         toast.error('Supabase no permitió editar este contacto.');
         return;
       }
-      toast.success('Contacto actualizado.');
+      toast.success(publication.isPublic ? 'Contacto actualizado y publicable.' : 'Contacto actualizado en revisión admin.');
       setEditing(null);
+      await reloadCurrentPage();
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function approveContact(contact: ContactRow) {
+    const phone = normalizePhoneForAdmin(contact.phone ?? '');
+    const categoryExists = Boolean(categoryById.get(contact.category_id) && !isSyntheticCategoryId(contact.category_id));
+    if (!hasUsablePhone(phone) || inferPhoneStatus({ ...contact, phone }) !== 'valid') {
+      toast.error('No se puede aprobar: corrige un teléfono real y útil primero.');
+      return;
+    }
+    if (!categoryExists) {
+      toast.error('No se puede aprobar: asigna una carpeta oficial válida.');
+      return;
+    }
+    if (!contact.description?.trim()) {
+      toast.error('No se puede aprobar: agrega una descripción útil.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const detected = detectPhoneCountry(phone);
+      const ok = await updateContactCompat(contact.id, {
+        phone,
+        whatsapp: normalizePhoneForAdmin(contact.whatsapp ?? phone),
+        phone_masked: maskPhone(phone),
+        phone_status: 'valid',
+        status: 'active',
+        visibility: 'public',
+        is_public: true,
+        is_active: true,
+        country_flag: detected.country_flag,
+        country_code: detected.country_code,
+        internal_note: sanitizeText(`${contact.internal_note ?? ''}\nAprobado manualmente desde Admin Contactos.`, 700),
+      });
+      if (!ok) {
+        toast.error('No se pudo aprobar este contacto.');
+        return;
+      }
+      toast.success('Contacto aprobado y movido a publicables.');
       await reloadCurrentPage();
     } finally {
       setActionLoading(false);
@@ -887,7 +1067,13 @@ export default function AdminContactsPage() {
     const description = sanitizeText(form.description || defaultDescriptionFor(category), 500);
     const phoneMasked = phone ? maskPhone(phone) : maskPhone(null);
     const tags = splitTags(form.tags).length ? splitTags(form.tags) : suggestContactTags({ name, description, category });
-    const status: ContactStatus = phone ? form.status : 'review';
+    const publication = getSafePublicationState({
+      phone,
+      requestedStatus: form.status,
+      requestedVisibility: form.status === 'active' ? 'public' : 'admin_only',
+      requestedIsPublic: form.status === 'active',
+      requestedPhoneStatus: null,
+    });
 
     if (!name || !categoryId) {
       toast.error('Completa nombre y carpeta destino.');
@@ -921,8 +1107,12 @@ export default function AdminContactsPage() {
         tags,
         internal_note: sanitizeText(form.internal_note, 700),
         source: sanitizeText(form.source || 'manual', 80),
-        is_active: status !== 'inactive',
-        status,
+        raw_phone: phone || null,
+        phone_status: publication.phoneStatus,
+        visibility: publication.visibility,
+        is_public: publication.isPublic,
+        is_active: publication.status !== 'inactive',
+        status: publication.status,
         risk_level: 'safe',
       };
 
@@ -1251,36 +1441,36 @@ export default function AdminContactsPage() {
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          <div className="rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4">
+          <button type="button" onClick={() => applyMetricFilter('total')} className="focus-ring rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Total admin</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.total}</p>
             <p className="mt-1 text-xs text-gray-400">Vista actual: {totalCount}</p>
-          </div>
-          <div className="rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4">
+          </button>
+          <button type="button" onClick={() => applyMetricFilter('publicable')} className="focus-ring rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Publicables</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.publicable}</p>
-            <p className="mt-1 text-xs text-gray-400">estado activo</p>
-          </div>
-          <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
+            <p className="mt-1 text-xs text-gray-400">activos, públicos y válidos</p>
+          </button>
+          <button type="button" onClick={() => applyMetricFilter('restricted')} className="focus-ring rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-yellow-300/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Restringidos</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.restricted}</p>
             <p className="mt-1 text-xs text-gray-400">solo revisión admin</p>
-          </div>
-          <div className="rounded-2xl border border-line bg-ink-950/55 p-4">
+          </button>
+          <button type="button" onClick={() => applyMetricFilter('uncategorized')} className="focus-ring rounded-2xl border border-line bg-ink-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/35">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500">Sin categoría</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.uncategorized}</p>
             <p className="mt-1 text-xs text-gray-400">para reasignar o limpiar</p>
-          </div>
-          <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
+          </button>
+          <button type="button" onClick={() => applyMetricFilter('no_phone')} className="focus-ring rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-yellow-300/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Sin teléfono útil</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.noPhone}</p>
             <p className="mt-1 text-xs text-gray-400">incluye revisión reservada</p>
-          </div>
-          <div className="rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4">
+          </button>
+          <button type="button" onClick={() => applyMetricFilter('complete')} className="focus-ring rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Completos</p>
             <p className="mt-2 text-2xl font-black text-white">{adminStats.complete}</p>
-            <p className="mt-1 text-xs text-gray-400">con teléfono y descripción</p>
-          </div>
+            <p className="mt-1 text-xs text-gray-400">publicables con descripción</p>
+          </button>
         </div>
 
         {adminStats.placeholders > 0 ? (
@@ -1417,6 +1607,8 @@ export default function AdminContactsPage() {
             className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white"
           >
             <option value="all">Calidad: todas</option>
+            <option value="publicable">Publicables</option>
+            <option value="restricted">Restringidos</option>
             <option value="complete">Completos</option>
             <option value="verified">Verificados</option>
             <option value="pending">Pendientes</option>
@@ -1551,8 +1743,11 @@ export default function AdminContactsPage() {
                       <div className="font-mono text-xs text-white">
                         {contact.country_flag ?? '🌎'} {contact.phone ? formatPhone(contact.phone) : contact.raw_phone ?? contact.phone_masked ?? maskPhone(null)}
                       </div>
-                      {contact.phone_status === 'needs_review' ? (
-                        <p className="mt-1 text-[11px] font-semibold text-yellow-300">Teléfono original pendiente de revisión</p>
+                      {contact.raw_phone ? (
+                        <p className="mt-1 break-all text-[11px] text-gray-500">Raw: {contact.raw_phone}</p>
+                      ) : null}
+                      {inferPhoneStatus(contact) !== 'valid' ? (
+                        <p className="mt-1 text-[11px] font-semibold text-yellow-300">phone_status: {inferPhoneStatus(contact)}</p>
                       ) : null}
                       <div className="mt-2 flex flex-wrap gap-2">
                         {whatsappLink ? (
@@ -1589,13 +1784,21 @@ export default function AdminContactsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${quality.className}`}>{quality.label}</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${quality.className}`}>{quality.label}</span>
+                        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{contact.status}</span>
+                        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{contact.visibility ?? 'public'}</span>
+                        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{inferPhoneStatus(contact)}</span>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">{contact.created_at ? new Date(contact.created_at).toLocaleDateString('es-PE') : '-'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
                         <button type="button" disabled={actionLoading} onClick={() => openEdit(contact)} className="rounded-full border border-line bg-white/5 p-2 text-brand-200 hover:border-brand-400/40" title="Editar">
                           ✏️
+                        </button>
+                        <button type="button" disabled={actionLoading || isPublicableContact(contact)} onClick={() => void approveContact(contact)} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-100 hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
+                          <Check className="h-4 w-4" />
                         </button>
                         <button type="button" disabled={actionLoading} onClick={() => openDuplicate(contact)} className="rounded-full border border-line bg-white/5 p-2 text-gray-200 hover:border-brand-400/40" title="Duplicar">
                           <Copy className="h-4 w-4" />
@@ -1734,15 +1937,26 @@ export default function AdminContactsPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Nombre</span><input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono</span><input value={editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono original / raw_phone</span><input value={editing.raw_phone ?? ''} onChange={(event) => setEditing({ ...editing, raw_phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">WhatsApp</span><input value={editing.whatsapp ?? editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, whatsapp: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => <option key={category.id} value={category.id}>{getCategoryLabel(category)}</option>)}</select></label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Estado</span><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="active">active</option><option value="review">review</option><option value="inactive">inactive</option><option value="rejected">rejected</option></select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Phone status</span><select value={editing.phone_status ?? inferPhoneStatus(editing)} onChange={(event) => setEditing({ ...editing, phone_status: event.target.value as ContactPhoneStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="valid">valid</option><option value="needs_review">needs_review</option><option value="missing">missing</option><option value="invalid">invalid</option><option value="placeholder_bug">placeholder_bug</option></select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Visibilidad</span><select value={editing.visibility ?? 'public'} onChange={(event) => setEditing({ ...editing, visibility: event.target.value as ContactVisibility })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="public">public</option><option value="restricted">restricted</option><option value="admin_only">admin_only</option></select></label>
+              <label className="flex items-center gap-3 rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-sm font-semibold text-gray-300">
+                <input type="checkbox" checked={editing.is_public !== false} onChange={(event) => setEditing({ ...editing, is_public: event.target.checked })} />
+                is_public
+              </label>
               <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Fuente</span><input value={editing.source ?? 'manual'} onChange={(event) => setEditing({ ...editing, source: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Descripción</span><textarea value={editing.description ?? ''} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Tags separados por coma</span><input value={editTags} onChange={(event) => setEditTags(event.target.value)} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
               <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Nota interna</span><textarea value={editing.internal_note ?? ''} onChange={(event) => setEditing({ ...editing, internal_note: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Motivo / nota de importación</span><textarea value={editing.import_note ?? ''} onChange={(event) => setEditing({ ...editing, import_note: event.target.value })} rows={2} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
             </div>
-            <button type="button" disabled={actionLoading} onClick={() => void saveEdit()} className="focus-ring mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:opacity-60"><Save className="h-4 w-4" />Guardar cambios</button>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button type="button" disabled={actionLoading} onClick={() => void saveEdit()} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:opacity-60"><Save className="h-4 w-4" />Guardar cambios</button>
+              <button type="button" disabled={actionLoading} onClick={() => void approveContact(editing)} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 text-sm font-bold text-brand-100 disabled:opacity-60"><Check className="h-4 w-4" />Aprobar contacto</button>
+            </div>
           </div>
         </div>
       ) : null}

@@ -1,5 +1,5 @@
 ﻿import { Clipboard, MessageCircle, RefreshCw, Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import MissionsSection from '../components/missions/MissionsSection';
@@ -18,6 +18,7 @@ import { getMyContactsData, type MyContactsData, type UnlockedContact } from '..
 import { formatPhone } from '../utils/phone';
 
 const TOTAL_FOLDERS = 24;
+const SILENT_REFRESH_COOLDOWN_MS = 90_000;
 
 function openSupportChat(message: string) {
   window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message } }));
@@ -32,6 +33,7 @@ export default function MyContactsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lastSilentRefreshRef = useRef(0);
   const debouncedQuery = useDebouncedValue(query, 350);
 
   async function loadMyContacts(options?: { silent?: boolean }) {
@@ -97,11 +99,18 @@ export default function MyContactsPage() {
     if (!user?.id) return;
 
     const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') {
+      const now = Date.now();
+      if (document.visibilityState === 'visible' && now - lastSilentRefreshRef.current > SILENT_REFRESH_COOLDOWN_MS) {
+        lastSilentRefreshRef.current = now;
         void loadMyContacts({ silent: true });
       }
     };
-    const refreshOnPageShow = () => void loadMyContacts({ silent: true });
+    const refreshOnPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        lastSilentRefreshRef.current = Date.now();
+        void loadMyContacts({ silent: true });
+      }
+    };
 
     document.addEventListener('visibilitychange', refreshWhenVisible);
     window.addEventListener('pageshow', refreshOnPageShow);

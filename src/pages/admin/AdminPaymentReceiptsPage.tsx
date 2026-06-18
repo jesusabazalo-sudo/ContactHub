@@ -134,14 +134,12 @@ export default function AdminPaymentReceiptsPage() {
 
       const profiles = new Map((profilesRes.data ?? []).map((profile: { id: string; email: string | null; full_name: string | null }) => [profile.id, profile]));
       const signedRows = await Promise.all(rows.map(async (row) => {
-        const attachmentPath = row.attachment_path ?? row.attachment_url ?? '';
+        const attachmentPath = row.attachment_path ?? '';
         let signedUrl = '';
         if (attachmentPath && !attachmentPath.startsWith('http') && !attachmentPath.startsWith('blob:')) {
           const signed = await dynamicSupabase().storage.from('comprobantes').createSignedUrl(attachmentPath, 60 * 60);
           if (signed.error) console.error('AdminPaymentReceiptsPage signed url:', signed.error.message);
           signedUrl = signed.data?.signedUrl ?? '';
-        } else {
-          signedUrl = attachmentPath;
         }
         const profile = row.user_id ? profiles.get(row.user_id) : null;
         return {

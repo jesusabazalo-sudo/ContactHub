@@ -1,5 +1,6 @@
 import { Copy, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { APP_CONFIG } from '../../config/app';
 import { officialCategories } from '../../data/officialCategories';
@@ -449,6 +450,7 @@ function PaymentCard({
 }
 
 export default function ChatWidget() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const autofill = useAutofillProfile();
   const [isOpen, setIsOpen] = useState(false);
@@ -769,11 +771,11 @@ export default function ChatWidget() {
       return;
     }
     if (action.type === 'catalog' && action.value) {
-      window.location.href = action.value;
+      navigate(action.value);
       return;
     }
     if (action.type === 'auth') {
-      window.location.href = action.value ?? '/auth?mode=register';
+      navigate(action.value ?? '/auth?mode=register');
       return;
     }
 
@@ -968,7 +970,7 @@ export default function ChatWidget() {
     const nextMessages = (data ?? []) as ChatMessage[];
     const signed: Record<string, string> = {};
     await Promise.all(nextMessages.map(async (message) => {
-      const attachmentPath = message.attachment_path ?? message.attachment_url;
+      const attachmentPath = message.attachment_path;
       if (message.has_attachment && attachmentPath) {
         const signedUrl = await signAttachmentUrl(attachmentPath);
         if (signedUrl) signed[message.id] = signedUrl;
@@ -1050,9 +1052,9 @@ export default function ChatWidget() {
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[88%] rounded-2xl border px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md border-brand-400/30 bg-gradient-to-br from-[#1a4a32] to-[#113423] text-white' : 'rounded-bl-md border-brand-400/15 bg-gradient-to-br from-[#0d2a1f] to-[#091612] text-white'}`}>
-                  {message.has_attachment && (attachmentUrls[message.id] || message.attachment_url) ? (
+                  {message.has_attachment && attachmentUrls[message.id] ? (
                     <div className="mb-2">
-                      <img src={attachmentUrls[message.id] ?? message.attachment_url ?? ''} alt="Comprobante enviado" className="max-h-48 max-w-[220px] rounded-xl border border-brand-400/25 object-contain" />
+                      <img src={attachmentUrls[message.id]} alt="Comprobante enviado" className="max-h-48 max-w-[220px] rounded-xl border border-brand-400/25 object-contain" />
                       <div className="mt-2 text-[11px] text-white/50">📎 Comprobante enviado</div>
                     </div>
                   ) : null}

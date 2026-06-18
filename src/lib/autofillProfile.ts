@@ -29,6 +29,8 @@ export const emptyAutofillProfile: AutofillProfile = {
   displayName: '',
 };
 
+let supportsExtendedProfileColumns: boolean | null = null;
+
 export function getAuthProfile(user: User | null | undefined): AutofillProfile {
   if (!user) return emptyAutofillProfile;
   const metadata = user.user_metadata ?? {};
@@ -66,15 +68,21 @@ export async function readAutofillProfile(user: User): Promise<ProfileRow | null
   if (!supabase || !isSupabaseConfigured) return null;
   const client = supabase as unknown as { from: (table: string) => any };
 
-  const fullSelect = await client
-    .from('profiles')
-    .select('id,email,full_name,display_name,phone,whatsapp')
-    .eq('id', user.id)
-    .maybeSingle();
+  if (supportsExtendedProfileColumns !== false) {
+    const fullSelect = await client
+      .from('profiles')
+      .select('id,email,full_name,display_name,phone,whatsapp')
+      .eq('id', user.id)
+      .maybeSingle();
 
-  if (!fullSelect.error) return (fullSelect.data ?? null) as ProfileRow | null;
+    if (!fullSelect.error) {
+      supportsExtendedProfileColumns = true;
+      return (fullSelect.data ?? null) as ProfileRow | null;
+    }
 
-  if (import.meta.env.DEV) console.warn('Autofill profile full select fallback:', fullSelect.error.message);
+    supportsExtendedProfileColumns = false;
+    if (import.meta.env.DEV) console.warn('Autofill profile extended columns unavailable; using safe profile fields.');
+  }
 
   const basicSelect = await client
     .from('profiles')
