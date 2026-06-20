@@ -258,7 +258,7 @@ export default function CategoryDetailPage() {
 
           {contacts.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {contacts.map((contact) => {
+              {contacts.map((contact, index) => {
                 const unlockedPhone = phonesByContactId.get(contact.id);
                 const isTrialUnlocked = trialContactIds.includes(contact.id) && Boolean(unlockedPhone);
                 const isRewardUnlocked = rewardContactIds.includes(contact.id) && Boolean(unlockedPhone);
@@ -268,17 +268,18 @@ export default function CategoryDetailPage() {
                 const effectiveAccessLevel: 0 | 1 | 2 = hasPerContactUnlock ? 2 : accessLevel;
                 const canSeeFullPhone = effectiveAccessLevel === 2;
                 return (
-                  <ContactCard
-                    key={contact.id}
-                    contact={{ ...contact, phone: unlockedPhone ?? contact.phone }}
-                    canSeeFullPhone={canSeeFullPhone}
-                    canContactDirect={effectiveAccessLevel === 2}
-                    accessLevel={effectiveAccessLevel}
-                    isAdmin={isAdmin}
-                    isTrialUnlocked={isTrialUnlocked}
-                    isRewardUnlocked={isRewardUnlocked}
-                    categoryName={category.name}
-                  />
+                  <div key={contact.id} className="float-in h-full" style={{ animationDelay: `${Math.min(index, 11) * 40}ms` }}>
+                    <ContactCard
+                      contact={{ ...contact, phone: unlockedPhone ?? contact.phone }}
+                      canSeeFullPhone={canSeeFullPhone}
+                      canContactDirect={effectiveAccessLevel === 2}
+                      accessLevel={effectiveAccessLevel}
+                      isAdmin={isAdmin}
+                      isTrialUnlocked={isTrialUnlocked}
+                      isRewardUnlocked={isRewardUnlocked}
+                      categoryName={category.name}
+                    />
+                  </div>
                 );
               })}
             </div>

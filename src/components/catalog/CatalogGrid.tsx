@@ -25,8 +25,10 @@ export default function CatalogGrid({ categories, getAccessLevel }: CatalogGridP
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {regularCategories.map((category) => (
-          <CategoryCard key={category.id} category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
+        {regularCategories.map((category, index) => (
+          <div key={category.id} className="float-in h-full" style={{ animationDelay: `${Math.min(index, 11) * 45}ms` }}>
+            <CategoryCard category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
+          </div>
         ))}
       </div>
       {premiumCategory ? (

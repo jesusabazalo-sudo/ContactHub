@@ -28,8 +28,10 @@ export default function PricingPage() {
             </p>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {pricingPlans.map((plan) => (
-              <PricingCard key={plan.id} plan={plan} />
+            {pricingPlans.map((plan, index) => (
+              <div key={plan.id} className="float-in h-full" style={{ animationDelay: `${index * 70}ms` }}>
+                <PricingCard plan={plan} />
+              </div>
             ))}
           </div>
           <div className="mt-10 rounded-2xl border border-brand-400/20 bg-surface p-5 sm:p-6">
