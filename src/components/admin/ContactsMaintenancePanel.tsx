@@ -73,9 +73,9 @@ export default function ContactsMaintenancePanel({ onArchived }: Props) {
           <ShieldAlert className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="font-display text-xl font-bold text-white">Mantenimiento seguro de contactos</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-            Este flujo trabaja Ãºnicamente con <code className="text-brand-300">public.contacts</code>. Primero crea respaldo SQL y CSV; despuÃ©s permite archivar, nunca borrar otras tablas.
+          <h2 className="font-display text-xl font-bold text-content">Mantenimiento seguro de contactos</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-content-secondary">
+            Este flujo trabaja Ãºnicamente con <code className="text-brand-text">public.contacts</code>. Primero crea respaldo SQL y CSV; despuÃ©s permite archivar, nunca borrar otras tablas.
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function ContactsMaintenancePanel({ onArchived }: Props) {
           type="button"
           disabled={isWorking}
           onClick={() => void downloadCsv()}
-          className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-white/5 px-4 py-3 text-sm font-bold text-white transition hover:border-brand-400/40 disabled:opacity-50"
+          className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/40 disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
           Descargar CSV actual
@@ -94,21 +94,21 @@ export default function ContactsMaintenancePanel({ onArchived }: Props) {
           type="button"
           disabled={isWorking}
           onClick={() => void createBackup()}
-          className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl border border-brand-400/30 bg-brand-400/10 px-4 py-3 text-sm font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950 disabled:opacity-50"
+          className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl border border-brand-400/30 bg-brand-400/10 px-4 py-3 text-sm font-bold text-brand-text transition hover:bg-brand-400 hover:text-ink-950 disabled:opacity-50"
         >
           <DatabaseBackup className="h-4 w-4" />
           Crear backup en Supabase
         </button>
-        <div className="rounded-xl border border-line bg-ink-950/60 px-4 py-3 text-sm">
-          <p className="font-semibold text-white">{backupTable || 'Backup pendiente'}</p>
-          <p className="mt-1 text-xs text-gray-500">{backupTable ? `${backupCount} contactos respaldados` : 'Archivar permanece bloqueado.'}</p>
+        <div className="rounded-xl border border-border bg-canvas/60 px-4 py-3 text-sm">
+          <p className="font-semibold text-content">{backupTable || 'Backup pendiente'}</p>
+          <p className="mt-1 text-xs text-content-muted">{backupTable ? `${backupCount} contactos respaldados` : 'Archivar permanece bloqueado.'}</p>
         </div>
       </div>
 
       {backupTable ? (
         <div className="mt-5 rounded-xl border border-red-400/20 bg-red-400/[0.05] p-4">
-          <p className="text-sm font-semibold text-white">Paso destructivo controlado</p>
-          <p className="mt-1 text-xs leading-5 text-gray-400">
+          <p className="text-sm font-semibold text-content">Paso destructivo controlado</p>
+          <p className="mt-1 text-xs leading-5 text-content-secondary">
             Escribe <strong className="text-red-200">ARCHIVAR CONTACTOS</strong>. Se aplicarÃ¡ soft delete mediante <code>is_active=false</code>, <code>deleted_at</code> y estado inactivo.
           </p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
@@ -116,13 +116,13 @@ export default function ContactsMaintenancePanel({ onArchived }: Props) {
               value={confirmation}
               onChange={(event) => setConfirmation(event.target.value)}
               placeholder="ARCHIVAR CONTACTOS"
-              className="focus-ring h-11 flex-1 rounded-xl border border-red-400/20 bg-ink-950/70 px-4 text-sm text-white placeholder:text-gray-600"
+              className="focus-ring h-11 flex-1 rounded-xl border border-red-400/20 bg-canvas/70 px-4 text-sm text-content placeholder:text-content-muted"
             />
             <button
               type="button"
               disabled={isWorking || confirmation !== 'ARCHIVAR CONTACTOS'}
               onClick={() => void archiveAll()}
-              className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-red-500 px-5 py-3 text-sm font-bold text-content disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Archive className="h-4 w-4" />
               Archivar contactos actuales

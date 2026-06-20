@@ -92,17 +92,17 @@ export default function WelcomeModal() {
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md">
       <div className="welcome-particles absolute inset-0" />
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-brand-400/30 bg-[#0F2027] p-6 text-center shadow-[0_26px_90px_rgba(0,0,0,0.55)] sm:p-8">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-brand-400/30 bg-surface p-6 text-center shadow-[0_26px_90px_rgba(0,0,0,0.55)] sm:p-8">
         <div className="onboarding-confetti" />
         <div className="text-6xl">🎉</div>
-        <h2 className="mt-5 font-display text-3xl font-bold text-white">¡Bienvenido a ContactHub!</h2>
-        <p className="mt-2 text-lg font-bold text-brand-200">Tomaste una decisión inteligente.</p>
-        <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-white/80">
+        <h2 className="mt-5 font-display text-3xl font-bold text-content">¡Bienvenido a ContactHub!</h2>
+        <p className="mt-2 text-lg font-bold text-brand-text">Tomaste una decisión inteligente.</p>
+        <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-content/80">
           Aquí tienes acceso a más de 800 contactos directos organizados para que encuentres exactamente lo que buscas.
           Esperamos que encuentres lo que necesitas, y más. Cualquier duda, estamos aquí.
         </p>
-        {profile?.full_name ? <p className="mt-4 text-xs font-semibold text-gray-500">Hola, {profile.full_name}.</p> : null}
-        <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
+        {profile?.full_name ? <p className="mt-4 text-xs font-semibold text-content-muted">Hola, {profile.full_name}.</p> : null}
+        <div className="mt-6 h-2 overflow-hidden rounded-full bg-muted">
           <div className="welcome-progress h-full rounded-full bg-brand-400" />
         </div>
         <button

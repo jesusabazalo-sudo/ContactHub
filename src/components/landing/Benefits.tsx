@@ -13,7 +13,7 @@ const useCases = [
 
 export default function Benefits() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad bg-canvas">
       <div className="container-shell">
         <SectionHeading
           eyebrow="Casos de uso"
@@ -23,9 +23,9 @@ export default function Benefits() {
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {useCases.map((item, index) => (
             <article key={item.title} className={`professional-card p-5 ${index === useCases.length - 1 ? 'lg:col-start-2' : ''}`}>
-              <item.icon className="h-5 w-5 text-brand-400" />
-              <h3 className="mt-4 text-sm font-bold text-white">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-400">{item.text}</p>
+              <item.icon className="h-5 w-5 text-brand-text" />
+              <h3 className="mt-4 text-sm font-bold text-content">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-content-secondary">{item.text}</p>
             </article>
           ))}
         </div>

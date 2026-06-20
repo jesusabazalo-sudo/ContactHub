@@ -94,21 +94,21 @@ export default function PromoOffers({ compact = false }: { compact?: boolean }) 
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-panel p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <span
             className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase ${
-              state.isPromoDay ? 'badge-pulse bg-brand-400 text-ink-950' : 'bg-white/10 text-gray-300'
+              state.isPromoDay ? 'badge-pulse bg-brand-400 text-ink-950' : 'bg-muted text-content-secondary'
             }`}
           >
             {state.isPromoDay ? 'Promo disponible hoy' : `Proxima promo: ${state.label}`}
           </span>
-          <p className="mt-3 text-sm leading-6 text-gray-300">Las promos pueden variar. Si tienes dudas, revisa por chat antes de pagar.</p>
+          <p className="mt-3 text-sm leading-6 text-content-secondary">Las promos pueden variar. Si tienes dudas, revisa por chat antes de pagar.</p>
         </div>
-        <div className="rounded-xl border border-line bg-ink-950/70 px-4 py-3 text-sm text-gray-300">
-          <TimerReset className="mr-2 inline h-4 w-4 text-brand-400" />
+        <div className="rounded-xl border border-border bg-canvas/70 px-4 py-3 text-sm text-content-secondary">
+          <TimerReset className="mr-2 inline h-4 w-4 text-brand-text" />
           {state.isPromoDay ? 'Termina en: ' : 'Empieza en: '}
-          <span className="font-mono font-bold text-white">{remaining}</span>
+          <span className="font-mono font-bold text-content">{remaining}</span>
         </div>
       </div>
 
@@ -116,21 +116,21 @@ export default function PromoOffers({ compact = false }: { compact?: boolean }) 
         {offers.map((offer) => (
           <article
             key={offer.title}
-            className={`card-hover relative overflow-hidden rounded-2xl border border-brand-400/25 bg-[#0d2a1f] p-5 ${
+            className={`card-hover relative overflow-hidden rounded-2xl border border-brand-400/25 bg-surface p-5 ${
               state.isPromoDay ? 'shadow-[0_0_18px_rgba(29,180,122,0.10)]' : ''
             }`}
           >
-            {!state.isPromoDay ? <div className="pointer-events-none absolute inset-0 bg-ink-950/35" /> : null}
+            {!state.isPromoDay ? <div className="pointer-events-none absolute inset-0 bg-canvas/35" /> : null}
             <div className="relative">
-              <h3 className="min-h-12 text-base font-bold text-white">{offer.title}</h3>
+              <h3 className="min-h-12 text-base font-bold text-content">{offer.title}</h3>
               <div className="mt-4 flex items-end gap-3">
-                <span className="text-sm text-gray-400 line-through">{offer.normalPrice}</span>
-                <span className="font-display text-3xl font-bold text-brand-400">{offer.promoPrice}</span>
+                <span className="text-sm text-content-secondary line-through">{offer.normalPrice}</span>
+                <span className="font-display text-3xl font-bold text-brand-text">{offer.promoPrice}</span>
               </div>
               {offer.savings ? (
                 <span className="mt-3 inline-flex rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-ink-950">{offer.savings}</span>
               ) : (
-                <span className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-gray-200">Precio base</span>
+                <span className="mt-3 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-bold text-content">Precio base</span>
               )}
               <div className="mt-4 rounded-xl border border-brand-400/20 bg-brand-400/10 p-3 text-sm leading-6 text-gray-100">{offer.gift}</div>
               <button

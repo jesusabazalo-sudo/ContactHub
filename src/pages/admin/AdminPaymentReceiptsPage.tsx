@@ -56,7 +56,7 @@ function statusLabel(status: ReceiptStatus | null | undefined) {
 }
 
 function statusClass(status: ReceiptStatus | null | undefined) {
-  if (status === 'verificado') return 'border-brand-400/30 bg-brand-400/10 text-brand-200';
+  if (status === 'verificado') return 'border-brand-400/30 bg-brand-400/10 text-brand-text';
   if (status === 'rechazado') return 'border-red-400/30 bg-red-400/10 text-red-200';
   return 'border-red-400/30 bg-red-400/10 text-red-100';
 }
@@ -271,16 +271,16 @@ export default function AdminPaymentReceiptsPage() {
       <section className="dopamine-card neon-edge rounded-2xl p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">Pagos</p>
-            <h2 className="mt-2 font-display text-2xl font-bold text-white">Comprobantes de pago</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-text">Pagos</p>
+            <h2 className="mt-2 font-display text-2xl font-bold text-content">Comprobantes de pago</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-content-secondary">
               Revisa los pagos recibidos y activa el acceso del cliente.
             </p>
           </div>
           <button
             type="button"
             onClick={() => void loadReceipts()}
-            className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-brand-400/40"
+            className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content transition hover:-translate-y-0.5 hover:border-brand-400/40"
           >
             <RefreshCw className="h-4 w-4" />
             Actualizar
@@ -294,7 +294,7 @@ export default function AdminPaymentReceiptsPage() {
               type="button"
               onClick={() => setStatusFilter(tab.id)}
               className={`rounded-full border px-4 py-2 text-xs font-black transition ${
-                statusFilter === tab.id ? 'border-brand-400/50 bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-[0_0_20px_rgba(34,197,94,0.18)]' : 'border-line bg-white/5 text-gray-300 hover:border-brand-400/40'
+                statusFilter === tab.id ? 'border-brand-400/50 bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-[0_0_20px_rgba(34,197,94,0.18)]' : 'border-border bg-muted text-content-secondary hover:border-brand-400/40'
               }`}
             >
               {tab.label}
@@ -305,7 +305,7 @@ export default function AdminPaymentReceiptsPage() {
 
         {error ? (
           <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-6 text-amber-50">
-            <p className="font-semibold text-white">{error}</p>
+            <p className="font-semibold text-content">{error}</p>
             <button type="button" onClick={() => void loadReceipts()} className="mt-4 rounded-full bg-brand-400 px-4 py-2 text-xs font-bold text-ink-950">
               Reintentar
             </button>
@@ -317,46 +317,46 @@ export default function AdminPaymentReceiptsPage() {
             {filteredReceipts.map((receipt) => (
               <article
                 key={receipt.id}
-                className={`card-hover flex flex-col gap-4 rounded-2xl border bg-white/[0.03] p-4 sm:flex-row ${
+                className={`card-hover flex flex-col gap-4 rounded-2xl border bg-muted p-4 sm:flex-row ${
                   normalizeStatus(receipt.comprobante_status) === 'pendiente'
                     ? 'border-red-400/30'
                     : normalizeStatus(receipt.comprobante_status) === 'verificado'
                       ? 'border-brand-400/30'
-                      : 'border-white/10'
+                      : 'border-border'
                 }`}
               >
                 <button
                   type="button"
                   onClick={() => receipt.signedUrl && window.open(receipt.signedUrl, '_blank', 'noopener,noreferrer')}
-                  className="group mx-auto h-28 w-28 flex-none overflow-hidden rounded-2xl border-2 border-purple-400/60 bg-ink-950 sm:mx-0"
+                  className="group mx-auto h-28 w-28 flex-none overflow-hidden rounded-2xl border-2 border-purple-400/60 bg-canvas sm:mx-0"
                 >
                   {receipt.signedUrl ? (
                     <img src={receipt.signedUrl} alt="Comprobante" className="h-full w-full object-cover transition group-hover:scale-105" />
                   ) : (
-                    <span className="flex h-full items-center justify-center px-2 text-center text-xs text-gray-500">Sin imagen</span>
+                    <span className="flex h-full items-center justify-center px-2 text-center text-xs text-content-muted">Sin imagen</span>
                   )}
                 </button>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="break-all text-sm font-bold text-white">{receipt.user_email}</p>
-                      <p className="mt-1 text-xs text-gray-500">{receipt.user_name ?? 'Sin nombre registrado'}</p>
-                      <p className="mt-1 text-xs text-gray-500">{formatDate(receipt.created_at)}</p>
+                      <p className="break-all text-sm font-bold text-content">{receipt.user_email}</p>
+                      <p className="mt-1 text-xs text-content-muted">{receipt.user_name ?? 'Sin nombre registrado'}</p>
+                      <p className="mt-1 text-xs text-content-muted">{formatDate(receipt.created_at)}</p>
                     </div>
                     <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(receipt.comprobante_status)}`}>
                       {statusLabel(receipt.comprobante_status)}
                     </span>
                   </div>
 
-                  <p className="mt-3 line-clamp-2 text-xs leading-5 text-gray-400">{receipt.message ?? 'Comprobante enviado desde chat.'}</p>
+                  <p className="mt-3 line-clamp-2 text-xs leading-5 text-content-secondary">{receipt.message ?? 'Comprobante enviado desde chat.'}</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {receipt.signedUrl ? (
                       <button
                         type="button"
                         onClick={() => window.open(receipt.signedUrl, '_blank', 'noopener,noreferrer')}
-                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-1.5 text-xs font-bold text-white transition hover:border-brand-400/40"
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-bold text-content transition hover:border-brand-400/40"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         Ver comprobante
@@ -392,7 +392,7 @@ export default function AdminPaymentReceiptsPage() {
                         type="button"
                         disabled={isUpdatingId === receipt.id}
                         onClick={() => void updateReceiptStatus(receipt, 'pendiente')}
-                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-1.5 text-xs font-bold text-gray-200 disabled:opacity-60"
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-bold text-content disabled:opacity-60"
                       >
                         Reabrir revision
                       </button>
@@ -402,7 +402,7 @@ export default function AdminPaymentReceiptsPage() {
                         type="button"
                         disabled={isUpdatingId === receipt.id}
                         onClick={() => void updateReceiptStatus(receipt, 'verificado')}
-                        className="inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-200 disabled:opacity-60"
+                        className="inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-text disabled:opacity-60"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Marcar revisado
@@ -416,26 +416,26 @@ export default function AdminPaymentReceiptsPage() {
         ) : null}
 
         {!error && !filteredReceipts.length ? (
-          <div className="mt-8 rounded-2xl border border-line bg-ink-950/60 p-8 text-center">
-            <p className="font-display text-xl font-bold text-white">No hay comprobantes pendientes por revisar.</p>
-            <p className="mt-2 text-sm text-gray-400">Cuando un cliente suba una imagen desde el chat, aparecera aqui.</p>
+          <div className="mt-8 rounded-2xl border border-border bg-canvas/60 p-8 text-center">
+            <p className="font-display text-xl font-bold text-content">No hay comprobantes pendientes por revisar.</p>
+            <p className="mt-2 text-sm text-content-secondary">Cuando un cliente suba una imagen desde el chat, aparecera aqui.</p>
           </div>
         ) : null}
       </section>
 
       {selectedReceipt ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-brand-400/25 bg-[#0F2027] p-5 shadow-2xl">
+          <div className="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-brand-400/25 bg-surface p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">Activar acceso</p>
-                <h3 className="mt-2 break-all font-display text-2xl font-bold text-white">{selectedReceipt.user_email}</h3>
-                <p className="mt-2 text-sm text-gray-400">Selecciona una o varias carpetas para activar por este comprobante.</p>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">Activar acceso</p>
+                <h3 className="mt-2 break-all font-display text-2xl font-bold text-content">{selectedReceipt.user_email}</h3>
+                <p className="mt-2 text-sm text-content-secondary">Selecciona una o varias carpetas para activar por este comprobante.</p>
               </div>
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="rounded-full border border-line px-3 py-1.5 text-sm font-bold text-white">Cerrar</button>
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="rounded-full border border-border px-3 py-1.5 text-sm font-bold text-content">Cerrar</button>
             </div>
 
-            <p className="mt-5 text-sm font-semibold text-gray-300">{selectedCategoryIds.length} carpetas seleccionadas</p>
+            <p className="mt-5 text-sm font-semibold text-content-secondary">{selectedCategoryIds.length} carpetas seleccionadas</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {categories.map((category) => {
                 const selected = selectedCategoryIds.includes(category.id);
@@ -445,14 +445,14 @@ export default function AdminPaymentReceiptsPage() {
                     type="button"
                     onClick={() => toggleCategory(category.id)}
                     className={`card-hover rounded-2xl border p-4 text-left transition ${
-                      selected ? 'border-brand-400/60 bg-brand-400/12' : 'border-line bg-white/[0.03] hover:border-brand-400/35'
+                      selected ? 'border-brand-400/60 bg-brand-400/12' : 'border-border bg-muted hover:border-brand-400/35'
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="mt-1 h-4 w-4 rounded border border-brand-400/50 bg-ink-950 text-center text-[10px] text-brand-300">{selected ? 'OK' : ''}</span>
+                      <span className="mt-1 h-4 w-4 rounded border border-brand-400/50 bg-canvas text-center text-[10px] text-brand-text">{selected ? 'OK' : ''}</span>
                       <div>
-                        <p className="font-semibold text-white">{category.displayLabel}</p>
-                        <p className="mt-1 text-xs text-gray-500">{category.short_description ?? 'Carpeta oficial ContactHub'}</p>
+                        <p className="font-semibold text-content">{category.displayLabel}</p>
+                        <p className="mt-1 text-xs text-content-muted">{category.short_description ?? 'Carpeta oficial ContactHub'}</p>
                       </div>
                     </div>
                   </button>
@@ -461,7 +461,7 @@ export default function AdminPaymentReceiptsPage() {
             </div>
 
             <div className="mt-5 flex flex-wrap justify-end gap-3">
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="rounded-full border border-line px-4 py-2 text-sm font-bold text-white">Cancelar</button>
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="rounded-full border border-border px-4 py-2 text-sm font-bold text-content">Cancelar</button>
               <button
                 type="button"
                 disabled={!selectedCategoryIds.length || isUpdatingId === selectedReceipt.id}

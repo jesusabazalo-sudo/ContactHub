@@ -152,30 +152,30 @@ export default function AdminSoportePage() {
     <AdminShell>
       <AdminNotice />
       <section className="grid gap-5 lg:grid-cols-[0.42fr_1fr]">
-        <div className="rounded-2xl border border-line bg-panel p-5">
-          <h2 className="font-display text-2xl font-bold text-white">Soporte</h2>
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="font-display text-2xl font-bold text-content">Soporte</h2>
           <div className="mt-5 divide-y divide-line">
             {conversations.map((conversation) => (
               <button key={conversation.userId} type="button" onClick={() => void openConversation(conversation.userId)} className="block w-full py-4 text-left">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-white">{conversation.email ?? conversation.userId}</p>
-                  {conversation.unread ? <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-white">{conversation.unread} nuevos</span> : null}
+                  <p className="font-semibold text-content">{conversation.email ?? conversation.userId}</p>
+                  {conversation.unread ? <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-content">{conversation.unread} nuevos</span> : null}
                 </div>
-                <p className="mt-1 text-sm text-gray-400">{conversation.lastMessage}</p>
-                <p className="mt-1 text-xs text-gray-500">{formatDate(conversation.lastDate)}</p>
+                <p className="mt-1 text-sm text-content-secondary">{conversation.lastMessage}</p>
+                <p className="mt-1 text-xs text-content-muted">{formatDate(conversation.lastDate)}</p>
               </button>
             ))}
-            {!conversations.length ? <p className="py-8 text-sm text-gray-400">No hay conversaciones todavía.</p> : null}
+            {!conversations.length ? <p className="py-8 text-sm text-content-secondary">No hay conversaciones todavía.</p> : null}
           </div>
         </div>
-        <div className="rounded-2xl border border-line bg-panel p-5">
+        <div className="rounded-2xl border border-border bg-surface p-5">
           {selectedUserId ? (
             <>
-              <h3 className="font-display text-xl font-bold text-white">{emailByUser.get(selectedUserId) ?? selectedUserId}</h3>
-              <div className="mt-5 h-[460px] space-y-3 overflow-y-auto rounded-xl border border-line bg-ink-950/50 p-4">
+              <h3 className="font-display text-xl font-bold text-content">{emailByUser.get(selectedUserId) ?? selectedUserId}</h3>
+              <div className="mt-5 h-[460px] space-y-3 overflow-y-auto rounded-xl border border-border bg-canvas/50 p-4">
                 {selectedMessages.map((message) => (
                   <div key={message.id} className={`flex ${message.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${message.sender === 'admin' ? 'bg-brand-400 text-ink-950' : 'bg-white/10 text-white'}`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${message.sender === 'admin' ? 'bg-brand-400 text-ink-950' : 'bg-muted text-content'}`}>
                       <p>{message.message}</p>
                       <p className="mt-1 text-[10px] opacity-70">{formatDate(message.created_at)}</p>
                     </div>
@@ -183,7 +183,7 @@ export default function AdminSoportePage() {
                 ))}
               </div>
               <div className="mt-4 flex gap-2">
-                <input value={reply} onChange={(event) => setReply(sanitizeTextInput(event.target.value, 500))} className="focus-ring h-11 flex-1 rounded-full border border-line bg-ink-950/70 px-4 text-white" placeholder="Respuesta" />
+                <input value={reply} onChange={(event) => setReply(sanitizeTextInput(event.target.value, 500))} className="focus-ring h-11 flex-1 rounded-full border border-border bg-canvas/70 px-4 text-content" placeholder="Respuesta" />
                 <button type="button" onClick={() => void sendReply()} className="focus-ring inline-flex h-11 items-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950">
                   <Send className="h-4 w-4" />
                   Enviar respuesta
@@ -193,8 +193,8 @@ export default function AdminSoportePage() {
           ) : (
             <div className="grid h-full min-h-[360px] place-items-center text-center">
               <div>
-                <MessageCircle className="mx-auto h-10 w-10 text-brand-400" />
-                <p className="mt-3 font-semibold text-white">Selecciona una conversación.</p>
+                <MessageCircle className="mx-auto h-10 w-10 text-brand-text" />
+                <p className="mt-3 font-semibold text-content">Selecciona una conversación.</p>
               </div>
             </div>
           )}

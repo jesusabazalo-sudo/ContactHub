@@ -97,7 +97,6 @@ export default function AdminRewardsPage() {
       }
 
       setRequests(requestsResult.data ?? []);
-      console.log('Categories loaded:', categoriesResult.length, categoriesResult[0]);
       setCategories(categoriesResult);
       setContacts(contactsResult.data ?? []);
     } catch (loadError) {
@@ -177,13 +176,13 @@ export default function AdminRewardsPage() {
   return (
     <AdminShell>
       <AdminNotice />
-      <section className="rounded-2xl border border-line bg-panel p-5">
+      <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white">Recompensas</h2>
-            <p className="mt-2 text-sm text-gray-400">Aprueba solicitudes y asigna exactamente 3 contactos extra.</p>
+            <h2 className="font-display text-2xl font-bold text-content">Recompensas</h2>
+            <p className="mt-2 text-sm text-content-secondary">Aprueba solicitudes y asigna exactamente 3 contactos extra.</p>
           </div>
-          <button type="button" onClick={loadData} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white">
+          <button type="button" onClick={loadData} className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content">
             <RefreshCw className="h-4 w-4" />
             Actualizar
           </button>
@@ -192,9 +191,9 @@ export default function AdminRewardsPage() {
         {error ? <div className="mt-5 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">{error}</div> : null}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
-          <div className="overflow-x-auto rounded-xl border border-line">
+          <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+              <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
                 <tr>
                   <th className="px-4 py-3">Usuario</th>
                   <th className="px-4 py-3">Estado</th>
@@ -204,16 +203,16 @@ export default function AdminRewardsPage() {
               </thead>
               <tbody>
                 {requests.map((request) => (
-                  <tr key={request.id} className="border-t border-line">
-                    <td className="px-4 py-3 font-mono text-xs text-gray-300">{request.user_id}</td>
-                    <td className="px-4 py-3 text-gray-300">{request.status}</td>
+                  <tr key={request.id} className="border-t border-border">
+                    <td className="px-4 py-3 font-mono text-xs text-content-secondary">{request.user_id}</td>
+                    <td className="px-4 py-3 text-content-secondary">{request.status}</td>
                     <td className="px-4 py-3">
                       {request.screenshot_url ? (
-                        <a href={request.screenshot_url} target="_blank" rel="noreferrer" className="text-brand-400 underline">
+                        <a href={request.screenshot_url} target="_blank" rel="noreferrer" className="text-brand-text underline">
                           Ver captura
                         </a>
                       ) : (
-                        <span className="text-gray-500">WhatsApp / pendiente</span>
+                        <span className="text-content-muted">WhatsApp / pendiente</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -230,7 +229,7 @@ export default function AdminRewardsPage() {
                 ))}
                 {!requests.length ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-gray-400">
+                    <td colSpan={4} className="px-4 py-10 text-center text-content-secondary">
                       No hay solicitudes de recompensa.
                     </td>
                   </tr>
@@ -239,10 +238,10 @@ export default function AdminRewardsPage() {
             </table>
           </div>
 
-          <aside className="rounded-2xl border border-line bg-ink-950/50 p-5">
-            <h3 className="font-display text-xl font-bold text-white">Aprobar 3 contactos</h3>
-            <p className="mt-2 text-sm text-gray-400">{selectedRequest ? `Solicitud: ${selectedRequest.id}` : 'Selecciona una solicitud pendiente.'}</p>
-            <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="focus-ring mt-4 h-11 w-full rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white">
+          <aside className="rounded-2xl border border-border bg-canvas/50 p-5">
+            <h3 className="font-display text-xl font-bold text-content">Aprobar 3 contactos</h3>
+            <p className="mt-2 text-sm text-content-secondary">{selectedRequest ? `Solicitud: ${selectedRequest.id}` : 'Selecciona una solicitud pendiente.'}</p>
+            <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="focus-ring mt-4 h-11 w-full rounded-full border border-border bg-canvas/70 px-4 text-sm text-content">
               <option value="all">Todas las categorías</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -254,7 +253,7 @@ export default function AdminRewardsPage() {
               {visibleContacts.map((contact) => {
                 const checked = selectedContactIds.includes(contact.id);
                 return (
-                  <label key={contact.id} className={`flex items-center gap-3 rounded-lg border border-line bg-white/5 p-3 text-sm text-white ${!checked && selectedContactIds.length >= 3 ? 'opacity-50' : ''}`}>
+                  <label key={contact.id} className={`flex items-center gap-3 rounded-lg border border-border bg-muted p-3 text-sm text-content ${!checked && selectedContactIds.length >= 3 ? 'opacity-50' : ''}`}>
                     <input type="checkbox" checked={checked} disabled={!checked && selectedContactIds.length >= 3} onChange={() => toggleContact(contact.id)} />
                     {contact.name}
                   </label>

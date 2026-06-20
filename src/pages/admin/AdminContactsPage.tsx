@@ -295,9 +295,9 @@ function matchesQualityFilter(contact: ContactRow, filter: ContactQualityFilter)
 function getContactQuality(contact: ContactRow) {
   const phoneStatus = inferPhoneStatus(contact);
   if (phoneStatus !== 'valid' || !hasUsablePhone(contact.phone)) return { key: 'no_phone', label: phoneStatus === 'placeholder_bug' ? 'Placeholder' : 'Sin teléfono', className: 'bg-red-500/15 text-red-300 border-red-400/25' };
-  if (contact.deleted_at || contact.is_active === false || contact.status === 'inactive') return { key: 'archived', label: 'Archivado', className: 'bg-white/10 text-gray-300 border-white/15' };
+  if (contact.deleted_at || contact.is_active === false || contact.status === 'inactive') return { key: 'archived', label: 'Archivado', className: 'bg-muted text-content-secondary border-border' };
   if (isRestrictedContact(contact)) return { key: 'pending', label: contact.status === 'rejected' ? 'Rechazado' : 'Restringido', className: 'bg-yellow-500/15 text-yellow-200 border-yellow-400/25' };
-  if (isCompleteContact(contact)) return { key: 'complete', label: 'Completo', className: 'bg-brand-400/15 text-brand-200 border-brand-400/25' };
+  if (isCompleteContact(contact)) return { key: 'complete', label: 'Completo', className: 'bg-brand-400/15 text-brand-text border-brand-400/25' };
   if (isPublicableContact(contact)) return { key: 'publicable', label: 'Publicable', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
   return { key: 'verified', label: 'Verificado', className: 'bg-sky-400/15 text-sky-200 border-sky-400/25' };
 }
@@ -645,7 +645,6 @@ export default function AdminContactsPage() {
       placeholders: rowsForStats.filter((contact) => inferPhoneStatus(contact) === 'placeholder_bug').length,
     });
 
-    console.log('Categories loaded:', withCounts.length, withCounts[0]);
     setCategories(withCounts as CategoryOption[]);
   };
 
@@ -1405,12 +1404,12 @@ export default function AdminContactsPage() {
           }}
         />
       </div>
-      <section className="rounded-2xl border border-line bg-panel p-5">
+      <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-300">Admin ContactHub</p>
-            <h2 className="mt-2 font-display text-2xl font-bold text-white">Gestión de contactos</h2>
-            <p className="mt-2 max-w-2xl text-sm text-gray-400">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-text">Admin ContactHub</p>
+            <h2 className="mt-2 font-display text-2xl font-bold text-content">Gestión de contactos</h2>
+            <p className="mt-2 max-w-2xl text-sm text-content-secondary">
               Administra contactos reales por carpeta, revisa calidad de datos, archiva sin borrar y prepara importaciones grandes con control.
             </p>
           </div>
@@ -1419,15 +1418,15 @@ export default function AdminContactsPage() {
               <Plus className="h-4 w-4" />
               Agregar contacto
             </button>
-            <Link to="/admin/importar" className="focus-ring inline-flex items-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-4 py-2 text-sm font-bold text-brand-100 hover:bg-brand-400 hover:text-ink-950">
+            <Link to="/admin/importar" className="focus-ring inline-flex items-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-4 py-2 text-sm font-bold text-brand-text hover:bg-brand-400 hover:text-ink-950">
               <ExternalLink className="h-4 w-4" />
               Importar 200+
             </Link>
-            <button type="button" onClick={() => void reloadCurrentPage()} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-brand-400/35">
+            <button type="button" onClick={() => void reloadCurrentPage()} className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content hover:border-brand-400/35">
               <RefreshCw className="h-4 w-4" />
               Recargar
             </button>
-            <button type="button" onClick={clearViewFilters} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-brand-400/35">
+            <button type="button" onClick={clearViewFilters} className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content hover:border-brand-400/35">
               <XCircle className="h-4 w-4" />
               Limpiar filtros
             </button>
@@ -1442,34 +1441,34 @@ export default function AdminContactsPage() {
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <button type="button" onClick={() => applyMetricFilter('total')} className="focus-ring rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Total admin</p>
-            <p className="mt-2 text-2xl font-black text-white">{adminStats.total}</p>
-            <p className="mt-1 text-xs text-gray-400">Vista actual: {totalCount}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">Total admin</p>
+            <p className="mt-2 text-2xl font-black text-content">{adminStats.total}</p>
+            <p className="mt-1 text-xs text-content-secondary">Vista actual: {totalCount}</p>
           </button>
-          <button type="button" onClick={() => applyMetricFilter('publicable')} className="focus-ring rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Publicables</p>
-            <p className="mt-2 text-2xl font-black text-white">{adminStats.publicable}</p>
-            <p className="mt-1 text-xs text-gray-400">activos, públicos y válidos</p>
+          <button type="button" onClick={() => applyMetricFilter('publicable')} className="focus-ring rounded-2xl border border-brand-400/20 bg-canvas/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">Publicables</p>
+            <p className="mt-2 text-2xl font-black text-content">{adminStats.publicable}</p>
+            <p className="mt-1 text-xs text-content-secondary">activos, públicos y válidos</p>
           </button>
           <button type="button" onClick={() => applyMetricFilter('restricted')} className="focus-ring rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-yellow-300/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Restringidos</p>
-            <p className="mt-2 text-2xl font-black text-white">{adminStats.restricted}</p>
-            <p className="mt-1 text-xs text-gray-400">solo revisión admin</p>
+            <p className="mt-2 text-2xl font-black text-content">{adminStats.restricted}</p>
+            <p className="mt-1 text-xs text-content-secondary">solo revisión admin</p>
           </button>
-          <button type="button" onClick={() => applyMetricFilter('uncategorized')} className="focus-ring rounded-2xl border border-line bg-ink-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/35">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500">Sin categoría</p>
-            <p className="mt-2 text-2xl font-black text-white">{adminStats.uncategorized}</p>
-            <p className="mt-1 text-xs text-gray-400">para reasignar o limpiar</p>
+          <button type="button" onClick={() => applyMetricFilter('uncategorized')} className="focus-ring rounded-2xl border border-border bg-canvas/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/35">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-content-muted">Sin categoría</p>
+            <p className="mt-2 text-2xl font-black text-content">{adminStats.uncategorized}</p>
+            <p className="mt-1 text-xs text-content-secondary">para reasignar o limpiar</p>
           </button>
           <button type="button" onClick={() => applyMetricFilter('no_phone')} className="focus-ring rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-yellow-300/45">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-200">Sin teléfono útil</p>
-            <p className="mt-2 text-2xl font-black text-white">{adminStats.noPhone}</p>
-            <p className="mt-1 text-xs text-gray-400">incluye revisión reservada</p>
+            <p className="mt-2 text-2xl font-black text-content">{adminStats.noPhone}</p>
+            <p className="mt-1 text-xs text-content-secondary">incluye revisión reservada</p>
           </button>
-          <button type="button" onClick={() => applyMetricFilter('complete')} className="focus-ring rounded-2xl border border-brand-400/20 bg-ink-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Completos</p>
-            <p className="mt-2 text-2xl font-black text-white">{adminStats.complete}</p>
-            <p className="mt-1 text-xs text-gray-400">publicables con descripción</p>
+          <button type="button" onClick={() => applyMetricFilter('complete')} className="focus-ring rounded-2xl border border-brand-400/20 bg-canvas/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-brand-400/45">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">Completos</p>
+            <p className="mt-2 text-2xl font-black text-content">{adminStats.complete}</p>
+            <p className="mt-1 text-xs text-content-secondary">publicables con descripción</p>
           </button>
         </div>
 
@@ -1490,18 +1489,18 @@ export default function AdminContactsPage() {
           </div>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap gap-2 border-b border-line pb-3">
+        <div className="mt-6 flex flex-wrap gap-2 border-b border-border pb-3">
           <button
             type="button"
             onClick={() => setActiveSubtab('list')}
-            className={`rounded-full px-4 py-2 text-sm font-bold transition ${activeSubtab === 'list' ? 'bg-brand-400 text-ink-950' : 'border border-line bg-white/5 text-white hover:border-brand-400/40'}`}
+            className={`rounded-full px-4 py-2 text-sm font-bold transition ${activeSubtab === 'list' ? 'bg-brand-400 text-ink-950' : 'border border-border bg-muted text-content hover:border-brand-400/40'}`}
           >
             Lista
           </button>
           <button
             type="button"
             onClick={() => setActiveSubtab('folder')}
-            className={`rounded-full px-4 py-2 text-sm font-bold transition ${activeSubtab === 'folder' ? 'bg-brand-400 text-ink-950' : 'border border-line bg-white/5 text-white hover:border-brand-400/40'}`}
+            className={`rounded-full px-4 py-2 text-sm font-bold transition ${activeSubtab === 'folder' ? 'bg-brand-400 text-ink-950' : 'border border-border bg-muted text-content hover:border-brand-400/40'}`}
           >
             Por carpeta
           </button>
@@ -1510,33 +1509,33 @@ export default function AdminContactsPage() {
         <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_320px_170px_170px_170px]">
           <label className="relative block">
             <span className="sr-only">Buscar contactos</span>
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
             <input
               value={search}
               onChange={(event) => {
                 setSearch(sanitizeTextInput(event.target.value, 80));
               }}
               placeholder="Buscar por nombre, teléfono, WhatsApp, descripción, tags o estado"
-              className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
+              className="focus-ring h-11 w-full rounded-full border border-border bg-canvas/70 pl-11 pr-4 text-sm text-content"
             />
-            {isSearching ? <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-200">Buscando...</span> : null}
+            {isSearching ? <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-text">Buscando...</span> : null}
           </label>
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsFolderPickerOpen((value) => !value)}
-              className="focus-ring flex h-11 w-full items-center justify-between gap-3 rounded-full border border-line bg-ink-950/70 px-4 text-left text-sm text-white hover:border-brand-400/40"
+              className="focus-ring flex h-11 w-full items-center justify-between gap-3 rounded-full border border-border bg-canvas/70 px-4 text-left text-sm text-content hover:border-brand-400/40"
             >
               <span className="min-w-0 truncate">{selectedCategory === 'all' ? 'Todas las carpetas' : selectedCategory === 'uncategorized' ? 'Sin categoría' : getCategoryLabel(selectedCategoryObject)}</span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-brand-200" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-brand-text" />
             </button>
             {isFolderPickerOpen ? (
-              <div className="absolute left-0 right-0 top-12 z-40 rounded-2xl border border-line bg-ink-950 p-3 shadow-2xl">
+              <div className="absolute left-0 right-0 top-12 z-40 rounded-2xl border border-border bg-canvas p-3 shadow-2xl">
                 <input
                   value={folderPickerSearch}
                   onChange={(event) => setFolderPickerSearch(sanitizeTextInput(event.target.value, 80))}
                   placeholder="Buscar carpeta..."
-                  className="focus-ring h-10 w-full rounded-full border border-line bg-white/5 px-4 text-sm text-white placeholder:text-gray-500"
+                  className="focus-ring h-10 w-full rounded-full border border-border bg-muted px-4 text-sm text-content placeholder:text-content-muted"
                 />
                 <div className="mt-3 max-h-[360px] overflow-y-auto pr-1">
                   <button
@@ -1547,7 +1546,7 @@ export default function AdminContactsPage() {
                       setIsFolderPickerOpen(false);
                       setFolderPickerSearch('');
                     }}
-                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${selectedCategory === 'all' ? 'bg-brand-400 text-ink-950' : 'text-gray-200 hover:bg-brand-400/10 hover:text-white'}`}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${selectedCategory === 'all' ? 'bg-brand-400 text-ink-950' : 'text-content hover:bg-brand-400/10 hover:text-content'}`}
                   >
                     <span>Todas las carpetas</span>
                     <span className="text-xs font-bold">{adminStats.total}</span>
@@ -1560,7 +1559,7 @@ export default function AdminContactsPage() {
                       setIsFolderPickerOpen(false);
                       setFolderPickerSearch('');
                     }}
-                    className={`mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${selectedCategory === 'uncategorized' ? 'bg-brand-400 text-ink-950' : 'text-gray-200 hover:bg-brand-400/10 hover:text-white'}`}
+                    className={`mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${selectedCategory === 'uncategorized' ? 'bg-brand-400 text-ink-950' : 'text-content hover:bg-brand-400/10 hover:text-content'}`}
                   >
                     <span>Sin categoría</span>
                     <span className="text-xs font-bold">{adminStats.uncategorized}</span>
@@ -1576,10 +1575,10 @@ export default function AdminContactsPage() {
                         setFolderPickerSearch('');
                         setActiveSubtab('folder');
                       }}
-                      className={`mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition ${selectedCategory === category.id ? 'bg-brand-400 text-ink-950' : 'text-gray-200 hover:bg-brand-400/10 hover:text-white'}`}
+                      className={`mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition ${selectedCategory === category.id ? 'bg-brand-400 text-ink-950' : 'text-content hover:bg-brand-400/10 hover:text-content'}`}
                     >
                       <span className="min-w-0 flex-1 truncate">{getCategoryLabel(category)}</span>
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold">{category.contacts_count ?? 0}</span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">{category.contacts_count ?? 0}</span>
                       {selectedCategory === category.id ? <Check className="h-4 w-4 shrink-0" /> : null}
                     </button>
                   ))}
@@ -1593,7 +1592,7 @@ export default function AdminContactsPage() {
               setCurrentPage(0);
               setSelectedStatus(event.target.value as 'all' | ContactStatus);
             }}
-            className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white"
+            className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content"
           >
             <option value="all">Todos los estados</option>
             <option value="active">Activos</option>
@@ -1604,7 +1603,7 @@ export default function AdminContactsPage() {
           <select
             value={qualityFilter}
             onChange={(event) => setQualityFilter(event.target.value as ContactQualityFilter)}
-            className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white"
+            className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content"
           >
             <option value="all">Calidad: todas</option>
             <option value="publicable">Publicables</option>
@@ -1618,7 +1617,7 @@ export default function AdminContactsPage() {
             value={tagFilter}
             onChange={(event) => setTagFilter(sanitizeTextInput(event.target.value, 40))}
             placeholder="Filtrar tag"
-            className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white placeholder:text-gray-500"
+            className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content placeholder:text-content-muted"
           />
         </div>
 
@@ -1626,13 +1625,13 @@ export default function AdminContactsPage() {
         <div className="mt-5">
           {selectedCategory === 'uncategorized' ? (
             <div className="mb-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-              <h3 className="text-sm font-black text-white">Contactos sin categoría</h3>
+              <h3 className="text-sm font-black text-content">Contactos sin categoría</h3>
               <p className="mt-1 text-sm text-yellow-100/80">Estos contactos aún no están vinculados a una carpeta. Puedes reasignarlos, archivarlos o eliminarlos.</p>
             </div>
           ) : null}
           <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-500">Carpetas oficiales</p>
-            <span className="text-xs text-gray-500">{categories.length} carpetas activas</span>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-content-muted">Carpetas oficiales</p>
+            <span className="text-xs text-content-muted">{categories.length} carpetas activas</span>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2">
             <button
@@ -1642,11 +1641,11 @@ export default function AdminContactsPage() {
                 setSelectedCategory('all');
               }}
               className={`focus-ring shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${
-                selectedCategory === 'all' ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-white hover:border-brand-400/40'
+                selectedCategory === 'all' ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-border bg-muted text-content hover:border-brand-400/40'
               }`}
             >
               Todas las carpetas
-              <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${selectedCategory === 'all' ? 'bg-ink-950/15 text-ink-950' : 'bg-white/10 text-gray-300'}`}>
+              <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${selectedCategory === 'all' ? 'bg-canvas/15 text-ink-950' : 'bg-muted text-content-secondary'}`}>
                 {adminStats.total}
               </span>
             </button>
@@ -1657,11 +1656,11 @@ export default function AdminContactsPage() {
                 setSelectedCategory('uncategorized');
               }}
               className={`focus-ring shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${
-                selectedCategory === 'uncategorized' ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-white hover:border-brand-400/40'
+                selectedCategory === 'uncategorized' ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-border bg-muted text-content hover:border-brand-400/40'
               }`}
             >
               Sin categoría
-              <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${selectedCategory === 'uncategorized' ? 'bg-ink-950/15 text-ink-950' : 'bg-white/10 text-gray-300'}`}>
+              <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${selectedCategory === 'uncategorized' ? 'bg-canvas/15 text-ink-950' : 'bg-muted text-content-secondary'}`}>
                 {adminStats.uncategorized}
               </span>
             </button>
@@ -1676,11 +1675,11 @@ export default function AdminContactsPage() {
                 className={`focus-ring shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition ${
                   selectedCategory === category.id
                     ? 'border-brand-400 bg-brand-400 text-ink-950'
-                    : 'border-line bg-ink-950/70 text-gray-200 hover:border-brand-400/40 hover:text-white'
+                    : 'border-border bg-canvas/70 text-content hover:border-brand-400/40 hover:text-content'
                 }`}
               >
                 <span>{getCategoryCompactLabel(category)}</span>
-                <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${selectedCategory === category.id ? 'bg-ink-950/15 text-ink-950' : 'bg-white/10 text-gray-300'}`}>
+                <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${selectedCategory === category.id ? 'bg-canvas/15 text-ink-950' : 'bg-muted text-content-secondary'}`}>
                   {category.contacts_count ?? 0}
                 </span>
               </button>
@@ -1689,30 +1688,30 @@ export default function AdminContactsPage() {
         </div>
         ) : null}
 
-        <div className="mt-5 flex flex-col gap-3 text-sm text-gray-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-3 text-sm text-content-secondary sm:flex-row sm:items-center sm:justify-between">
           <span>
             Mostrando {pageStart}-{pageEnd} de {totalCount} contactos
             {selectedCategory !== 'all' ? ` en ${selectedCategoryLabel}` : ''}
           </span>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={toggleAllVisible} className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 font-bold text-white">
+            <button type="button" onClick={toggleAllVisible} className="focus-ring rounded-full border border-border bg-muted px-4 py-2 font-bold text-content">
               {allVisibleSelected ? 'Quitar visibles' : 'Seleccionar visibles'}
             </button>
-            <button type="button" onClick={() => void selectCurrentFolder()} className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 font-bold text-white">
+            <button type="button" onClick={() => void selectCurrentFolder()} className="focus-ring rounded-full border border-border bg-muted px-4 py-2 font-bold text-content">
               Seleccionar carpeta
             </button>
-            <button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((page) => Math.max(0, page - 1))} className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 font-bold text-white disabled:opacity-40">
+            <button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((page) => Math.max(0, page - 1))} className="focus-ring rounded-full border border-border bg-muted px-4 py-2 font-bold text-content disabled:opacity-40">
               Anterior
             </button>
-            <button type="button" disabled={pageEnd >= totalCount} onClick={() => setCurrentPage((page) => page + 1)} className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 font-bold text-white disabled:opacity-40">
+            <button type="button" disabled={pageEnd >= totalCount} onClick={() => setCurrentPage((page) => page + 1)} className="focus-ring rounded-full border border-border bg-muted px-4 py-2 font-bold text-content disabled:opacity-40">
               Siguiente
             </button>
           </div>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-xl border border-line">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[1280px] text-left text-sm">
-            <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+            <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
               <tr>
                 <th className="px-4 py-3"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} /></th>
                 <th className="px-4 py-3">#</th>
@@ -1731,27 +1730,27 @@ export default function AdminContactsPage() {
                 const whatsappLink = getWhatsappLink(contact.whatsapp || contact.phone);
                 const category = categoryById.get(contact.category_id);
                 return (
-                  <tr key={contact.id} className="border-t border-line hover:bg-white/[0.03]">
+                  <tr key={contact.id} className="border-t border-border hover:bg-muted">
                     <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.includes(contact.id)} onChange={() => toggleSelection(contact.id)} /></td>
-                    <td className="px-4 py-3 text-xs font-bold text-gray-500">{currentPage * pageSize + index + 1}</td>
+                    <td className="px-4 py-3 text-xs font-bold text-content-muted">{currentPage * pageSize + index + 1}</td>
                     <td className="px-4 py-3">
-                      <p className="text-sm font-bold text-white">{contact.name}</p>
-                      {contact.description ? <p className="mt-1 max-w-[360px] text-xs italic text-gray-400">{contact.description}</p> : <p className="mt-1 text-xs text-yellow-200/75">Sin descripción: conviene completar valor del contacto.</p>}
-                      {contact.internal_note ? <p className="mt-1 text-[11px] text-brand-200/75">Nota: {contact.internal_note}</p> : null}
+                      <p className="text-sm font-bold text-content">{contact.name}</p>
+                      {contact.description ? <p className="mt-1 max-w-[360px] text-xs italic text-content-secondary">{contact.description}</p> : <p className="mt-1 text-xs text-yellow-200/75">Sin descripción: conviene completar valor del contacto.</p>}
+                      {contact.internal_note ? <p className="mt-1 text-[11px] text-brand-text/75">Nota: {contact.internal_note}</p> : null}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-mono text-xs text-white">
+                      <div className="font-mono text-xs text-content">
                         {contact.country_flag ?? '🌎'} {contact.phone ? formatPhone(contact.phone) : contact.raw_phone ?? contact.phone_masked ?? maskPhone(null)}
                       </div>
                       {contact.raw_phone ? (
-                        <p className="mt-1 break-all text-[11px] text-gray-500">Raw: {contact.raw_phone}</p>
+                        <p className="mt-1 break-all text-[11px] text-content-muted">Raw: {contact.raw_phone}</p>
                       ) : null}
                       {inferPhoneStatus(contact) !== 'valid' ? (
                         <p className="mt-1 text-[11px] font-semibold text-yellow-300">phone_status: {inferPhoneStatus(contact)}</p>
                       ) : null}
                       <div className="mt-2 flex flex-wrap gap-2">
                         {whatsappLink ? (
-                          <a href={whatsappLink} target="_blank" rel="noreferrer" className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-[11px] font-bold text-brand-100">
+                          <a href={whatsappLink} target="_blank" rel="noreferrer" className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-[11px] font-bold text-brand-text">
                             WhatsApp
                           </a>
                         ) : (
@@ -1764,46 +1763,46 @@ export default function AdminContactsPage() {
                               void navigator.clipboard.writeText(contact.phone ?? '');
                               toast.success('Número copiado.');
                             }}
-                            className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-200"
+                            className="rounded-full border border-border bg-muted px-3 py-1 text-[11px] font-bold text-content"
                           >
                             Copiar
                           </button>
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-300">{getCategoryLabel(category)}</td>
+                    <td className="px-4 py-3 text-content-secondary">{getCategoryLabel(category)}</td>
                     <td className="px-4 py-3">
                       <div className="flex max-w-[220px] flex-wrap gap-1.5">
                         {(contact.tags ?? []).length ? (
                           (contact.tags ?? []).map((tag) => (
-                            <span key={tag} className="rounded-full border border-line bg-white/5 px-2 py-1 text-[10px] font-bold text-gray-300">{tag}</span>
+                            <span key={tag} className="rounded-full border border-border bg-muted px-2 py-1 text-[10px] font-bold text-content-secondary">{tag}</span>
                           ))
                         ) : (
-                          <span className="text-xs text-gray-500">Sin tags</span>
+                          <span className="text-xs text-content-muted">Sin tags</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1.5">
                         <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${quality.className}`}>{quality.label}</span>
-                        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{contact.status}</span>
-                        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{contact.visibility ?? 'public'}</span>
-                        <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{inferPhoneStatus(contact)}</span>
+                        <span className="rounded-full border border-border bg-muted px-3 py-1 text-[11px] font-bold text-content-secondary">{contact.status}</span>
+                        <span className="rounded-full border border-border bg-muted px-3 py-1 text-[11px] font-bold text-content-secondary">{contact.visibility ?? 'public'}</span>
+                        <span className="rounded-full border border-border bg-muted px-3 py-1 text-[11px] font-bold text-content-secondary">{inferPhoneStatus(contact)}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{contact.created_at ? new Date(contact.created_at).toLocaleDateString('es-PE') : '-'}</td>
+                    <td className="px-4 py-3 text-xs text-content-muted">{contact.created_at ? new Date(contact.created_at).toLocaleDateString('es-PE') : '-'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" disabled={actionLoading} onClick={() => openEdit(contact)} className="rounded-full border border-line bg-white/5 p-2 text-brand-200 hover:border-brand-400/40" title="Editar">
+                        <button type="button" disabled={actionLoading} onClick={() => openEdit(contact)} className="rounded-full border border-border bg-muted p-2 text-brand-text hover:border-brand-400/40" title="Editar">
                           ✏️
                         </button>
-                        <button type="button" disabled={actionLoading || isPublicableContact(contact)} onClick={() => void approveContact(contact)} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-100 hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
+                        <button type="button" disabled={actionLoading || isPublicableContact(contact)} onClick={() => void approveContact(contact)} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-text hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
                           <Check className="h-4 w-4" />
                         </button>
-                        <button type="button" disabled={actionLoading} onClick={() => openDuplicate(contact)} className="rounded-full border border-line bg-white/5 p-2 text-gray-200 hover:border-brand-400/40" title="Duplicar">
+                        <button type="button" disabled={actionLoading} onClick={() => openDuplicate(contact)} className="rounded-full border border-border bg-muted p-2 text-content hover:border-brand-400/40" title="Duplicar">
                           <Copy className="h-4 w-4" />
                         </button>
-                        <button type="button" disabled={actionLoading || contact.status === 'inactive'} onClick={() => void archiveRow(contact)} className="rounded-full border border-line bg-white/5 p-2 text-yellow-100 hover:border-yellow-300/40" title="Archivar">
+                        <button type="button" disabled={actionLoading || contact.status === 'inactive'} onClick={() => void archiveRow(contact)} className="rounded-full border border-border bg-muted p-2 text-yellow-100 hover:border-yellow-300/40" title="Archivar">
                           <Archive className="h-4 w-4" />
                         </button>
                         <button type="button" disabled={actionLoading} onClick={() => void deleteRow(contact)} className="rounded-full border border-red-400/20 bg-red-500/10 p-2 text-red-300 hover:border-red-300/50" title="Archivar con confirmación">
@@ -1816,8 +1815,8 @@ export default function AdminContactsPage() {
               })}
               {!filteredContacts.length ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
-                    <p className="text-base font-bold text-white">
+                  <td colSpan={9} className="px-4 py-12 text-center text-content-secondary">
+                    <p className="text-base font-bold text-content">
                       {debouncedSearch.trim()
                         ? 'No encontramos contactos con esa búsqueda en esta carpeta.'
                         : selectedCategory === 'all'
@@ -1827,8 +1826,8 @@ export default function AdminContactsPage() {
                     <p className="mt-2 text-sm">Puedes crear el primer contacto manualmente, importar una lista o pegar contactos desde el importador.</p>
                     <div className="mt-4 flex justify-center gap-2">
                       <button type="button" onClick={openAddContact} className="rounded-full bg-brand-400 px-4 py-2 text-sm font-bold text-ink-950">Crear primer contacto</button>
-                      <Link to="/admin/importar" className="rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white">Importar contactos</Link>
-                      <Link to="/admin/importar" className="rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white">Pegar lista</Link>
+                      <Link to="/admin/importar" className="rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content">Importar contactos</Link>
+                      <Link to="/admin/importar" className="rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content">Pegar lista</Link>
                     </div>
                   </td>
                 </tr>
@@ -1839,25 +1838,25 @@ export default function AdminContactsPage() {
       </section>
 
       {selectedIds.length ? (
-        <div className="fixed bottom-4 left-1/2 z-50 w-[min(960px,calc(100vw-24px))] -translate-x-1/2 rounded-2xl border border-line bg-ink-900 p-4 shadow-2xl">
+        <div className="fixed bottom-4 left-1/2 z-50 w-[min(960px,calc(100vw-24px))] -translate-x-1/2 rounded-2xl border border-border bg-surface p-4 shadow-2xl">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <span className="text-sm font-bold text-white">{selectedIds.length} contactos seleccionados</span>
+            <span className="text-sm font-bold text-content">{selectedIds.length} contactos seleccionados</span>
             <div className="flex flex-wrap gap-2">
-              <select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value as ContactStatus)} className="h-10 rounded-full border border-line bg-ink-950 px-3 text-xs text-white">
+              <select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value as ContactStatus)} className="h-10 rounded-full border border-border bg-canvas px-3 text-xs text-content">
                 <option value="active">Activo</option>
                 <option value="review">Revisión</option>
                 <option value="inactive">Archivado</option>
                 <option value="rejected">Rechazado</option>
               </select>
-              <button type="button" disabled={actionLoading} onClick={() => void bulkUpdateStatus()} className="rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Cambiar estado</button>
-              <input value={bulkTag} onChange={(event) => setBulkTag(sanitizeTextInput(event.target.value, 32))} placeholder="tag" className="h-10 w-28 rounded-full border border-line bg-ink-950 px-3 text-xs text-white" />
-              <button type="button" disabled={actionLoading || !bulkTag.trim()} onClick={() => void bulkAddTag()} className="rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"><Tags className="inline h-3 w-3" /> Tag</button>
-              <select value={bulkMoveCategory} onChange={(event) => setBulkMoveCategory(event.target.value)} className="h-10 max-w-[220px] rounded-full border border-line bg-ink-950 px-3 text-xs text-white">
+              <button type="button" disabled={actionLoading} onClick={() => void bulkUpdateStatus()} className="rounded-full border border-border bg-muted px-3 py-2 text-xs font-bold text-content disabled:opacity-50">Cambiar estado</button>
+              <input value={bulkTag} onChange={(event) => setBulkTag(sanitizeTextInput(event.target.value, 32))} placeholder="tag" className="h-10 w-28 rounded-full border border-border bg-canvas px-3 text-xs text-content" />
+              <button type="button" disabled={actionLoading || !bulkTag.trim()} onClick={() => void bulkAddTag()} className="rounded-full border border-border bg-muted px-3 py-2 text-xs font-bold text-content disabled:opacity-50"><Tags className="inline h-3 w-3" /> Tag</button>
+              <select value={bulkMoveCategory} onChange={(event) => setBulkMoveCategory(event.target.value)} className="h-10 max-w-[220px] rounded-full border border-border bg-canvas px-3 text-xs text-content">
                 <option value="">Mover a carpeta...</option>
                 {categories.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => <option key={category.id} value={category.id}>{getCategoryLabel(category)}</option>)}
               </select>
-              <button type="button" disabled={actionLoading || !bulkMoveCategory} onClick={() => void bulkMove()} className="rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Mover</button>
-              <button type="button" disabled={actionLoading} onClick={() => void archiveSelected()} className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+              <button type="button" disabled={actionLoading || !bulkMoveCategory} onClick={() => void bulkMove()} className="rounded-full border border-border bg-muted px-3 py-2 text-xs font-bold text-content disabled:opacity-50">Mover</button>
+              <button type="button" disabled={actionLoading} onClick={() => void archiveSelected()} className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-content disabled:opacity-50">
                 Eliminar seleccionados
               </button>
             </div>
@@ -1867,53 +1866,53 @@ export default function AdminContactsPage() {
 
       {repairPlan ? (
         <div className="fixed inset-0 z-[70] grid place-items-center bg-black/75 p-4">
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-yellow-300/25 bg-ink-900 p-6 shadow-2xl">
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-yellow-300/25 bg-surface p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-200">Vista previa segura</p>
-                <h3 className="mt-2 font-display text-2xl font-bold text-white">Reparar vínculos de carpetas</h3>
+                <h3 className="mt-2 font-display text-2xl font-bold text-content">Reparar vínculos de carpetas</h3>
               </div>
-              <button type="button" onClick={() => setRepairPlan(null)} className="rounded-full border border-line p-2 text-white">
+              <button type="button" onClick={() => setRepairPlan(null)} className="rounded-full border border-border p-2 text-content">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <p className="mt-4 text-sm leading-6 text-gray-300">
+            <p className="mt-4 text-sm leading-6 text-content-secondary">
               Esta acción intentará vincular contactos a carpetas oficiales. No eliminará contactos ni carpetas.
             </p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-line bg-white/5 p-3">
-                <p className="text-xs text-gray-400">Analizados</p>
-                <p className="mt-1 text-xl font-black text-white">{repairPlan.scanned}</p>
+              <div className="rounded-xl border border-border bg-muted p-3">
+                <p className="text-xs text-content-secondary">Analizados</p>
+                <p className="mt-1 text-xl font-black text-content">{repairPlan.scanned}</p>
               </div>
               <div className="rounded-xl border border-brand-400/25 bg-brand-400/10 p-3">
-                <p className="text-xs text-brand-100">Reparables</p>
-                <p className="mt-1 text-xl font-black text-white">{repairPlan.repairs.length}</p>
+                <p className="text-xs text-brand-text">Reparables</p>
+                <p className="mt-1 text-xl font-black text-content">{repairPlan.repairs.length}</p>
               </div>
               <div className="rounded-xl border border-yellow-400/25 bg-yellow-400/10 p-3">
                 <p className="text-xs text-yellow-100">Revisión manual</p>
-                <p className="mt-1 text-xl font-black text-white">{repairPlan.unresolved}</p>
+                <p className="mt-1 text-xl font-black text-content">{repairPlan.unresolved}</p>
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-line bg-ink-950/60 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-gray-400">Cambios propuestos</p>
+            <div className="mt-5 rounded-2xl border border-border bg-canvas/60 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-content-secondary">Cambios propuestos</p>
               <div className="mt-3 grid gap-2">
                 {repairDestinationSummary.slice(0, 8).map(({ category, count }) => (
-                  <div key={category.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm">
-                    <span className="min-w-0 truncate text-gray-200">{getCategoryLabel(category)}</span>
-                    <span className="shrink-0 rounded-full bg-brand-400/15 px-2 py-1 text-xs font-black text-brand-100">{count}</span>
+                  <div key={category.id} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2 text-sm">
+                    <span className="min-w-0 truncate text-content">{getCategoryLabel(category)}</span>
+                    <span className="shrink-0 rounded-full bg-brand-400/15 px-2 py-1 text-xs font-black text-brand-text">{count}</span>
                   </div>
                 ))}
                 {repairDestinationSummary.length > 8 ? (
-                  <p className="text-xs text-gray-500">Y {repairDestinationSummary.length - 8} carpetas adicionales.</p>
+                  <p className="text-xs text-content-muted">Y {repairDestinationSummary.length - 8} carpetas adicionales.</p>
                 ) : null}
               </div>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button type="button" disabled={actionLoading} onClick={() => setRepairPlan(null)} className="h-11 rounded-full border border-line bg-white/5 px-5 text-sm font-bold text-white disabled:opacity-50">
+              <button type="button" disabled={actionLoading} onClick={() => setRepairPlan(null)} className="h-11 rounded-full border border-border bg-muted px-5 text-sm font-bold text-content disabled:opacity-50">
                 Cancelar
               </button>
               <button type="button" disabled={actionLoading} onClick={() => void confirmCategoryRepairs()} className="h-11 rounded-full bg-brand-400 px-5 text-sm font-black text-ink-950 disabled:opacity-50">
@@ -1926,36 +1925,36 @@ export default function AdminContactsPage() {
 
       {editing ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-line bg-ink-900 p-6">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="font-display text-2xl font-bold text-white">Editar contacto</h3>
-                <p className="mt-2 text-sm text-gray-400">Actualiza datos visibles y datos internos para administración.</p>
+                <h3 className="font-display text-2xl font-bold text-content">Editar contacto</h3>
+                <p className="mt-2 text-sm text-content-secondary">Actualiza datos visibles y datos internos para administración.</p>
               </div>
-              <button type="button" onClick={() => setEditing(null)} className="rounded-full border border-line p-2 text-white"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setEditing(null)} className="rounded-full border border-border p-2 text-content"><X className="h-4 w-4" /></button>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Nombre</span><input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono</span><input value={editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Teléfono original / raw_phone</span><input value={editing.raw_phone ?? ''} onChange={(event) => setEditing({ ...editing, raw_phone: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">WhatsApp</span><input value={editing.whatsapp ?? editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, whatsapp: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white">{categories.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => <option key={category.id} value={category.id}>{getCategoryLabel(category)}</option>)}</select></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Estado</span><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="active">active</option><option value="review">review</option><option value="inactive">inactive</option><option value="rejected">rejected</option></select></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Phone status</span><select value={editing.phone_status ?? inferPhoneStatus(editing)} onChange={(event) => setEditing({ ...editing, phone_status: event.target.value as ContactPhoneStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="valid">valid</option><option value="needs_review">needs_review</option><option value="missing">missing</option><option value="invalid">invalid</option><option value="placeholder_bug">placeholder_bug</option></select></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Visibilidad</span><select value={editing.visibility ?? 'public'} onChange={(event) => setEditing({ ...editing, visibility: event.target.value as ContactVisibility })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="public">public</option><option value="restricted">restricted</option><option value="admin_only">admin_only</option></select></label>
-              <label className="flex items-center gap-3 rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-sm font-semibold text-gray-300">
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Nombre</span><input value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Teléfono</span><input value={editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, phone: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 font-mono text-content" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Teléfono original / raw_phone</span><input value={editing.raw_phone ?? ''} onChange={(event) => setEditing({ ...editing, raw_phone: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 font-mono text-content" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">WhatsApp</span><input value={editing.whatsapp ?? editing.phone ?? ''} onChange={(event) => setEditing({ ...editing, whatsapp: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 font-mono text-content" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Categoría</span><select value={editing.category_id} onChange={(event) => setEditing({ ...editing, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content">{categories.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => <option key={category.id} value={category.id}>{getCategoryLabel(category)}</option>)}</select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Estado</span><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content"><option value="active">active</option><option value="review">review</option><option value="inactive">inactive</option><option value="rejected">rejected</option></select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Phone status</span><select value={editing.phone_status ?? inferPhoneStatus(editing)} onChange={(event) => setEditing({ ...editing, phone_status: event.target.value as ContactPhoneStatus })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content"><option value="valid">valid</option><option value="needs_review">needs_review</option><option value="missing">missing</option><option value="invalid">invalid</option><option value="placeholder_bug">placeholder_bug</option></select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Visibilidad</span><select value={editing.visibility ?? 'public'} onChange={(event) => setEditing({ ...editing, visibility: event.target.value as ContactVisibility })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content"><option value="public">public</option><option value="restricted">restricted</option><option value="admin_only">admin_only</option></select></label>
+              <label className="flex items-center gap-3 rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-sm font-semibold text-content-secondary">
                 <input type="checkbox" checked={editing.is_public !== false} onChange={(event) => setEditing({ ...editing, is_public: event.target.checked })} />
                 is_public
               </label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Fuente</span><input value={editing.source ?? 'manual'} onChange={(event) => setEditing({ ...editing, source: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
-              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Descripción</span><textarea value={editing.description ?? ''} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
-              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Tags separados por coma</span><input value={editTags} onChange={(event) => setEditTags(event.target.value)} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
-              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Nota interna</span><textarea value={editing.internal_note ?? ''} onChange={(event) => setEditing({ ...editing, internal_note: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
-              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-gray-300">Motivo / nota de importación</span><textarea value={editing.import_note ?? ''} onChange={(event) => setEditing({ ...editing, import_note: event.target.value })} rows={2} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Fuente</span><input value={editing.source ?? 'manual'} onChange={(event) => setEditing({ ...editing, source: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content" /></label>
+              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-content-secondary">Descripción</span><textarea value={editing.description ?? ''} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-content" /></label>
+              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-content-secondary">Tags separados por coma</span><input value={editTags} onChange={(event) => setEditTags(event.target.value)} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content" /></label>
+              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-content-secondary">Nota interna</span><textarea value={editing.internal_note ?? ''} onChange={(event) => setEditing({ ...editing, internal_note: event.target.value })} rows={3} className="focus-ring rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-content" /></label>
+              <label className="grid gap-2 sm:col-span-2"><span className="text-sm font-semibold text-content-secondary">Motivo / nota de importación</span><textarea value={editing.import_note ?? ''} onChange={(event) => setEditing({ ...editing, import_note: event.target.value })} rows={2} className="focus-ring rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-content" /></label>
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <button type="button" disabled={actionLoading} onClick={() => void saveEdit()} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:opacity-60"><Save className="h-4 w-4" />Guardar cambios</button>
-              <button type="button" disabled={actionLoading} onClick={() => void approveContact(editing)} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 text-sm font-bold text-brand-100 disabled:opacity-60"><Check className="h-4 w-4" />Aprobar contacto</button>
+              <button type="button" disabled={actionLoading} onClick={() => void approveContact(editing)} className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 text-sm font-bold text-brand-text disabled:opacity-60"><Check className="h-4 w-4" />Aprobar contacto</button>
             </div>
           </div>
         </div>
@@ -1963,57 +1962,57 @@ export default function AdminContactsPage() {
 
       {isAddOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-line bg-ink-900 p-6">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="font-display text-2xl font-bold text-white">Agregar contacto</h3>
-                <p className="mt-2 text-sm text-gray-400">Crea un contacto manual y asígnalo a una carpeta oficial.</p>
+                <h3 className="font-display text-2xl font-bold text-content">Agregar contacto</h3>
+                <p className="mt-2 text-sm text-content-secondary">Crea un contacto manual y asígnalo a una carpeta oficial.</p>
               </div>
-              <button type="button" onClick={closeAddModal} className="rounded-full border border-line p-2 text-white"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={closeAddModal} className="rounded-full border border-border p-2 text-content"><X className="h-4 w-4" /></button>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 sm:col-span-2">
-                <span className="text-sm font-semibold text-gray-300">Nombre del contacto</span>
-                <input value={form.name} placeholder="Ej: Pack de IA mensuales" onChange={(event) => setForm({ ...form, name: sanitizeTextInput(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white placeholder:text-gray-500 focus:border-brand-400" />
+                <span className="text-sm font-semibold text-content-secondary">Nombre del contacto</span>
+                <input value={form.name} placeholder="Ej: Pack de IA mensuales" onChange={(event) => setForm({ ...form, name: sanitizeTextInput(event.target.value, 160) })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content placeholder:text-content-muted focus:border-brand-400" />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Teléfono</span>
+                <span className="text-sm font-semibold text-content-secondary">Teléfono</span>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-11 w-12 items-center justify-center rounded-full border border-line bg-ink-950/70 text-xl">{form.country_flag}</span>
-                  <input value={form.phone} placeholder="Ej: +51 963 187 899" onChange={(event) => handlePhoneInput(event.target.value)} className="focus-ring h-11 flex-1 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white placeholder:text-gray-500 focus:border-brand-400" />
+                  <span className="flex h-11 w-12 items-center justify-center rounded-full border border-border bg-canvas/70 text-xl">{form.country_flag}</span>
+                  <input value={form.phone} placeholder="Ej: +51 963 187 899" onChange={(event) => handlePhoneInput(event.target.value)} className="focus-ring h-11 flex-1 rounded-full border border-border bg-canvas/70 px-4 font-mono text-content placeholder:text-content-muted focus:border-brand-400" />
                 </div>
-                <span className="text-xs text-gray-500">Puede quedar vacío si todavía está pendiente.</span>
+                <span className="text-xs text-content-muted">Puede quedar vacío si todavía está pendiente.</span>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">WhatsApp</span>
-                <input value={form.whatsapp} placeholder="Se genera desde el teléfono" onChange={(event) => setForm({ ...form, whatsapp: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-white placeholder:text-gray-500 focus:border-brand-400" />
+                <span className="text-sm font-semibold text-content-secondary">WhatsApp</span>
+                <input value={form.whatsapp} placeholder="Se genera desde el teléfono" onChange={(event) => setForm({ ...form, whatsapp: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 font-mono text-content placeholder:text-content-muted focus:border-brand-400" />
               </label>
               <label className="grid gap-2 sm:col-span-2">
-                <span className="text-sm font-semibold text-gray-300">Carpeta destino</span>
-                <select value={form.category_id} onChange={(event) => setForm({ ...form, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white focus:border-brand-400">
+                <span className="text-sm font-semibold text-content-secondary">Carpeta destino</span>
+                <select value={form.category_id} onChange={(event) => setForm({ ...form, category_id: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content focus:border-brand-400">
                   <option value="">Selecciona una carpeta...</option>
                   {categories.filter((category) => !isSyntheticCategoryId(category.id)).map((category) => <option key={category.id} value={category.id}>{getCategoryLabel(category)}</option>)}
                 </select>
               </label>
               <label className="grid gap-2 sm:col-span-2">
-                <span className="text-sm font-semibold text-white">Descripción</span>
+                <span className="text-sm font-semibold text-content">Descripción</span>
                 <textarea
                   value={form.description}
                   rows={3}
                   maxLength={500}
                   placeholder="Breve descripción de lo que ofrece este contacto"
                   onChange={(event) => setForm({ ...form, description: event.target.value.slice(0, 500) })}
-                  className="focus-ring resize-none rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white placeholder:text-gray-500 focus:border-brand-400"
+                  className="focus-ring resize-none rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-content placeholder:text-content-muted focus:border-brand-400"
                 />
-                <span className="text-right text-xs text-gray-500">{form.description.length}/500</span>
+                <span className="text-right text-xs text-content-muted">{form.description.length}/500</span>
               </label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Tags</span><input value={form.tags} placeholder="ia, proveedor, curso" onChange={(event) => setForm({ ...form, tags: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white placeholder:text-gray-500" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Estado</span><select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white"><option value="active">Activo</option><option value="review">Pendiente</option><option value="inactive">Archivado</option><option value="rejected">Rechazado</option></select></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Fuente</span><input value={form.source} onChange={(event) => setForm({ ...form, source: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" /></label>
-              <label className="grid gap-2"><span className="text-sm font-semibold text-gray-300">Nota interna</span><input value={form.internal_note} placeholder="Pago, origen, revisión..." onChange={(event) => setForm({ ...form, internal_note: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white placeholder:text-gray-500" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Tags</span><input value={form.tags} placeholder="ia, proveedor, curso" onChange={(event) => setForm({ ...form, tags: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content placeholder:text-content-muted" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Estado</span><select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as ContactStatus })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content"><option value="active">Activo</option><option value="review">Pendiente</option><option value="inactive">Archivado</option><option value="rejected">Rechazado</option></select></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Fuente</span><input value={form.source} onChange={(event) => setForm({ ...form, source: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content" /></label>
+              <label className="grid gap-2"><span className="text-sm font-semibold text-content-secondary">Nota interna</span><input value={form.internal_note} placeholder="Pago, origen, revisión..." onChange={(event) => setForm({ ...form, internal_note: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content placeholder:text-content-muted" /></label>
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={closeAddModal} className="focus-ring inline-flex h-11 items-center justify-center rounded-full border border-line bg-white/5 px-5 text-sm font-bold text-white">
+              <button type="button" onClick={closeAddModal} className="focus-ring inline-flex h-11 items-center justify-center rounded-full border border-border bg-muted px-5 text-sm font-bold text-content">
                 Cancelar
               </button>
               <button type="button" disabled={actionLoading || !form.name.trim() || !form.category_id} onClick={() => void saveNewContact()} className="focus-ring btn-primary-glow inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 disabled:cursor-not-allowed disabled:opacity-50">

@@ -19,11 +19,11 @@ export default function AdminGuard({ children }: PropsWithChildren) {
 
   if (!isAdmin) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0F2027] p-6 text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface p-6 text-content">
         <div className="text-4xl">🔒</div>
         <h2 className="text-xl font-bold">Acceso restringido</h2>
-        <p className="text-sm text-white/50">No tienes permisos para ver esta página.</p>
-        <button type="button" onClick={() => navigate('/')} className="rounded-lg bg-[#1DB47A] px-4 py-2 text-sm text-white">
+        <p className="text-sm text-content/50">No tienes permisos para ver esta página.</p>
+        <button type="button" onClick={() => navigate('/')} className="rounded-lg bg-brand px-4 py-2 text-sm text-content">
           Volver al inicio
         </button>
       </div>

@@ -22,7 +22,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, index) =>
         tokens.some((token) => new RegExp(`^${token}$`, 'i').test(part)) ? (
-          <mark key={`${part}-${index}`} className="rounded bg-brand-400/20 px-0.5 text-brand-200">
+          <mark key={`${part}-${index}`} className="rounded bg-brand-400/20 px-0.5 text-brand-text">
             {part}
           </mark>
         ) : (
@@ -108,7 +108,7 @@ export default function GlobalSearch() {
   return (
     <div ref={rootRef} className="relative z-30 mx-auto mt-8 w-full max-w-3xl text-left">
       <label className="global-search-shell flex min-h-14 items-center gap-3 px-4 sm:min-h-16 sm:px-5">
-        <Search className="h-5 w-5 shrink-0 text-brand-400" />
+        <Search className="h-5 w-5 shrink-0 text-brand-text" />
         <span className="sr-only">¿Qué estás buscando?</span>
         <input
           value={query}
@@ -126,10 +126,10 @@ export default function GlobalSearch() {
             }
           }}
           placeholder="Busca libros, IA, proveedores, cursos, fitness, streaming..."
-          className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-slate-500 sm:text-lg"
+          className="min-w-0 flex-1 bg-transparent text-base text-content outline-none placeholder:text-content-muted sm:text-lg"
         />
         {query ? (
-          <button type="button" onClick={() => setQuery('')} className="focus-ring rounded-full p-2 text-slate-500 transition hover:bg-white/5 hover:text-white" aria-label="Limpiar búsqueda">
+          <button type="button" onClick={() => setQuery('')} className="focus-ring rounded-full p-2 text-content-muted transition hover:bg-muted hover:text-content" aria-label="Limpiar búsqueda">
             <X className="h-4 w-4" />
           </button>
         ) : null}
@@ -139,26 +139,26 @@ export default function GlobalSearch() {
         <div className="global-search-results absolute left-0 right-0 top-[calc(100%+10px)] max-h-[min(68vh,560px)] overflow-y-auto p-3 sm:p-4">
           {!normalizedQuery ? (
             <div>
-              <div className="flex items-center gap-2 px-2 text-sm text-slate-300">
-                <Sparkles className="h-4 w-4 text-brand-400" />
+              <div className="flex items-center gap-2 px-2 text-sm text-content-secondary">
+                <Sparkles className="h-4 w-4 text-brand-text" />
                 Busca por palabra clave, categoría o necesidad.
               </div>
               <SearchSuggestions onChoose={chooseSuggestion} />
             </div>
           ) : isTyping || isLoading ? (
-            <div className="flex items-center gap-3 px-3 py-5 text-sm text-slate-300">
+            <div className="flex items-center gap-3 px-3 py-5 text-sm text-content-secondary">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-400/25 border-t-brand-400" />
               Buscando...
             </div>
           ) : hasResults ? (
             <div className="space-y-5">
-              <p className="px-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                Resultados para: <span className="normal-case tracking-normal text-brand-300">{debouncedQuery}</span>
+              <p className="px-2 text-xs font-bold uppercase tracking-[0.16em] text-content-muted">
+                Resultados para: <span className="normal-case tracking-normal text-brand-text">{debouncedQuery}</span>
               </p>
               {categoryResults.length ? (
                 <section>
-                  <h3 className="mb-2 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                    <FolderOpen className="h-4 w-4 text-brand-400" />
+                  <h3 className="mb-2 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[0.14em] text-content-secondary">
+                    <FolderOpen className="h-4 w-4 text-brand-text" />
                     Carpetas relacionadas
                   </h3>
                   <div className="grid gap-2">
@@ -170,14 +170,14 @@ export default function GlobalSearch() {
                           navigate(`/catalogo/${category.slug}`);
                           setIsOpen(false);
                         }}
-                        className="focus-ring flex w-full items-center gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-3 text-left transition hover:border-brand-400/35 hover:bg-brand-400/[0.07]"
+                        className="focus-ring flex w-full items-center gap-3 rounded-lg border border-border bg-muted p-3 text-left transition hover:border-brand-400/35 hover:bg-brand-400/[0.07]"
                       >
                         <span className="text-xl">{category.icon}</span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-bold text-white"><Highlight text={category.name} query={debouncedQuery} /></span>
-                          <span className="mt-1 line-clamp-1 block text-xs text-slate-400">{category.shortDescription}</span>
+                          <span className="block text-sm font-bold text-content"><Highlight text={category.name} query={debouncedQuery} /></span>
+                          <span className="mt-1 line-clamp-1 block text-xs text-content-secondary">{category.shortDescription}</span>
                         </span>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-brand-400" />
+                        <ArrowRight className="h-4 w-4 shrink-0 text-brand-text" />
                       </button>
                     ))}
                   </div>
@@ -186,8 +186,8 @@ export default function GlobalSearch() {
 
               {contactResults.length ? (
                 <section>
-                  <h3 className="mb-2 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                    <UserRoundSearch className="h-4 w-4 text-brand-400" />
+                  <h3 className="mb-2 flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[0.14em] text-content-secondary">
+                    <UserRoundSearch className="h-4 w-4 text-brand-text" />
                     Contactos disponibles
                   </h3>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -199,11 +199,11 @@ export default function GlobalSearch() {
                           navigate(`/catalogo/${contact.categorySlug}`);
                           setIsOpen(false);
                         }}
-                        className="focus-ring rounded-lg border border-white/[0.07] bg-black/15 p-3 text-left transition hover:border-brand-400/30"
+                        className="focus-ring rounded-lg border border-border bg-black/15 p-3 text-left transition hover:border-brand-400/30"
                       >
-                        <span className="line-clamp-1 text-sm font-bold text-white"><Highlight text={contact.name} query={debouncedQuery} /></span>
-                        <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-400">{contact.description || contact.categoryName}</span>
-                        <span className="mt-2 block text-[11px] font-semibold text-brand-300">Disponible con acceso activo</span>
+                        <span className="line-clamp-1 text-sm font-bold text-content"><Highlight text={contact.name} query={debouncedQuery} /></span>
+                        <span className="mt-1 line-clamp-2 block text-xs leading-5 text-content-secondary">{contact.description || contact.categoryName}</span>
+                        <span className="mt-2 block text-[11px] font-semibold text-brand-text">Disponible con acceso activo</span>
                       </button>
                     ))}
                   </div>
@@ -213,12 +213,12 @@ export default function GlobalSearch() {
             </div>
           ) : (
             <div className="px-2 py-3">
-              <h3 className="text-base font-bold text-white">No encontramos resultados para esta búsqueda.</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Prueba con una necesidad más amplia o explora las opciones disponibles.</p>
+              <h3 className="text-base font-bold text-content">No encontramos resultados para esta búsqueda.</h3>
+              <p className="mt-2 text-sm leading-6 text-content-secondary">Prueba con una necesidad más amplia o explora las opciones disponibles.</p>
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
                 <Link to="/catalogo" className="focus-ring rounded-lg bg-brand-400 px-3 py-2.5 text-center text-xs font-bold text-ink-950">Ver catálogo</Link>
-                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: `Hola, busqué "${query}" y necesito orientación.` } }))} className="focus-ring rounded-lg border border-line bg-white/5 px-3 py-2.5 text-xs font-bold text-white">Hablar con soporte</button>
-                <Link to="/publica-tu-servicio" className="focus-ring rounded-lg border border-line bg-white/5 px-3 py-2.5 text-center text-xs font-bold text-white">Publicar servicio</Link>
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: `Hola, busqué "${query}" y necesito orientación.` } }))} className="focus-ring rounded-lg border border-border bg-muted px-3 py-2.5 text-xs font-bold text-content">Hablar con soporte</button>
+                <Link to="/publica-tu-servicio" className="focus-ring rounded-lg border border-border bg-muted px-3 py-2.5 text-center text-xs font-bold text-content">Publicar servicio</Link>
               </div>
             </div>
           )}
@@ -230,11 +230,11 @@ export default function GlobalSearch() {
 
 function SearchSuggestions({ onChoose }: { onChoose: (value: string) => void }) {
   return (
-    <section className="mt-4 border-t border-line pt-4">
-      <p className="px-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">También podrías buscar</p>
+    <section className="mt-4 border-t border-border pt-4">
+      <p className="px-2 text-xs font-bold uppercase tracking-[0.14em] text-content-muted">También podrías buscar</p>
       <div className="mt-3 flex flex-wrap gap-2 px-2">
         {suggestions.map((suggestion) => (
-          <button key={suggestion} type="button" onClick={() => onChoose(suggestion)} className="focus-ring rounded-full border border-line bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-brand-400/35 hover:text-white">
+          <button key={suggestion} type="button" onClick={() => onChoose(suggestion)} className="focus-ring rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-content-secondary transition hover:border-brand-400/35 hover:text-content">
             {suggestion}
           </button>
         ))}

@@ -191,11 +191,15 @@ export async function getTrialContacts(userId: string) {
     return { used: false, contacts: [] };
   }
 
+  const contactIds = claim.contact_ids ?? [];
+  if (!contactIds.length) return { used: true, contacts: [], claimedAt: claim.claimed_at };
+
+  // Leer desde la vista segura (no del teléfono crudo de `contacts`). La vista ya
+  // restringe a los contactos de prueba/recompensa del propio usuario por RLS.
   const { data: contacts, error: contactsError } = await supabase
-    .from('contacts')
+    .from('contact_trial_secure')
     .select('id, name, phone, description, category_id, country_flag')
-    .in('id', claim.contact_ids ?? [])
-    .eq('status', 'active');
+    .in('id', contactIds);
   if (contactsError) console.error('getTrialContacts contacts:', contactsError.message);
 
   return { used: true, contacts: contacts ?? [], claimedAt: claim.claimed_at };

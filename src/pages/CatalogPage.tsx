@@ -105,30 +105,30 @@ export default function CatalogPage() {
   return (
     <section className="section-pad section-band min-h-screen">
       <div className="container-shell">
-        <div className="grid gap-8 border-b border-line pb-10 lg:grid-cols-[1fr_0.65fr] lg:items-end">
+        <div className="grid gap-8 border-b border-border pb-10 lg:grid-cols-[1fr_0.65fr] lg:items-end">
           <SectionHeading
             eyebrow="Catálogo"
             title="Explora por lo que quieres lograr"
             description={`${APP_CONFIG.contactsClaim} contactos y oportunidades organizados para aprender, vender, conseguir proveedores, encontrar servicios o resolver una necesidad concreta.`}
           />
-          <div className="rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-slate-300">
+          <div className="rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-content-secondary">
             Puedes explorar sin cuenta. Los números completos solo se muestran cuando tienes una prueba o un acceso activo.
           </div>
         </div>
         <div className="mt-8">
           <CategoryFilters search={search} filter={filter} setSearch={setSearch} onFilterChange={setFilter} purchasedDisabled={!user} />
-          {search !== debouncedSearch ? <p className="mt-3 text-xs font-semibold text-brand-300">Buscando...</p> : null}
+          {search !== debouncedSearch ? <p className="mt-3 text-xs font-semibold text-brand-text">Buscando...</p> : null}
         </div>
         {filter === 'purchased' && user ? (
-          <div className="mt-6 rounded-lg border border-brand-400/20 bg-brand-400/[0.06] p-4 text-sm leading-6 text-gray-300">
+          <div className="mt-6 rounded-lg border border-brand-400/20 bg-brand-400/[0.06] p-4 text-sm leading-6 text-content-secondary">
             Mostrando solo tus carpetas desbloqueadas.
           </div>
         ) : null}
-        <div className="mt-6 flex flex-col gap-2 rounded-lg border border-line bg-panel px-4 py-3 text-sm text-gray-300 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-6 flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-content-secondary sm:flex-row sm:items-center sm:justify-between">
           <span>
             {filteredCategories.length} carpeta(s) encontradas{debouncedSearch ? ` para "${debouncedSearch}"` : ''}.
           </span>
-          <span className="text-xs font-semibold text-gray-500">Busca por nombre, descripción, tags o casos de uso.</span>
+          <span className="text-xs font-semibold text-content-muted">Busca por nombre, descripción, tags o casos de uso.</span>
         </div>
         <div className="mt-8">
           <CatalogGrid

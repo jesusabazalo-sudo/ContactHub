@@ -154,20 +154,20 @@ export default function MyContactsPage() {
   const needsForPower = Math.max(0, 4 - unlockedCount);
 
   return (
-    <section className="section-pad dopamine-surface bg-ink-950">
+    <section className="section-pad dopamine-surface bg-canvas">
       <div className="container-shell">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             {user?.email ? (
-              <p className="mb-4 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-400">
+              <p className="mb-4 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-text">
                 Sesión activa: {autofill.email || user.email}
               </p>
             ) : null}
             {autofill.fullName || autofill.displayName ? (
-              <p className="mb-2 text-base font-semibold text-white">Hola, {autofill.displayName || autofill.fullName} 👋</p>
+              <p className="mb-2 text-base font-semibold text-content">Hola, {autofill.displayName || autofill.fullName} 👋</p>
             ) : null}
-            <h1 className="font-display text-4xl font-bold leading-tight text-white">Tu camino dentro de ContactHub.</h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-gray-300">
+            <h1 className="font-display text-4xl font-bold leading-tight text-content">Tu camino dentro de ContactHub.</h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-content-secondary">
               Aquí ves tus carpetas activas, tus contactos disponibles y el progreso hacia un acceso más completo.
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function MyContactsPage() {
             type="button"
             onClick={() => void loadMyContacts({ silent: true })}
             disabled={isRefreshing}
-            className="focus-ring inline-flex w-fit items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-4 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
+            className="focus-ring inline-flex w-fit items-center justify-center gap-2 rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/35"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Actualizando...' : 'Actualizar mis accesos'}
@@ -185,15 +185,15 @@ export default function MyContactsPage() {
         <div className="dopamine-card neon-edge mt-8 rounded-2xl p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-semibold text-brand-400">Resumen de acceso</p>
-              <p className="mt-2 font-display text-3xl font-bold text-white">
+              <p className="text-sm font-semibold text-brand-text">Resumen de acceso</p>
+              <p className="mt-2 font-display text-3xl font-bold text-content">
                 {unlockedCount} de {TOTAL_FOLDERS} carpetas desbloqueadas
               </p>
-              <p className="mt-2 text-sm text-gray-300">Ya tienes carpetas desbloqueadas. Puedes ver tus contactos completos aqui.</p>
+              <p className="mt-2 text-sm text-content-secondary">Ya tienes carpetas desbloqueadas. Puedes ver tus contactos completos aqui.</p>
             </div>
             <div className="text-right">
-              <p className="font-display text-3xl font-bold text-brand-400">{progress}%</p>
-              <p className="mt-1 text-sm text-gray-400">{data.contacts.length} contactos visibles</p>
+              <p className="font-display text-3xl font-bold text-brand-text">{progress}%</p>
+              <p className="mt-1 text-sm text-content-secondary">{data.contacts.length} contactos visibles</p>
             </div>
           </div>
           <ProgressBar value={progress} className="mt-5" />
@@ -208,7 +208,7 @@ export default function MyContactsPage() {
         {unlockedCount >= 1 && unlockedCount <= 3 ? (
           <div className="dopamine-card neon-edge mt-6 rounded-2xl p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <p className="text-sm leading-6 text-gray-200">
+              <p className="text-sm leading-6 text-content">
                 Tienes {unlockedCount} carpetas. Si agregas {needsForPower} más llegas al Pack Power y desbloqueas más valor. ¿Te interesa?
               </p>
               <button
@@ -228,10 +228,10 @@ export default function MyContactsPage() {
         <div className="mt-8">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Tus carpetas desbloqueadas</h2>
-              <p className="mt-1 text-sm text-gray-400">Selecciona una carpeta para ver solamente sus contactos.</p>
+              <h2 className="font-display text-2xl font-bold text-content">Tus carpetas desbloqueadas</h2>
+              <p className="mt-1 text-sm text-content-secondary">Selecciona una carpeta para ver solamente sus contactos.</p>
             </div>
-            <span className="rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-300">
+            <span className="rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-text">
               {unlockedCount} activas
             </span>
           </div>
@@ -244,18 +244,18 @@ export default function MyContactsPage() {
                 className={`focus-ring card-hover rounded-2xl border p-5 text-left transition ${
                   activeCategoryId === folder.id
                     ? 'border-brand-400/50 bg-brand-400/10 shadow-[0_0_28px_rgba(34,197,94,0.12)]'
-                    : 'border-line bg-panel hover:border-brand-400/30'
+                    : 'border-border bg-surface hover:border-brand-400/30'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-lg font-bold text-white">{folder.name}</p>
-                  <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-1 text-[10px] font-bold uppercase text-brand-300">
+                  <p className="text-lg font-bold text-content">{folder.name}</p>
+                  <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-1 text-[10px] font-bold uppercase text-brand-text">
                     Activa
                   </span>
                 </div>
-                <p className="mt-2 min-h-12 text-sm leading-6 text-gray-400">{folder.shortDescription || folder.description}</p>
-                <p className="mt-4 text-sm font-semibold text-brand-400">{folder.contactsCount} contactos en carpeta</p>
-                <p className="mt-3 text-xs font-bold text-white">Ver contactos →</p>
+                <p className="mt-2 min-h-12 text-sm leading-6 text-content-secondary">{folder.shortDescription || folder.description}</p>
+                <p className="mt-4 text-sm font-semibold text-brand-text">{folder.contactsCount} contactos en carpeta</p>
+                <p className="mt-3 text-xs font-bold text-content">Ver contactos →</p>
               </button>
             ))}
           </div>
@@ -264,10 +264,10 @@ export default function MyContactsPage() {
         <div className="dopamine-card mt-8 rounded-2xl p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Historial de accesos</h2>
-              <p className="mt-1 text-sm text-gray-400">Permisos activos leídos desde user_category_access.</p>
+              <h2 className="font-display text-2xl font-bold text-content">Historial de accesos</h2>
+              <p className="mt-1 text-sm text-content-secondary">Permisos activos leídos desde user_category_access.</p>
             </div>
-            <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-xs font-bold text-gray-300">
+            <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-bold text-content-secondary">
               {data.accessHistory.length} registro(s)
             </span>
           </div>
@@ -275,17 +275,17 @@ export default function MyContactsPage() {
             {data.accessHistory.map((access) => {
               const folder = data.folders.find((item) => item.id === access.categoryId);
               return (
-                <div key={`${access.categoryId}-${access.createdAt ?? 'active'}`} className="grid gap-3 rounded-xl border border-line bg-white/[0.025] p-4 md:grid-cols-[1fr_auto] md:items-center">
+                <div key={`${access.categoryId}-${access.createdAt ?? 'active'}`} className="grid gap-3 rounded-xl border border-border bg-muted p-4 md:grid-cols-[1fr_auto] md:items-center">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-white">{folder?.name ?? 'Carpeta activa'}</p>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="truncate text-sm font-bold text-content">{folder?.name ?? 'Carpeta activa'}</p>
+                    <p className="mt-1 text-xs text-content-muted">
                       {access.createdAt ? new Date(access.createdAt).toLocaleDateString('es-PE') : 'Fecha no disponible'} · {access.accessType || 'manual'} · {access.status}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => folder?.id && setActiveCategoryId(folder.id)}
-                    className="focus-ring rounded-lg border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-100 transition hover:bg-brand-400/20"
+                    className="focus-ring rounded-lg border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-text transition hover:bg-brand-400/20"
                   >
                     Ver contactos
                   </button>
@@ -299,21 +299,21 @@ export default function MyContactsPage() {
           <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
             <label className="relative block">
               <span className="sr-only">Buscar dentro de mis contactos</span>
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
               <input
                 value={query}
                 onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
                 placeholder="Buscar por nombre, descripción, teléfono, carpeta o tag"
-                className="focus-ring h-12 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white placeholder:text-gray-500"
+                className="focus-ring h-12 w-full rounded-full border border-border bg-canvas/70 pl-11 pr-4 text-sm text-content placeholder:text-content-muted"
               />
-              {query !== debouncedQuery ? <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-300">Buscando...</span> : null}
+              {query !== debouncedQuery ? <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-text">Buscando...</span> : null}
             </label>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setActiveCategoryId('all')}
                 className={`focus-ring rounded-full border px-4 py-2 text-sm font-bold transition ${
-                  activeCategoryId === 'all' ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-gray-300'
+                  activeCategoryId === 'all' ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-border bg-muted text-content-secondary'
                 }`}
               >
                 Todas
@@ -324,7 +324,7 @@ export default function MyContactsPage() {
                   type="button"
                   onClick={() => setActiveCategoryId(folder.id)}
                   className={`focus-ring rounded-full border px-4 py-2 text-sm font-bold transition ${
-                    activeCategoryId === folder.id ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-gray-300'
+                    activeCategoryId === folder.id ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-border bg-muted text-content-secondary'
                   }`}
                 >
                   {folder.name}
@@ -337,10 +337,10 @@ export default function MyContactsPage() {
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Acceso rápido</h2>
-              <p className="mt-1 text-sm text-gray-400">Todos tus contactos desbloqueados en una sola búsqueda.</p>
+              <h2 className="font-display text-2xl font-bold text-content">Acceso rápido</h2>
+              <p className="mt-1 text-sm text-content-secondary">Todos tus contactos desbloqueados en una sola búsqueda.</p>
             </div>
-            <p className="text-sm text-gray-400">{filteredContacts.length} resultado(s)</p>
+            <p className="text-sm text-content-secondary">{filteredContacts.length} resultado(s)</p>
           </div>
 
           {filteredContacts.length ? (
@@ -350,9 +350,9 @@ export default function MyContactsPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-line bg-panel p-8 text-center">
-              <h3 className="font-display text-2xl font-bold text-white">No hay contactos con ese filtro.</h3>
-              <p className="mt-3 text-sm leading-6 text-gray-400">Prueba con otra carpeta o una búsqueda más amplia.</p>
+            <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+              <h3 className="font-display text-2xl font-bold text-content">No hay contactos con ese filtro.</h3>
+              <p className="mt-3 text-sm leading-6 text-content-secondary">Prueba con otra carpeta o una búsqueda más amplia.</p>
             </div>
           )}
         </div>
@@ -375,24 +375,24 @@ function EmptyContactsState({
   const autofill = useAutofillProfile();
 
   return (
-    <section className="section-pad dopamine-surface bg-ink-950">
+    <section className="section-pad dopamine-surface bg-canvas">
       <div className="container-shell">
         <div className="dopamine-card neon-edge mx-auto max-w-5xl rounded-3xl p-6 sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div>
               {userEmail ? (
-                <p className="mb-5 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-400">
+                <p className="mb-5 inline-flex rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-text">
                   Sesión activa: {autofill.email || userEmail}
                 </p>
               ) : null}
               {autofill.fullName || autofill.displayName ? (
-                <p className="mb-3 text-base font-semibold text-white">Hola, {autofill.displayName || autofill.fullName} 👋</p>
+                <p className="mb-3 text-base font-semibold text-content">Hola, {autofill.displayName || autofill.fullName} 👋</p>
               ) : null}
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-400">Tu progreso de acceso</p>
-              <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-text">Tu progreso de acceso</p>
+              <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-content sm:text-4xl">
                 Todavía no tienes ninguna carpeta desbloqueada, pero ya puedes empezar.
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-300">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-content-secondary">
                 Aún no tienes carpetas desbloqueadas, pero ya puedes explorar lo que hay. Cada acceso te acerca a los contactos que pueden ayudarte a avanzar.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -400,7 +400,7 @@ function EmptyContactsState({
                   type="button"
                   onClick={onRefresh}
                   disabled={isRefreshing}
-                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 py-3 text-sm font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 py-3 text-sm font-bold text-brand-text transition hover:bg-brand-400 hover:text-ink-950 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   {isRefreshing ? 'Actualizando...' : 'Actualizar mis accesos'}
@@ -410,14 +410,14 @@ function EmptyContactsState({
                 </Link>
                 <Link
                   to="/catalogo"
-                  className="focus-ring rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
+                  className="focus-ring rounded-full border border-border bg-muted px-5 py-3 text-sm font-bold text-content transition hover:border-brand-400/35"
                 >
                   Explorar catálogo
                 </Link>
                 <button
                   type="button"
                   onClick={() => openSupportChat('Hola, quiero desbloquear una carpeta de ContactHub. ¿Qué opción me recomiendas?')}
-                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 py-3 text-sm font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950"
+                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-brand-400/35 bg-brand-400/10 px-5 py-3 text-sm font-bold text-brand-text transition hover:bg-brand-400 hover:text-ink-950"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Escribir por chat
@@ -425,29 +425,29 @@ function EmptyContactsState({
                 <button
                   type="button"
                   onClick={() => openSupportChat('Hola, quiero ganar un contacto gratis con una misión. ¿Qué puedo hacer?')}
-                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
+                  className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-border bg-muted px-5 py-3 text-sm font-bold text-content transition hover:border-brand-400/35"
                 >
                   Ganar contacto gratis
                 </button>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-brand-400/25 bg-ink-950/70 p-5 shadow-[0_0_30px_rgba(34,197,94,0.08)]">
+            <div className="rounded-2xl border border-brand-400/25 bg-canvas/70 p-5 shadow-[0_0_30px_rgba(34,197,94,0.08)]">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-gray-400">Carpetas desbloqueadas</p>
-                  <p className="mt-2 font-display text-4xl font-bold text-white">0%</p>
+                  <p className="text-sm font-semibold text-content-secondary">Carpetas desbloqueadas</p>
+                  <p className="mt-2 font-display text-4xl font-bold text-content">0%</p>
                 </div>
-                <p className="pb-1 text-sm font-semibold text-brand-300">0 de {totalFolders}</p>
+                <p className="pb-1 text-sm font-semibold text-brand-text">0 de {totalFolders}</p>
               </div>
               <ProgressBar value={0} className="mt-5" />
-              <p className="mt-5 text-sm leading-6 text-gray-400">
+              <p className="mt-5 text-sm leading-6 text-content-secondary">
                 Cuando actives tu primera carpeta, esta barra subirá automáticamente y verás tus contactos completos aquí.
               </p>
               <button
                 type="button"
                 onClick={() => openSupportChat('Hola, quiero saber cómo desbloquear mi primera carpeta en ContactHub.')}
-                className="focus-ring mt-5 w-full rounded-full bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-400 hover:text-ink-950"
+                className="focus-ring mt-5 w-full rounded-full bg-muted px-5 py-3 text-sm font-bold text-content transition hover:bg-brand-400 hover:text-ink-950"
               >
                 Desbloquear una carpeta
               </button>
@@ -511,42 +511,42 @@ function ProfileDataCard({ autofill }: { autofill: ReturnType<typeof useAutofill
     <div className="dopamine-card neon-edge mt-6 rounded-2xl p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-semibold text-brand-400">Mis datos</p>
-          <h2 className="mt-2 font-display text-2xl font-bold text-white">Autorrelleno para ContactHub</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-400">
+          <p className="text-sm font-semibold text-brand-text">Mis datos</p>
+          <h2 className="mt-2 font-display text-2xl font-bold text-content">Autorrelleno para ContactHub</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-content-secondary">
             Usamos estos datos solo para gestionar tu cuenta, accesos, comprobantes y soporte.
           </p>
         </div>
-        <p className="rounded-full border border-line bg-white/5 px-3 py-1 text-xs font-semibold text-gray-300">
+        <p className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-content-secondary">
           {autofill.loading ? 'Sincronizando...' : 'Datos privados'}
         </p>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         <label className="grid gap-2">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Correo</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-content-muted">Correo</span>
           <input
             value={autofill.email}
             readOnly
-            className="h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-gray-400"
+            className="h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content-secondary"
           />
         </label>
         <label className="grid gap-2">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Nombre</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-content-muted">Nombre</span>
           <input
             value={name}
             onChange={(event) => setName(sanitizeTextInput(event.target.value, 160))}
             placeholder="Tu nombre"
-            className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white placeholder:text-gray-500"
+            className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content placeholder:text-content-muted"
           />
         </label>
         <label className="grid gap-2">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">WhatsApp</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-content-muted">WhatsApp</span>
           <input
             value={whatsapp}
             onChange={(event) => setWhatsapp(sanitizePhone(event.target.value))}
             placeholder="+51 9..."
-            className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 font-mono text-sm text-white placeholder:text-gray-500"
+            className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 font-mono text-sm text-content placeholder:text-content-muted"
           />
         </label>
       </div>
@@ -582,22 +582,22 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
     <article className="card-hover dopamine-card rounded-2xl p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase text-brand-400">{folderName ?? 'Carpeta desbloqueada'}</p>
-          <h3 className="mt-2 text-lg font-bold text-white">{contact.name}</h3>
-          <p className="mt-2 text-sm leading-6 text-gray-400">{contact.description || 'Contacto desbloqueado desde Supabase.'}</p>
+          <p className="text-xs font-semibold uppercase text-brand-text">{folderName ?? 'Carpeta desbloqueada'}</p>
+          <h3 className="mt-2 text-lg font-bold text-content">{contact.name}</h3>
+          <p className="mt-2 text-sm leading-6 text-content-secondary">{contact.description || 'Contacto desbloqueado desde Supabase.'}</p>
         </div>
 
       </div>
 
       <div className="mt-5 rounded-lg border border-brand-400/25 bg-brand-400/10 p-4">
-        <p className="text-xs font-semibold uppercase text-brand-400">Teléfono visible</p>
-        <p className="mt-1 font-mono text-xl font-bold text-white">{formatPhone(contact.phone)}</p>
-        <p className="mt-1 text-xs text-gray-400">Vista segura: este número no sale de previews públicos.</p>
+        <p className="text-xs font-semibold uppercase text-brand-text">Teléfono visible</p>
+        <p className="mt-1 font-mono text-xl font-bold text-content">{formatPhone(contact.phone)}</p>
+        <p className="mt-1 text-xs text-content-secondary">Vista segura: este número no sale de previews públicos.</p>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
         {contact.tags.map((tag) => (
-          <span key={tag} className="rounded-full border border-line bg-white/5 px-3 py-1 text-xs text-gray-300">
+          <span key={tag} className="rounded-full border border-border bg-muted px-3 py-1 text-xs text-content-secondary">
             {tag}
           </span>
         ))}
@@ -609,7 +609,7 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="focus-ring inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1db857] active:scale-[0.98]"
+            className="focus-ring inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-bold text-content transition hover:bg-[#1db857] active:scale-[0.98]"
           >
             <MessageCircle className="h-4 w-4" />
             Consultar por WhatsApp
@@ -618,7 +618,7 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
           <button
             type="button"
             disabled
-            className="inline-flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/35"
+            className="inline-flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content/35"
           >
             <MessageCircle className="h-4 w-4" />
             WhatsApp no disponible
@@ -627,7 +627,7 @@ function UnlockedContactCard({ contact, folderName }: { contact: UnlockedContact
         <button
           type="button"
           onClick={copyPhone}
-          className="focus-ring inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-4 py-3 text-sm font-bold text-white transition hover:border-brand-400/35"
+          className="focus-ring inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/35"
         >
           <Clipboard className="h-4 w-4" />
           Copiar número

@@ -61,10 +61,10 @@ export default function AdminDashboardPage() {
           <article key={stat.label} className="card-hover dopamine-card rounded-2xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-400">{stat.label}</p>
-                <p className="mt-2 font-display text-3xl font-bold text-white">{stat.value}</p>
+                <p className="text-sm font-semibold text-content-secondary">{stat.label}</p>
+                <p className="mt-2 font-display text-3xl font-bold text-content">{stat.value}</p>
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-400/10 text-brand-400">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-400/10 text-brand-text">
                 <stat.icon className="h-5 w-5" />
               </div>
             </div>
@@ -74,12 +74,12 @@ export default function AdminDashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="dopamine-card rounded-2xl p-6">
-          <h2 className="font-display text-2xl font-bold text-white">Accesos rápidos</h2>
+          <h2 className="font-display text-2xl font-bold text-content">Accesos rápidos</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {quickLinks.map((link) => (
-              <Link key={link.label} to={link.to} className="card-hover rounded-2xl border border-line bg-white/5 p-4 transition hover:border-brand-400/35 hover:bg-brand-400/10">
-                <p className="font-semibold text-white">{link.label}</p>
-                <p className="mt-2 text-sm leading-6 text-gray-400">{link.description}</p>
+              <Link key={link.label} to={link.to} className="card-hover rounded-2xl border border-border bg-muted p-4 transition hover:border-brand-400/35 hover:bg-brand-400/10">
+                <p className="font-semibold text-content">{link.label}</p>
+                <p className="mt-2 text-sm leading-6 text-content-secondary">{link.description}</p>
               </Link>
             ))}
           </div>
@@ -87,22 +87,22 @@ export default function AdminDashboardPage() {
 
         <section className="dopamine-card rounded-2xl p-6">
           <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-brand-400" />
-            <h2 className="font-display text-2xl font-bold text-white">Actividad reciente</h2>
+            <Activity className="h-5 w-5 text-brand-text" />
+            <h2 className="font-display text-2xl font-bold text-content">Actividad reciente</h2>
           </div>
           <div className="mt-5 grid gap-3">
             {data?.recentActivity.length ? (
               data.recentActivity.map((activity) => (
-                <article key={activity.id} className="rounded-2xl border border-brand-400/10 bg-ink-950/50 p-4">
-                  <p className="font-semibold text-white">{activity.action}</p>
-                  <p className="mt-1 text-xs text-gray-500">{formatDate(activity.createdAt)}</p>
-                  <p className="mt-2 text-sm text-gray-400">
+                <article key={activity.id} className="rounded-2xl border border-brand-400/10 bg-canvas/50 p-4">
+                  <p className="font-semibold text-content">{activity.action}</p>
+                  <p className="mt-1 text-xs text-content-muted">{formatDate(activity.createdAt)}</p>
+                  <p className="mt-2 text-sm text-content-secondary">
                     {activity.targetType ?? 'evento'} {activity.targetId ? `· ${activity.targetId.slice(0, 8)}` : ''}
                   </p>
                 </article>
               ))
             ) : (
-              <p className="rounded-lg border border-line bg-ink-950/50 p-4 text-sm leading-6 text-gray-400">
+              <p className="rounded-lg border border-border bg-canvas/50 p-4 text-sm leading-6 text-content-secondary">
                 Todavía no hay actividad registrada. Cuando actives accesos o canceles solicitudes, aparecerán aquí.
               </p>
             )}

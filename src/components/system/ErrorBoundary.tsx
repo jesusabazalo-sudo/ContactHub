@@ -18,12 +18,12 @@ export default class ErrorBoundary extends React.Component<{ children: React.Rea
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0F2027] p-6 text-white">
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface p-6 text-content">
           <div className="text-5xl">!</div>
           <h2 className="text-xl font-bold">Algo salio mal</h2>
-          <p className="text-center text-sm text-white/50">La pagina tuvo un problema. Puedes reintentar sin recargar toda la app.</p>
+          <p className="text-center text-sm text-content/50">La pagina tuvo un problema. Puedes reintentar sin recargar toda la app.</p>
           <div className="flex gap-3">
-            <button onClick={() => this.setState({ hasError: false })} className="rounded-lg bg-[#1DB47A] px-5 py-2 font-semibold text-white">
+            <button onClick={() => this.setState({ hasError: false })} className="rounded-lg bg-brand px-5 py-2 font-semibold text-content">
               Reintentar vista
             </button>
             <button
@@ -32,7 +32,7 @@ export default class ErrorBoundary extends React.Component<{ children: React.Rea
                 window.history.pushState({}, '', '/');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
-              className="rounded-lg border border-white/20 px-5 py-2 text-white"
+              className="rounded-lg border border-border px-5 py-2 text-content"
             >
               Volver al inicio
             </button>

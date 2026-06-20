@@ -244,8 +244,14 @@ export default function AuthPage() {
   }
 
   return (
-    <section className={`relative min-h-screen overflow-hidden bg-[#0F2027] px-4 py-8 ${isLoading ? 'auth-loading' : ''}`}>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(29,180,122,0.18),transparent_28rem),radial-gradient(circle_at_80%_70%,rgba(29,180,122,0.12),transparent_24rem)]" />
+    <section className={`relative min-h-screen overflow-hidden bg-canvas px-4 py-8 ${isLoading ? 'auth-loading' : ''}`}>
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(circle at 20% 10%, rgb(var(--brand) / 0.14), transparent 28rem), radial-gradient(circle at 80% 70%, rgb(var(--brand) / 0.10), transparent 24rem)',
+        }}
+      />
 
       {GEO_SHAPES.map(([shape, position, animation, delay], index) => (
         <span key={`${shape}-${index}`} className={`geo-shape geo-${shape} ${animation} ${position}`} style={{ animationDelay: delay }} />
@@ -254,45 +260,45 @@ export default function AuthPage() {
       {showSuccessFlash ? <div className="pointer-events-none fixed inset-0 z-[60] animate-auth-flash bg-brand-400" /> : null}
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-[420px] items-center justify-center">
-        <div className="w-full rounded-3xl border border-[rgba(29,180,122,0.3)] bg-[rgba(15,32,39,0.95)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[20px] sm:p-7">
+        <div className="w-full rounded-2xl border border-border bg-surface p-5 shadow-card-lg sm:p-7">
           <div className="text-center">
-            <div className="mx-auto grid h-16 w-16 animate-logo-pulse place-items-center rounded-full bg-brand-400 text-xl font-black text-ink-950 shadow-[0_0_28px_rgba(29,180,122,0.42)]">
+            <div className="mx-auto grid h-16 w-16 animate-logo-pulse place-items-center rounded-2xl bg-brand text-xl font-bold text-brand-contrast shadow-glow">
               CH
             </div>
-            <h1 className="mt-4 font-display text-2xl font-bold text-white">ContactHub</h1>
-            <p key={taglineIndex} className="mt-2 animate-tagline-fade text-sm font-medium text-white sm:text-base">
+            <h1 className="mt-4 font-display text-2xl font-bold text-content">ContactHub</h1>
+            <p key={taglineIndex} className="mt-2 animate-tagline-fade text-sm font-medium text-content sm:text-base">
               {TAGLINES[taglineIndex]}
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 rounded-full border border-line bg-ink-950/70 p-1">
-            <button type="button" onClick={() => setMode('login')} className={`focus-ring rounded-full px-4 py-2 text-sm font-bold transition ${mode === 'login' ? 'bg-brand-400 text-ink-950' : 'text-gray-300 hover:text-white'}`}>
+          <div className="mt-6 grid grid-cols-2 rounded-full border border-border bg-canvas/70 p-1">
+            <button type="button" onClick={() => setMode('login')} className={`focus-ring rounded-full px-4 py-2 text-sm font-bold transition ${mode === 'login' ? 'bg-brand-400 text-ink-950' : 'text-content-secondary hover:text-content'}`}>
               Login
             </button>
-            <button type="button" onClick={() => setMode('register')} className={`focus-ring rounded-full px-4 py-2 text-sm font-bold transition ${mode === 'register' ? 'bg-brand-400 text-ink-950' : 'text-gray-300 hover:text-white'}`}>
+            <button type="button" onClick={() => setMode('register')} className={`focus-ring rounded-full px-4 py-2 text-sm font-bold transition ${mode === 'register' ? 'bg-brand-400 text-ink-950' : 'text-content-secondary hover:text-content'}`}>
               Registro
             </button>
           </div>
 
           {isRegisterMode ? (
-            <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-[rgba(255,255,255,0.85)]">
-              <p className="font-bold text-white">👋 Bienvenido a ContactHub</p>
+            <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-content-secondary">
+              <p className="font-bold text-content">👋 Bienvenido a ContactHub</p>
               <p className="mt-3">
                 Aquí encuentras contactos directos de proveedores, vendedores y oportunidades digitales, organizados en 24 categorías para que llegues directo a lo que buscas.
               </p>
-              <p className="mt-3 font-semibold text-brand-200">Sin intermediarios. Sin perder tiempo.</p>
+              <p className="mt-3 font-semibold text-brand-text">Sin intermediarios. Sin perder tiempo.</p>
             </div>
           ) : null}
 
           {!isSupabaseConfigured ? <SupabaseMissingAlert className="mt-5" /> : null}
           {notice ? <div className="mt-5 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">{notice}</div> : null}
 
-          <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-[rgba(255,255,255,0.85)]">
-            <p className="font-bold text-white">Tu correo es tu llave de acceso</p>
+          <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-content-secondary">
+            <p className="font-bold text-content">Tu correo es tu llave de acceso</p>
             <p className="mt-2">
               Usamos tu correo para guardar tus carpetas desbloqueadas, registrar tu prueba gratis y asociar comprobantes. No pedimos tu contraseña de Gmail, no vendemos tu información y no publicamos tu correo.
             </p>
-            <p className="mt-2 text-brand-100">
+            <p className="mt-2 text-brand-text">
               Puedes explorar primero y registrarte cuando quieras guardar un acceso.
             </p>
           </div>
@@ -301,7 +307,7 @@ export default function AuthPage() {
             type="button"
             onClick={() => void handleGoogleSignIn()}
             disabled={isLoading}
-            className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white/[0.08] px-5 text-sm font-bold text-white transition hover:border-brand-400/45 disabled:cursor-not-allowed disabled:opacity-70"
+            className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-border bg-muted px-5 text-sm font-bold text-content transition hover:border-brand-400/45 disabled:cursor-not-allowed disabled:opacity-70"
           >
             <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-black text-ink-950">G</span>
             Continuar con Google
@@ -310,49 +316,49 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
             {isRegisterMode ? (
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-white/90">Nombre</span>
+                <span className="text-sm font-semibold text-content/90">Nombre</span>
                 <span className="relative">
-                  <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  <input value={fullName} onChange={(event) => setFullName(event.target.value)} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-white/[0.08] pl-11 pr-4 text-[16px] text-white placeholder:text-white/40" placeholder="Tu nombre" autoComplete="name" />
+                  <UserRound className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
+                  <input value={fullName} onChange={(event) => setFullName(event.target.value)} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-border bg-muted pl-11 pr-4 text-[16px] text-content placeholder:text-content/40" placeholder="Tu nombre" autoComplete="name" />
                 </span>
               </label>
             ) : null}
 
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-white/90">Correo</span>
+              <span className="text-sm font-semibold text-content/90">Correo</span>
               <span className="relative">
-                <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <input required value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-white/[0.08] pl-11 pr-4 text-[16px] text-white placeholder:text-white/40" placeholder="tu@email.com" autoComplete="email" />
+                <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
+                <input required value={email} onChange={(event) => setEmail(event.target.value)} type="email" className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-border bg-muted pl-11 pr-4 text-[16px] text-content placeholder:text-content/40" placeholder="tu@email.com" autoComplete="email" />
               </span>
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-white/90">Contraseña</span>
+              <span className="text-sm font-semibold text-content/90">Contraseña</span>
               <span className="relative">
-                <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <input required value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? 'text' : 'password'} minLength={6} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-line bg-white/[0.08] pl-11 pr-12 text-[16px] text-white placeholder:text-white/40" placeholder="Mínimo 6 caracteres" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
-                <button type="button" onClick={() => setShowPassword((current) => !current)} className="focus-ring absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-gray-400 hover:text-white" aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}>
+                <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
+                <input required value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? 'text' : 'password'} minLength={6} className="focus-ring h-12 min-h-12 w-full rounded-2xl border border-border bg-muted pl-11 pr-12 text-[16px] text-content placeholder:text-content/40" placeholder="Mínimo 6 caracteres" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+                <button type="button" onClick={() => setShowPassword((current) => !current)} className="focus-ring absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-content-secondary hover:text-content" aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </span>
             </label>
 
-            <button type="submit" disabled={isLoading} className="focus-ring btn-primary-glow mt-2 inline-flex h-[52px] items-center justify-center gap-3 rounded-2xl bg-brand-400 px-5 text-sm font-black text-ink-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-75">
+            <button type="submit" disabled={isLoading} className="focus-ring btn-primary-glow mt-2 inline-flex h-[52px] items-center justify-center gap-3 rounded-xl bg-brand px-5 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-75">
               {isLoading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-950/30 border-t-ink-950" /> : null}
               {isLoading ? 'Entrando...' : mode === 'login' ? 'Entrar a ContactHub' : 'Crear cuenta segura'}
             </button>
           </form>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <button type="button" onClick={() => setMode('register')} className="focus-ring inline-flex h-11 items-center justify-center rounded-2xl border border-brand-400/30 bg-brand-400/10 px-4 text-xs font-bold text-brand-100 transition hover:bg-brand-400 hover:text-ink-950">
+            <button type="button" onClick={() => setMode('register')} className="focus-ring inline-flex h-11 items-center justify-center rounded-xl border border-brand/30 bg-brand/10 px-4 text-xs font-semibold text-brand-text transition hover:bg-brand hover:text-brand-contrast">
               Crear cuenta segura
             </button>
-            <button type="button" onClick={() => navigate('/catalogo')} className="focus-ring inline-flex h-11 items-center justify-center rounded-2xl border border-line bg-white/5 px-4 text-xs font-bold text-white transition hover:border-brand-400/40">
+            <button type="button" onClick={() => navigate('/catalogo')} className="focus-ring inline-flex h-11 items-center justify-center rounded-2xl border border-border bg-muted px-4 text-xs font-bold text-content transition hover:border-brand-400/40">
               Explorar sin registrarme
             </button>
           </div>
 
-          <div className="mt-4 grid gap-1 rounded-2xl border border-line bg-white/[0.03] p-4 text-xs leading-5 text-gray-400">
+          <div className="mt-4 grid gap-1 rounded-2xl border border-border bg-muted p-4 text-xs leading-5 text-content-secondary">
             <p>Registro necesario solo para guardar tus accesos.</p>
             <p>Tu correo funciona como tu llave de entrada.</p>
             <p>Sin cuenta puedes explorar. Con cuenta puedes desbloquear.</p>
@@ -360,10 +366,10 @@ export default function AuthPage() {
           </div>
 
           <div className="mt-5 flex flex-col items-center gap-3 text-center text-sm">
-            <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="focus-ring rounded-full px-3 py-2 font-semibold text-brand-200 hover:text-white">
+            <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="focus-ring rounded-full px-3 py-2 font-semibold text-brand-text hover:text-content">
               {mode === 'login' ? '¿Nuevo aquí? Crea tu cuenta gratis' : 'Ya tengo cuenta, quiero entrar'}
             </button>
-            <button type="button" onClick={handlePasswordReset} className="focus-ring rounded-full px-3 py-2 text-xs font-semibold text-gray-500 transition hover:text-white">
+            <button type="button" onClick={handlePasswordReset} className="focus-ring rounded-full px-3 py-2 text-xs font-semibold text-content-muted transition hover:text-content">
               Olvidé mi contraseña
             </button>
           </div>
@@ -372,22 +378,22 @@ export default function AuthPage() {
 
       {showOnboarding ? (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-[480px] overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0F2027] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.48)] sm:p-7">
+          <div className="relative w-full max-w-[480px] overflow-hidden rounded-3xl border border-brand-400/20 bg-surface p-5 shadow-[0_24px_80px_rgba(0,0,0,0.48)] sm:p-7">
             {onboardingDone ? (
               <div className="relative py-12 text-center">
                 <div className="onboarding-confetti" />
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-400 text-2xl">✅</div>
-                <h2 className="mt-5 font-display text-2xl font-bold text-white">¡Listo! Ya tienes acceso a ContactHub.</h2>
-                <p className="mt-3 text-sm text-gray-400">Te llevamos al catálogo para que empieces a explorar.</p>
+                <h2 className="mt-5 font-display text-2xl font-bold text-content">¡Listo! Ya tienes acceso a ContactHub.</h2>
+                <p className="mt-3 text-sm text-content-secondary">Te llevamos al catálogo para que empieces a explorar.</p>
               </div>
             ) : (
               <>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div className="h-full rounded-full bg-brand-400 transition-all duration-300" style={{ width: `${((onboardingStep + 1) / ONBOARDING_STEPS.length) * 100}%` }} />
                 </div>
-                <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-brand-300">{onboardingStep + 1}/3</p>
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-brand-text">{onboardingStep + 1}/3</p>
                 <div key={currentOnboarding.key} className="animate-onboarding-slide">
-                  <h2 className="mt-3 font-display text-2xl font-bold text-white">{currentOnboarding.title}</h2>
+                  <h2 className="mt-3 font-display text-2xl font-bold text-content">{currentOnboarding.title}</h2>
                   <div className="mt-5 flex flex-wrap gap-3">
                     {currentOnboarding.options.map((option) => {
                       const value = option.replace(/^[^\s]+\s/, '');
@@ -398,7 +404,7 @@ export default function AuthPage() {
                           type="button"
                           onClick={() => setOnboardingAnswers((current) => ({ ...current, [currentOnboarding.key]: value }))}
                           className={`focus-ring rounded-full border px-4 py-3 text-sm font-bold transition ${
-                            selected ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-line bg-white/5 text-gray-300 hover:border-brand-400/40 hover:text-white'
+                            selected ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-border bg-muted text-content-secondary hover:border-brand-400/40 hover:text-content'
                           }`}
                         >
                           {option}
@@ -407,7 +413,7 @@ export default function AuthPage() {
                     })}
                   </div>
                 </div>
-                <button type="button" disabled={isSavingOnboarding} onClick={nextOnboardingStep} className="focus-ring mt-7 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-brand-400 px-5 text-sm font-black text-ink-950 transition hover:bg-white disabled:opacity-70">
+                <button type="button" disabled={isSavingOnboarding} onClick={nextOnboardingStep} className="focus-ring mt-7 inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:opacity-70">
                   {onboardingStep === ONBOARDING_STEPS.length - 1 ? (isSavingOnboarding ? 'Guardando...' : 'Finalizar →') : 'Siguiente →'}
                 </button>
               </>

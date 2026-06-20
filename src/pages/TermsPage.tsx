@@ -15,9 +15,9 @@ export default function TermsPage() {
         <SectionHeading eyebrow="Términos" title="Reglas simples para usar ContactHub" description="Queremos que la plataforma sea útil, clara y responsable para usuarios, clientes y contactos." />
         <div className="mt-10 grid gap-3">
           {terms.map((term, index) => (
-            <article key={term} className="grid gap-4 rounded-lg border border-line bg-panel p-5 sm:grid-cols-[auto_1fr]">
-              <span className="font-mono text-sm font-bold text-brand-400">{String(index + 1).padStart(2, '0')}</span>
-              <p className="text-sm leading-6 text-slate-300">{term}</p>
+            <article key={term} className="grid gap-4 rounded-lg border border-border bg-surface p-5 sm:grid-cols-[auto_1fr]">
+              <span className="font-mono text-sm font-bold text-brand-text">{String(index + 1).padStart(2, '0')}</span>
+              <p className="text-sm leading-6 text-content-secondary">{term}</p>
             </article>
           ))}
         </div>

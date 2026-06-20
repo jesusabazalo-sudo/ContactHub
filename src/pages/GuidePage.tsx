@@ -3,7 +3,7 @@ import SectionHeading from '../components/ui/SectionHeading';
 
 export default function GuidePage() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad bg-canvas">
       <div className="container-shell">
         <SectionHeading
           eyebrow="Guía rápida"

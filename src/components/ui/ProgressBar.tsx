@@ -9,8 +9,8 @@ export default function ProgressBar({ value, label, className = '' }: ProgressBa
 
   return (
     <div className={className}>
-      {label ? <div className="mb-2 flex justify-between text-xs font-semibold text-gray-400">{label}</div> : null}
-      <div className="h-3 overflow-hidden rounded-full bg-white/10">
+      {label ? <div className="mb-2 flex justify-between text-xs font-semibold text-content-secondary">{label}</div> : null}
+      <div className="h-3 overflow-hidden rounded-full bg-muted">
         <div className="progress-fill h-full rounded-full bg-brand-400" style={{ width: `${safeValue}%` }} />
       </div>
     </div>

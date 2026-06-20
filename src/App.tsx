@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AdminGuard from './components/auth/AdminGuard';
 import AuthGuard from './components/auth/AuthGuard';
 import ChatWidget from './components/chat/ChatWidget';
-import GeometryBackground from './components/system/GeometryBackground';
 import WelcomeModal from './components/system/WelcomeModal';
 import PublicLayout from './layouts/PublicLayout';
 import AuthCallbackPage from './pages/AuthCallbackPage';
@@ -36,7 +35,6 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 export default function App() {
   return (
     <>
-      <GeometryBackground />
       <Routes>
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/auth" element={<AuthPage />} />

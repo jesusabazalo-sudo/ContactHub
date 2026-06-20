@@ -487,6 +487,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      public_reviews: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          display_name: string | null;
+          is_anonymous: boolean;
+          rating: number;
+          comment: string;
+          status: 'pending' | 'approved' | 'rejected';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          display_name?: string | null;
+          is_anonymous?: boolean;
+          rating: number;
+          comment: string;
+          status?: 'pending' | 'approved' | 'rejected';
+          created_at?: string;
+        };
+        Update: {
+          display_name?: string | null;
+          is_anonymous?: boolean;
+          rating?: number;
+          comment?: string;
+          status?: 'pending' | 'approved' | 'rejected';
+        };
+        Relationships: [];
+      };
+      reward_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          review_id: string | null;
+          screenshot_url: string | null;
+          status: 'pending' | 'approved' | 'rejected';
+          bonus_contact_ids: string[];
+          admin_note: string | null;
+          created_at: string;
+          reviewed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          review_id?: string | null;
+          screenshot_url?: string | null;
+          status?: 'pending' | 'approved' | 'rejected';
+          bonus_contact_ids?: string[];
+          admin_note?: string | null;
+          created_at?: string;
+          reviewed_at?: string | null;
+        };
+        Update: {
+          review_id?: string | null;
+          screenshot_url?: string | null;
+          status?: 'pending' | 'approved' | 'rejected';
+          bonus_contact_ids?: string[];
+          admin_note?: string | null;
+          reviewed_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       contact_unlocked_secure: {
@@ -592,12 +655,17 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? '';
 const supabaseAnonKey = supabaseKey;
 const forbiddenSupabaseRole = ['service', 'role'].join('_');
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Faltan variables de entorno de Supabase.');
+// No lanzamos excepción en la carga del módulo: eso provocaría una pantalla en
+// blanco imposible de capturar por el ErrorBoundary. En su lugar degradamos a
+// `supabase = null` y la UI muestra <SupabaseMissingAlert />. Avisamos en consola.
+if ((!supabaseUrl || !supabaseKey) && import.meta.env.DEV) {
+  console.warn('[ContactHub] Faltan variables de entorno de Supabase. Crea un .env.local con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.');
 }
 
 if (supabaseKey.includes(forbiddenSupabaseRole)) {
-  throw new Error(`NUNCA uses ${forbiddenSupabaseRole} en el frontend.`);
+  // Salvaguarda de seguridad crítica: jamás crear el cliente con la service_role
+  // key en el frontend. Degradamos a null en vez de exponerla.
+  console.error(`[ContactHub] Se detectó una clave de tipo "${forbiddenSupabaseRole}" en el frontend. El cliente Supabase NO se inicializará.`);
 }
 
 function isPlaceholderValue(value: string) {

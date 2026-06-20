@@ -201,7 +201,6 @@ export default function AdminImportarPage() {
       const nextCategories = buildOfficialCategoryOptions(categoriesResult.data ?? [])
         .filter((category) => category.displayOrder >= 1 && category.displayOrder <= 24)
         .slice(0, 24) as CategoryOption[];
-      console.log('Categorías cargadas:', nextCategories.length, nextCategories[0]);
       setCategories(nextCategories);
       setCategoryId((current) => {
         const currentStillValid = nextCategories.some((category) => category.id === current && !isSyntheticCategoryId(category.id));
@@ -292,11 +291,11 @@ export default function AdminImportarPage() {
     if (!importableContacts.length) {
       const noValidError = 'No hay contactos válidos para importar.';
       setResult(noValidError);
-      console.log('CONTACTHUB_DEBUG_IMPORT', { selectedCategory, parsedContacts, insertedCount: 0, error: noValidError });
+      if (import.meta.env.DEV) console.debug('CONTACTHUB_DEBUG_IMPORT', { selectedCategory, parsedContacts, insertedCount: 0, error: noValidError });
       return;
     }
 
-    console.log('IMPORT_CATEGORY_SELECTED', selectedCategory);
+    if (import.meta.env.DEV) console.debug('IMPORT_CATEGORY_SELECTED', selectedCategory);
     setIsImporting(true);
     let insertedCount = 0;
     let existingDuplicateCount = 0;
@@ -392,12 +391,14 @@ export default function AdminImportarPage() {
       setRealSavedCount(verifyContacts.length);
       setFailed(failedRows);
 
-      console.log('CONTACTHUB_IMPORT_VERIFY', {
-        selectedCategory,
-        insertedContacts,
-        verifyCount: verifyContacts.length,
-        verifyContacts,
-      });
+      if (import.meta.env.DEV) {
+        console.debug('CONTACTHUB_IMPORT_VERIFY', {
+          selectedCategory,
+          insertedContacts,
+          verifyCount: verifyContacts.length,
+          verifyContacts,
+        });
+      }
 
       if (insertedCount === 0) {
         setResult(failedRows.length ? `No se importó ningún contacto. Error: ${failedRows[0].error}` : 'No se importó ningún contacto.');
@@ -417,7 +418,7 @@ export default function AdminImportarPage() {
       const message = importError instanceof Error ? importError.message : 'No se pudo importar.';
       setResult(`No se pudo importar: ${message}`);
       console.error('Error importando contactos:', importError);
-      console.log('CONTACTHUB_DEBUG_IMPORT', { selectedCategory, parsedContacts, insertedCount, error: message });
+      if (import.meta.env.DEV) console.debug('CONTACTHUB_DEBUG_IMPORT', { selectedCategory, parsedContacts, insertedCount, error: message });
     } finally {
       setProgress('');
       setIsImporting(false);
@@ -429,13 +430,13 @@ export default function AdminImportarPage() {
   return (
     <AdminShell>
       <AdminNotice />
-      <section className="mx-auto w-full max-w-7xl rounded-2xl border border-line bg-panel px-4 py-6 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl rounded-2xl border border-border bg-surface px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white">Importar contactos</h2>
-            <p className="mt-2 text-sm text-gray-400">Pega una lista, revisa la vista previa y guarda solo los contactos válidos.</p>
+            <h2 className="font-display text-2xl font-bold text-content">Importar contactos</h2>
+            <p className="mt-2 text-sm text-content-secondary">Pega una lista, revisa la vista previa y guarda solo los contactos válidos.</p>
           </div>
-          <button type="button" onClick={loadCategories} className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-brand-400/35">
+          <button type="button" onClick={loadCategories} className="focus-ring rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content hover:border-brand-400/35">
             Reintentar categorías
           </button>
         </div>
@@ -453,9 +454,9 @@ export default function AdminImportarPage() {
         <div className="mt-6 rounded-2xl border border-brand-400/25 bg-brand-400/[0.06] p-4 sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">Importación Excel por 24 carpetas</p>
-              <h3 className="mt-1 text-lg font-bold text-white">Cargar hoja “Todos” de forma segura</h3>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">Importación Excel por 24 carpetas</p>
+              <h3 className="mt-1 text-lg font-bold text-content">Cargar hoja “Todos” de forma segura</h3>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-content-secondary">
                 Valida teléfonos, usa Carpeta ID, omite duplicados y separa registros reservados antes de guardar.
               </p>
             </div>
@@ -473,25 +474,25 @@ export default function AdminImportarPage() {
 
           {excelPreview ? (
             <div className="mt-5">
-              <p className="text-sm font-semibold text-white">{excelPreview.fileName}</p>
+              <p className="text-sm font-semibold text-content">{excelPreview.fileName}</p>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
-                  ['Filas', excelPreview.totalRows, 'text-white'],
-                  ['Listos', excelPreview.validRows.length, 'text-brand-300'],
+                  ['Filas', excelPreview.totalRows, 'text-content'],
+                  ['Listos', excelPreview.validRows.length, 'text-brand-text'],
                   ['Reservados', excelPreview.reservedRows.length, 'text-amber-200'],
                   ['Inválidos', excelPreview.invalidRows.length, 'text-red-200'],
                   ['Duplicados', excelPreview.duplicateRows.length, 'text-sky-200'],
                 ].map(([label, value, color]) => (
-                  <div key={String(label)} className="rounded-xl border border-white/10 bg-ink-950/55 p-3">
+                  <div key={String(label)} className="rounded-xl border border-border bg-canvas/55 p-3">
                     <p className={`text-xl font-bold ${color}`}>{value}</p>
-                    <p className="text-xs text-gray-500">{label}</p>
+                    <p className="text-xs text-content-muted">{label}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                 {Array.from({ length: 24 }, (_, index) => index + 1).map((order) => (
-                  <div key={order} className="rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-400">
-                    <span className="font-bold text-white">{String(order).padStart(2, '0')}</span>
+                  <div key={order} className="rounded-lg bg-muted px-3 py-2 text-xs text-content-secondary">
+                    <span className="font-bold text-content">{String(order).padStart(2, '0')}</span>
                     <span className="ml-2">{excelPreview.byFolder[order] ?? 0}</span>
                   </div>
                 ))}
@@ -500,7 +501,7 @@ export default function AdminImportarPage() {
                 type="button"
                 disabled={isExcelImporting || !excelPreview.validRows.length || categories.some((category) => isSyntheticCategoryId(category.id))}
                 onClick={() => void importExcel()}
-                className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 hover:bg-brand-300 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-gray-500 sm:w-auto"
+                className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 hover:bg-brand-300 disabled:cursor-not-allowed disabled:bg-muted disabled:text-content-muted sm:w-auto"
               >
                 <UploadCloud className="h-4 w-4" />
                 {isExcelImporting ? 'Importando...' : `Importar ${excelPreview.validRows.length} contactos validados`}
@@ -509,8 +510,8 @@ export default function AdminImportarPage() {
           ) : null}
 
           {excelResult ? (
-            <div className="mt-5 rounded-xl border border-white/10 bg-ink-950/65 p-4 text-sm text-gray-300">
-              <p className="font-bold text-white">Resultado de importación</p>
+            <div className="mt-5 rounded-xl border border-border bg-canvas/65 p-4 text-sm text-content-secondary">
+              <p className="font-bold text-content">Resultado de importación</p>
               <p className="mt-2">
                 {excelResult.inserted} importados ({excelResult.publicInserted} públicos + {excelResult.reservedInserted} reservados) · {excelResult.invalid} inválidos ·{' '}
                 {excelResult.inputDuplicates + excelResult.existingDuplicates} duplicados · {excelResult.uncategorized} sin categoría.
@@ -523,18 +524,18 @@ export default function AdminImportarPage() {
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
           <div className="w-full space-y-4">
             <div ref={categoryPickerRef} className="relative grid gap-2">
-              <span className="text-sm font-semibold text-gray-300">Categoría destino</span>
+              <span className="text-sm font-semibold text-content-secondary">Categoría destino</span>
               <button
                 type="button"
                 onClick={() => setIsCategoryPickerOpen((current) => !current)}
-                className="focus-ring flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-left text-sm font-semibold text-white hover:border-brand-400/45"
+                className="focus-ring flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-left text-sm font-semibold text-content hover:border-brand-400/45"
                 aria-expanded={isCategoryPickerOpen}
               >
                 <span className="min-w-0 truncate">{selectedCategory?.displayLabel ?? 'Selecciona una carpeta...'}</span>
-                <span className="shrink-0 text-brand-300">{isCategoryPickerOpen ? '▲' : '▼'}</span>
+                <span className="shrink-0 text-brand-text">{isCategoryPickerOpen ? '▲' : '▼'}</span>
               </button>
               {isCategoryPickerOpen ? (
-                <div className="absolute left-0 right-0 top-[76px] z-30 max-h-[380px] overflow-y-auto rounded-2xl border border-brand-400/25 bg-ink-950/95 p-2 shadow-2xl shadow-black/40">
+                <div className="absolute left-0 right-0 top-[76px] z-30 max-h-[380px] overflow-y-auto rounded-2xl border border-brand-400/25 bg-canvas/95 p-2 shadow-2xl shadow-black/40">
                   {categories.map((category) => (
                     <button
                       key={category.id}
@@ -544,7 +545,7 @@ export default function AdminImportarPage() {
                         setIsCategoryPickerOpen(false);
                       }}
                       className={`focus-ring flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${
-                        categoryId === category.id ? 'bg-brand-400/20 text-white ring-1 ring-brand-400/40' : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                        categoryId === category.id ? 'bg-brand-400/20 text-content ring-1 ring-brand-400/40' : 'text-content-secondary hover:bg-muted hover:text-content'
                       }`}
                     >
                       <span className="mt-0.5 w-6 shrink-0 text-center text-lg">{category.displayIcon}</span>
@@ -552,7 +553,7 @@ export default function AdminImportarPage() {
                         <span className="block font-bold leading-snug">
                           {String(category.displayOrder).padStart(2, '0')}. {category.displayTitle}
                         </span>
-                        <span className="mt-0.5 block text-xs text-gray-500">
+                        <span className="mt-0.5 block text-xs text-content-muted">
                           {category.displaySubtitle}
                           {isSyntheticCategoryId(category.id) ? ' · falta crear en Supabase' : ''}
                         </span>
@@ -563,28 +564,28 @@ export default function AdminImportarPage() {
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-line bg-ink-950/50 p-4 text-sm leading-6 text-gray-300">
-              <p className="font-semibold text-white">Destino: {selectedCategory?.displayLabel ?? 'Selecciona una categoría'}</p>
-              {selectedCategory?.id ? <p className="mt-1 truncate text-xs text-gray-500">{selectedCategory.id}</p> : null}
+            <div className="rounded-2xl border border-border bg-canvas/50 p-4 text-sm leading-6 text-content-secondary">
+              <p className="font-semibold text-content">Destino: {selectedCategory?.displayLabel ?? 'Selecciona una categoría'}</p>
+              {selectedCategory?.id ? <p className="mt-1 truncate text-xs text-content-muted">{selectedCategory.id}</p> : null}
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-white/5 p-3">
-                  <p className="text-2xl font-bold text-brand-400">{importableContacts.length}</p>
-                  <p className="text-xs text-gray-500">listos</p>
+                <div className="rounded-lg bg-muted p-3">
+                  <p className="text-2xl font-bold text-brand-text">{importableContacts.length}</p>
+                  <p className="text-xs text-content-muted">listos</p>
                 </div>
-                <div className="rounded-lg bg-white/5 p-3">
+                <div className="rounded-lg bg-muted p-3">
                   <p className="text-2xl font-bold text-amber-200">{invalidContacts.length}</p>
-                  <p className="text-xs text-gray-500">inválidos</p>
+                  <p className="text-xs text-content-muted">inválidos</p>
                 </div>
-                <div className="rounded-lg bg-white/5 p-3">
+                <div className="rounded-lg bg-muted p-3">
                   <p className="text-2xl font-bold text-sky-200">{duplicateInputCount}</p>
-                  <p className="text-xs text-gray-500">duplicados en lista</p>
+                  <p className="text-xs text-content-muted">duplicados en lista</p>
                 </div>
-                <div className="rounded-lg bg-white/5 p-3">
+                <div className="rounded-lg bg-muted p-3">
                   <p className="text-2xl font-bold text-red-200">{sensitiveContacts.length}</p>
-                  <p className="text-xs text-gray-500">sensibles</p>
+                  <p className="text-xs text-content-muted">sensibles</p>
                 </div>
               </div>
-              {realSavedCount !== null ? <p className="mt-4 text-brand-300">Ahora hay {realSavedCount} contactos reales en esta categoría.</p> : null}
+              {realSavedCount !== null ? <p className="mt-4 text-brand-text">Ahora hay {realSavedCount} contactos reales en esta categoría.</p> : null}
             </div>
 
             <button
@@ -592,20 +593,20 @@ export default function AdminImportarPage() {
               disabled={!canImport}
               onClick={() => void importContacts()}
               className={`focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 text-sm font-bold transition ${
-                canImport ? 'bg-brand-400 text-ink-950 hover:bg-brand-300' : 'cursor-not-allowed bg-white/10 text-gray-500'
+                canImport ? 'bg-brand-400 text-ink-950 hover:bg-brand-300' : 'cursor-not-allowed bg-muted text-content-muted'
               }`}
             >
               <UploadCloud className="h-4 w-4" />
               {importableContacts.length ? `Importar ${importableContacts.length} contactos` : 'No hay contactos válidos'}
             </button>
 
-            {progress ? <p className="text-sm text-brand-400">{progress}</p> : null}
-            {result ? <p className="rounded-lg border border-line bg-ink-950/50 p-4 text-sm font-semibold text-white">{result}</p> : null}
+            {progress ? <p className="text-sm text-brand-text">{progress}</p> : null}
+            {result ? <p className="rounded-lg border border-border bg-canvas/50 p-4 text-sm font-semibold text-content">{result}</p> : null}
           </div>
 
           <div className="grid w-full min-w-0 gap-4">
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-gray-300">Contactos</span>
+              <span className="text-sm font-semibold text-content-secondary">Contactos</span>
               <textarea
                 value={text}
                 onChange={(event) => {
@@ -616,13 +617,13 @@ export default function AdminImportarPage() {
                 }}
                 rows={13}
                 placeholder={'Pega aquí tus contactos, uno por línea.\nEjemplo:\nPack Minero +51 915 151 528\nVender PDFs de Alto Curso +51 998 801 893'}
-                className="focus-ring min-h-[320px] w-full resize-y rounded-2xl border border-line bg-ink-950/70 px-4 py-3 font-mono text-sm text-white"
+                className="focus-ring min-h-[320px] w-full resize-y rounded-2xl border border-border bg-canvas/70 px-4 py-3 font-mono text-sm text-content"
               />
             </label>
 
-            <div className="max-h-[360px] overflow-auto rounded-xl border border-line">
+            <div className="max-h-[360px] overflow-auto rounded-xl border border-border">
               <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+                <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
                   <tr>
                     <th className="px-4 py-3">Estado</th>
                     <th className="px-4 py-3">Nombre</th>
@@ -632,13 +633,13 @@ export default function AdminImportarPage() {
                 </thead>
                 <tbody>
                   {parsedContacts.map((line, index) => (
-                    <tr key={`${line.raw}-${index}`} className={`border-t border-line ${line.sensitive ? 'bg-amber-500/10' : line.valid ? '' : 'bg-red-500/10'}`}>
-                      <td className={`px-4 py-3 font-bold ${line.sensitive ? 'text-amber-200' : line.valid ? 'text-brand-400' : 'text-red-200'}`}>
+                    <tr key={`${line.raw}-${index}`} className={`border-t border-border ${line.sensitive ? 'bg-amber-500/10' : line.valid ? '' : 'bg-red-500/10'}`}>
+                      <td className={`px-4 py-3 font-bold ${line.sensitive ? 'text-amber-200' : line.valid ? 'text-brand-text' : 'text-red-200'}`}>
                         {line.sensitive ? 'REVISAR' : line.valid ? '✓' : '✕'}
                       </td>
-                      <td className="px-4 py-3 text-white">{line.name}</td>
-                      <td className="px-4 py-3 font-mono text-gray-300">{line.phone || line.error}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">
+                      <td className="px-4 py-3 text-content">{line.name}</td>
+                      <td className="px-4 py-3 font-mono text-content-secondary">{line.phone || line.error}</td>
+                      <td className="px-4 py-3 text-xs text-content-muted">
                         {line.raw}
                         {line.sensitiveReason ? <span className="mt-1 block text-amber-200">{line.sensitiveReason}</span> : null}
                       </td>
@@ -646,7 +647,7 @@ export default function AdminImportarPage() {
                   ))}
                   {!parsedContacts.length ? (
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                      <td colSpan={4} className="px-4 py-8 text-center text-content-muted">
                         La vista previa aparecerá aquí.
                       </td>
                     </tr>

@@ -432,24 +432,24 @@ export default function AdminAccessPage() {
     <AdminShell>
       <AdminNotice />
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-2xl border border-line bg-panel p-6">
+        <section className="rounded-2xl border border-border bg-surface p-6">
           <div className="flex items-center gap-2">
-            <FolderCheck className="h-5 w-5 text-brand-400" />
-            <h2 className="font-display text-2xl font-bold text-white">Activar accesos</h2>
+            <FolderCheck className="h-5 w-5 text-brand-text" />
+            <h2 className="font-display text-2xl font-bold text-content">Activar accesos</h2>
           </div>
-          <p className="mt-3 text-sm leading-6 text-gray-400">
+          <p className="mt-3 text-sm leading-6 text-content-secondary">
             Busca un usuario registrado y otorga una o varias carpetas. La activación queda guardada en Supabase.
           </p>
 
           {selectedPending ? (
-            <div className="mt-5 rounded-lg border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-gray-200">
+            <div className="mt-5 rounded-lg border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-content">
               Atendiendo solicitud pendiente de {selectedPending.userEmail ?? 'usuario sin email'}.
             </div>
           ) : null}
 
           <form onSubmit={handleSearchSubmit} className="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-gray-300">Email del cliente</span>
+              <span className="text-sm font-semibold text-content-secondary">Email del cliente</span>
               <input
                 required
                 value={email}
@@ -462,13 +462,13 @@ export default function AdminAccessPage() {
                 }}
                 type="email"
                 placeholder="cliente@email.com"
-                className="focus-ring h-12 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white placeholder:text-gray-500"
+                className="focus-ring h-12 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content placeholder:text-content-muted"
               />
             </label>
             <button
               type="submit"
               disabled={isSearching}
-              className="focus-ring mt-auto inline-flex h-12 items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-5 text-sm font-bold text-white transition hover:border-brand-400/35 disabled:cursor-not-allowed disabled:opacity-70"
+              className="focus-ring mt-auto inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-muted px-5 text-sm font-bold text-content transition hover:border-brand-400/35 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Search className="h-4 w-4" />
               {isSearching ? 'Buscando...' : 'Buscar'}
@@ -482,17 +482,17 @@ export default function AdminAccessPage() {
           ) : null}
 
           {selectedUser ? (
-            <div className="mt-5 rounded-2xl border border-line bg-ink-950/50 p-5">
+            <div className="mt-5 rounded-2xl border border-border bg-canvas/50 p-5">
               <div className="flex items-start gap-3">
-                <UserRoundSearch className="mt-1 h-5 w-5 text-brand-400" />
+                <UserRoundSearch className="mt-1 h-5 w-5 text-brand-text" />
                 <div>
-                  <p className="font-semibold text-white">{selectedUser.email ?? 'Usuario sin email'}</p>
-                  <p className="mt-1 text-sm text-gray-400">{selectedUser.fullName ?? 'Sin nombre registrado'}</p>
-                  <p className="mt-1 text-xs text-gray-500">Registrado: {formatDate(selectedUser.createdAt)}</p>
-                  <p className="mt-1 break-all text-[11px] text-brand-200">Destino verificado: {selectedUser.id}</p>
+                  <p className="font-semibold text-content">{selectedUser.email ?? 'Usuario sin email'}</p>
+                  <p className="mt-1 text-sm text-content-secondary">{selectedUser.fullName ?? 'Sin nombre registrado'}</p>
+                  <p className="mt-1 text-xs text-content-muted">Registrado: {formatDate(selectedUser.createdAt)}</p>
+                  <p className="mt-1 break-all text-[11px] text-brand-text">Destino verificado: {selectedUser.id}</p>
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 text-sm text-gray-400">
+              <div className="mt-4 grid gap-2 text-sm text-content-secondary">
                 <p>Teléfono: {selectedUser.phone ?? 'No registrado'}</p>
                 <p>Carpetas activas: {selectedUser.activeAccesses.length}</p>
                 <p>Prueba gratis: {selectedUser.usedTrial ? 'Usada' : 'No registrada'}</p>
@@ -502,26 +502,26 @@ export default function AdminAccessPage() {
                 type="button"
                 onClick={() => void handleVerifyRealAccesses()}
                 disabled={isCheckingAccesses}
-                className="focus-ring mt-4 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-200 transition hover:bg-brand-400 hover:text-ink-950 disabled:opacity-60"
+                className="focus-ring mt-4 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-text transition hover:bg-brand-400 hover:text-ink-950 disabled:opacity-60"
               >
                 {isCheckingAccesses ? 'Verificando...' : 'Verificar accesos reales'}
               </button>
               {accessDiagnostics ? (
-                <div className="mt-3 rounded-xl border border-line bg-ink-950/60 p-3">
-                  <p className="text-xs font-semibold text-white">
+                <div className="mt-3 rounded-xl border border-border bg-canvas/60 p-3">
+                  <p className="text-xs font-semibold text-content">
                     Tabla oficial: user_category_access · user_id: {selectedUser.id}
                   </p>
                   <div className="mt-2 grid gap-2">
                     {accessDiagnostics.length ? accessDiagnostics.map((access) => (
-                      <div key={access.id} className="rounded-lg border border-line bg-white/[0.03] p-2 text-[11px] text-gray-400">
-                        <p className="font-semibold text-brand-200">{access.categoryName}</p>
+                      <div key={access.id} className="rounded-lg border border-border bg-muted p-2 text-[11px] text-content-secondary">
+                        <p className="font-semibold text-brand-text">{access.categoryName}</p>
                         <p className="mt-1 break-all">
                           category_id: {access.categoryId ?? 'null'} · status: {access.status} · access_type: {access.accessType ?? 'manual'}
                         </p>
                         <p className="mt-1 break-all">granted_by: {access.grantedBy ?? 'sin registro'}</p>
                       </div>
                     )) : (
-                      <p className="text-xs text-gray-500">No hay accesos activos reales para este cliente.</p>
+                      <p className="text-xs text-content-muted">No hay accesos activos reales para este cliente.</p>
                     )}
                   </div>
                 </div>
@@ -531,15 +531,15 @@ export default function AdminAccessPage() {
                   {selectedUser.activeAccesses.map((access) => (
                     <div key={access.categoryId} className="flex flex-col gap-2 rounded-xl border border-brand-400/20 bg-brand-400/10 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-brand-200">{access.categoryName}</p>
-                        <p className="mt-1 text-[11px] text-gray-500">
+                        <p className="text-xs font-semibold text-brand-text">{access.categoryName}</p>
+                        <p className="mt-1 text-[11px] text-content-muted">
                           {access.accessType ?? access.source ?? 'manual'} · {formatDate(access.updatedAt ?? access.createdAt)}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => void handleRevokeAccess(access.categoryId)}
-                        className="focus-ring rounded-full border border-red-400/25 bg-red-400/10 px-3 py-1.5 text-xs font-bold text-red-100 transition hover:bg-red-400 hover:text-white"
+                        className="focus-ring rounded-full border border-red-400/25 bg-red-400/10 px-3 py-1.5 text-xs font-bold text-red-100 transition hover:bg-red-400 hover:text-content"
                       >
                         Revocar
                       </button>
@@ -555,15 +555,15 @@ export default function AdminAccessPage() {
                   </p>
                   <div className="mt-3 grid gap-3">
                     {selectedUser.unlinkedAccesses.map((access) => (
-                      <div key={access.accessId} className="rounded-lg border border-amber-200/15 bg-ink-950/45 p-3">
-                        <p className="break-all text-xs text-gray-400">
+                      <div key={access.accessId} className="rounded-lg border border-amber-200/15 bg-canvas/45 p-3">
+                        <p className="break-all text-xs text-content-secondary">
                           Vínculo: {access.categoryId ?? 'sin category_id'} · {formatDate(access.updatedAt ?? access.createdAt)}
                         </p>
                         <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                           <select
                             value={legacyCategoryByAccess[access.accessId] ?? ''}
                             onChange={(event) => setLegacyCategoryByAccess((current) => ({ ...current, [access.accessId]: event.target.value }))}
-                            className="focus-ring h-10 rounded-lg border border-line bg-ink-950 px-3 text-xs text-white"
+                            className="focus-ring h-10 rounded-lg border border-border bg-canvas px-3 text-xs text-content"
                           >
                             <option value="">Selecciona carpeta oficial</option>
                             {categories
@@ -601,15 +601,15 @@ export default function AdminAccessPage() {
             <div>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-gray-300">Categorías activas disponibles</p>
-                  <p className="mt-1 text-xs text-gray-500">{selectedCategoryIds.length} seleccionadas</p>
+                  <p className="text-sm font-semibold text-content-secondary">Categorías activas disponibles</p>
+                  <p className="mt-1 text-xs text-content-muted">{selectedCategoryIds.length} seleccionadas</p>
                 </div>
                 {categories.length ? (
                   <button
                     type="button"
                     onClick={handleTotalAccessSelection}
                     className={`focus-ring rounded-full px-4 py-2 text-xs font-bold transition ${
-                      allCategoriesSelected ? 'border border-line bg-white/5 text-white' : 'bg-brand-400 text-ink-950 hover:bg-white'
+                      allCategoriesSelected ? 'border border-border bg-muted text-content' : 'bg-brand-400 text-ink-950 hover:bg-white'
                     }`}
                   >
                     {allCategoriesSelected ? 'Deseleccionar todo' : 'Dar acceso total'}
@@ -631,7 +631,7 @@ export default function AdminAccessPage() {
                             ? 'cursor-not-allowed border-brand-400/20 bg-brand-400/5 opacity-75'
                             : checked
                               ? 'cursor-pointer border-brand-400/45 bg-brand-400/10 hover:border-brand-400/50'
-                              : 'cursor-pointer border-line bg-ink-950/50 hover:border-brand-400/50'
+                              : 'cursor-pointer border-border bg-canvas/50 hover:border-brand-400/50'
                         }`}
                       >
                         <input
@@ -639,23 +639,23 @@ export default function AdminAccessPage() {
                           checked={checked}
                           disabled={alreadyActive}
                           onChange={() => toggleCategory(category.id)}
-                          className="h-4 w-4 rounded border-line bg-ink-950 text-brand-400"
+                          className="h-4 w-4 rounded border-border bg-canvas text-brand-text"
                         />
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-brand-400/25 bg-brand-400/10 text-lg">
                           {category.icon ?? '📁'}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-2">
-                            <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-xs font-bold text-brand-200">
+                            <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-xs font-bold text-brand-text">
                               {String(category.sortOrder ?? 0).padStart(2, '0')}
                             </span>
-                            <span className="block truncate text-sm font-semibold text-white">{category.name}</span>
+                            <span className="block truncate text-sm font-semibold text-content">{category.name}</span>
                           </span>
-                          {category.shortDescription ? <span className="block truncate text-xs text-gray-500">{category.shortDescription}</span> : null}
-                          <span className="mt-1 block text-xs text-gray-500">{category.contactsCount} contactos · activo</span>
+                          {category.shortDescription ? <span className="block truncate text-xs text-content-muted">{category.shortDescription}</span> : null}
+                          <span className="mt-1 block text-xs text-content-muted">{category.contactsCount} contactos · activo</span>
                         </span>
                         {alreadyActive ? (
-                          <span className="rounded-full border border-brand-400/25 px-2 py-1 text-xs font-semibold text-brand-200">
+                          <span className="rounded-full border border-brand-400/25 px-2 py-1 text-xs font-semibold text-brand-text">
                             Ya activo
                           </span>
                         ) : null}
@@ -663,14 +663,14 @@ export default function AdminAccessPage() {
                     );
                   })
                 ) : (
-                  <p className="rounded-lg border border-line bg-ink-950/50 p-5 text-sm leading-6 text-gray-400">
+                  <p className="rounded-lg border border-border bg-canvas/50 p-5 text-sm leading-6 text-content-secondary">
                     No se encontraron categorías activas. Ejecuta el seed de carpetas oficiales.
                   </p>
                 )}
               </div>
               {!categories.length ? (
                 <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-6 text-amber-100">
-                  <p className="font-semibold text-white">No se encontraron categorías activas.</p>
+                  <p className="font-semibold text-content">No se encontraron categorías activas.</p>
                   <p className="mt-1 text-amber-100/80">Ejecuta el seed de carpetas oficiales para crear o reactivar las 24 carpetas de ContactHub.</p>
                   <button
                     type="button"
@@ -685,13 +685,13 @@ export default function AdminAccessPage() {
             </div>
 
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-gray-300">Nota interna</span>
+              <span className="text-sm font-semibold text-content-secondary">Nota interna</span>
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(sanitizeTextInput(event.target.value, 500))}
                 rows={3}
                 placeholder="Pago confirmado por WhatsApp/Yape."
-                className="focus-ring resize-none rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-sm text-white placeholder:text-gray-500"
+                className="focus-ring resize-none rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-sm text-content placeholder:text-content-muted"
               />
             </label>
 
@@ -714,16 +714,16 @@ export default function AdminAccessPage() {
 
           {activationResult ? (
             <div className="mt-6 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-5">
-              <p className="font-semibold text-white">Acceso activado para {activationResult.email ?? 'cliente'}.</p>
-              <p className="mt-2 text-sm text-brand-200">{activationResult.categoryNames.join(', ')}</p>
-              <div className="mt-4 rounded-lg border border-brand-400/25 bg-brand-400/10 p-4 text-sm font-semibold text-brand-100">
+              <p className="font-semibold text-content">Acceso activado para {activationResult.email ?? 'cliente'}.</p>
+              <p className="mt-2 text-sm text-brand-text">{activationResult.categoryNames.join(', ')}</p>
+              <div className="mt-4 rounded-lg border border-brand-400/25 bg-brand-400/10 p-4 text-sm font-semibold text-brand-text">
                 ✅ Permiso activado. Ya puedes explorar tu nuevo acceso.
               </div>
-              <div className="mt-4 rounded-lg border border-line bg-ink-950/70 p-4 text-sm leading-6 text-gray-300">{activationResult.message}</div>
+              <div className="mt-4 rounded-lg border border-border bg-canvas/70 p-4 text-sm leading-6 text-content-secondary">{activationResult.message}</div>
               <button
                 type="button"
                 onClick={copyActivationMessage}
-                className="focus-ring mt-4 inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:border-brand-400/35"
+                className="focus-ring mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content transition hover:border-brand-400/35"
               >
                 <Clipboard className="h-4 w-4" />
                 Copiar mensaje para WhatsApp
@@ -732,16 +732,16 @@ export default function AdminAccessPage() {
           ) : null}
         </section>
 
-        <section className="rounded-2xl border border-line bg-panel p-6">
+        <section className="rounded-2xl border border-border bg-surface p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Solicitudes pendientes</h2>
-              <p className="mt-2 text-sm text-gray-400">Solicitudes creadas con estado pending en Supabase.</p>
+              <h2 className="font-display text-2xl font-bold text-content">Solicitudes pendientes</h2>
+              <p className="mt-2 text-sm text-content-secondary">Solicitudes creadas con estado pending en Supabase.</p>
             </div>
             <button
               type="button"
               onClick={loadAccessData}
-              className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:border-brand-400/35"
+              className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content transition hover:border-brand-400/35"
             >
               <RefreshCw className="h-4 w-4" />
               Actualizar
@@ -751,15 +751,15 @@ export default function AdminAccessPage() {
           <div className="mt-5 grid gap-3">
             {pendingPurchases.length ? (
               pendingPurchases.map((purchase) => (
-                <article key={purchase.id} className="rounded-lg border border-line bg-ink-950/50 p-4">
+                <article key={purchase.id} className="rounded-lg border border-border bg-canvas/50 p-4">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <p className="font-semibold text-white">{purchase.userEmail ?? 'Usuario sin email'}</p>
-                      <p className="mt-1 text-xs text-gray-500">{formatDate(purchase.createdAt)}</p>
-                      <p className="mt-3 text-sm leading-6 text-gray-400">
+                      <p className="font-semibold text-content">{purchase.userEmail ?? 'Usuario sin email'}</p>
+                      <p className="mt-1 text-xs text-content-muted">{formatDate(purchase.createdAt)}</p>
+                      <p className="mt-3 text-sm leading-6 text-content-secondary">
                         Plan: {purchase.planName ?? 'Sin plan'} · Carpeta: {purchase.categoryName ?? 'Por elegir'}
                       </p>
-                      {purchase.notes ? <p className="mt-2 text-xs text-gray-500">{purchase.notes}</p> : null}
+                      {purchase.notes ? <p className="mt-2 text-xs text-content-muted">{purchase.notes}</p> : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -773,7 +773,7 @@ export default function AdminAccessPage() {
                       <button
                         type="button"
                         onClick={() => void handleCancelPending(purchase.id)}
-                        className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white transition hover:border-amber-300/35"
+                        className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content transition hover:border-amber-300/35"
                       >
                         <XCircle className="h-4 w-4" />
                         Cancelar
@@ -783,7 +783,7 @@ export default function AdminAccessPage() {
                 </article>
               ))
             ) : (
-              <p className="rounded-lg border border-line bg-ink-950/50 p-5 text-sm leading-6 text-gray-400">
+              <p className="rounded-lg border border-border bg-canvas/50 p-5 text-sm leading-6 text-content-secondary">
                 No hay solicitudes pendientes en este momento.
               </p>
             )}
@@ -792,18 +792,18 @@ export default function AdminAccessPage() {
       </div>
       {isTotalConfirmOpen && selectedUser ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-brand-400/30 bg-[#0f201f] p-6 shadow-2xl shadow-brand-400/10">
-            <h3 className="text-xl font-bold text-white">Confirmar acceso total</h3>
-            <p className="mt-3 text-sm leading-6 text-gray-300">
+          <div className="w-full max-w-md rounded-2xl border border-brand-400/30 bg-surface p-6 shadow-2xl shadow-brand-400/10">
+            <h3 className="text-xl font-bold text-content">Confirmar acceso total</h3>
+            <p className="mt-3 text-sm leading-6 text-content-secondary">
               Se seleccionarán {availableCategoryIds.length} carpetas pendientes para{' '}
-              <strong className="text-brand-200">{selectedUser.email ?? 'este cliente'}</strong>.
+              <strong className="text-brand-text">{selectedUser.email ?? 'este cliente'}</strong>.
               El acceso se guardará para su ID de usuario, no para la cuenta admin.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setIsTotalConfirmOpen(false)}
-                className="focus-ring rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white"
+                className="focus-ring rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content"
               >
                 Cancelar
               </button>

@@ -39,7 +39,7 @@ function rewardsClient() {
 }
 
 function statusBadgeClass(status: MissionRequestRow['status']) {
-  if (status === 'approved') return 'border-brand-400/25 bg-brand-400/10 text-brand-100';
+  if (status === 'approved') return 'border-brand-400/25 bg-brand-400/10 text-brand-text';
   if (status === 'rejected') return 'border-red-400/25 bg-red-400/10 text-red-100';
   return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
 }
@@ -117,7 +117,6 @@ export default function AdminRecompensasPage() {
       if (requestsRes.error) console.error('AdminRecompensas mission requests:', requestsRes.error.message);
 
       setProfiles(profilesRes.data ?? []);
-      console.log('Categories loaded:', categoriesRes.length, categoriesRes[0]);
       setCategories(categoriesRes);
       setAccesses(accessesRes.data ?? []);
       setRewards(rewardsRes.data ?? []);
@@ -250,27 +249,27 @@ export default function AdminRecompensasPage() {
         <section className="dopamine-card rounded-2xl p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="font-display text-2xl font-bold text-white">Dar regalo de carpetas</h2>
-              <p className="mt-2 text-sm text-gray-400">Selecciona un usuario y activa carpetas como regalo o recompensa manual.</p>
+              <h2 className="font-display text-2xl font-bold text-content">Dar regalo de carpetas</h2>
+              <p className="mt-2 text-sm text-content-secondary">Selecciona un usuario y activa carpetas como regalo o recompensa manual.</p>
             </div>
-            <button type="button" onClick={loadData} className="focus-ring rounded-full border border-line p-2 text-white">
+            <button type="button" onClick={loadData} className="focus-ring rounded-full border border-border p-2 text-content">
               <RefreshCw className="h-4 w-4" />
             </button>
           </div>
 
           <label className="relative mt-5 block">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
             <input
               value={query}
               onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
               placeholder="Buscar usuario por email o nombre"
-              className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
+              className="focus-ring h-11 w-full rounded-full border border-border bg-canvas/70 pl-11 pr-4 text-sm text-content"
             />
           </label>
 
-          <div className="mt-5 max-h-[320px] overflow-auto rounded-xl border border-line">
+          <div className="mt-5 max-h-[320px] overflow-auto rounded-xl border border-border">
             {filteredProfiles.map((profile) => (
-              <label key={profile.id} className="flex cursor-pointer items-center gap-3 border-b border-line px-4 py-3 last:border-b-0">
+              <label key={profile.id} className="flex cursor-pointer items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
                 <input
                   type="checkbox"
                   checked={selectedUserId === profile.id}
@@ -280,8 +279,8 @@ export default function AdminRecompensasPage() {
                   }}
                 />
                 <span>
-                  <span className="block font-semibold text-white">{profile.email ?? 'Sin email'}</span>
-                  <span className="text-xs text-gray-500">{profile.full_name ?? 'Sin nombre'}</span>
+                  <span className="block font-semibold text-content">{profile.email ?? 'Sin email'}</span>
+                  <span className="text-xs text-content-muted">{profile.full_name ?? 'Sin nombre'}</span>
                 </span>
               </label>
             ))}
@@ -291,28 +290,28 @@ export default function AdminRecompensasPage() {
         <section className="dopamine-card rounded-2xl p-5">
           {selectedUser ? (
             <>
-              <p className="text-sm font-semibold text-brand-400">Usuario seleccionado</p>
-              <h3 className="mt-2 font-display text-2xl font-bold text-white">{selectedUser.email ?? selectedUser.id}</h3>
+              <p className="text-sm font-semibold text-brand-text">Usuario seleccionado</p>
+              <h3 className="mt-2 font-display text-2xl font-bold text-content">{selectedUser.email ?? selectedUser.id}</h3>
               <div className="mt-4">
-                <p className="text-xs font-bold uppercase text-gray-500">Carpetas actuales</p>
+                <p className="text-xs font-bold uppercase text-content-muted">Carpetas actuales</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {currentAccesses.map((access) => (
-                    <span key={access.category_id} className="rounded-full bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-300">
+                    <span key={access.category_id} className="rounded-full bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-text">
                       {categoryById.get(access.category_id)?.displayLabel ?? access.category_id}
                     </span>
                   ))}
-                  {!currentAccesses.length ? <span className="text-sm text-gray-500">Sin carpetas activas.</span> : null}
+                  {!currentAccesses.length ? <span className="text-sm text-content-muted">Sin carpetas activas.</span> : null}
                 </div>
               </div>
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-semibold text-gray-300">{selectedCategoryIds.length} carpetas seleccionadas</p>
+                <p className="text-sm font-semibold text-content-secondary">{selectedCategoryIds.length} carpetas seleccionadas</p>
                 <button
                   type="button"
                   onClick={toggleAllCategories}
                   disabled={!categories.length}
                   className={`focus-ring rounded-lg px-4 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                    allSelected ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-brand-400 text-ink-950 hover:bg-white'
+                    allSelected ? 'bg-muted text-content hover:bg-muted' : 'bg-brand-400 text-ink-950 hover:bg-white'
                   }`}
                 >
                   {allSelected ? '☐ Deseleccionar todas' : '☑ Seleccionar todas'}
@@ -336,7 +335,7 @@ export default function AdminRecompensasPage() {
                         }
                       }}
                       className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition hover:border-brand-400/45 ${
-                        checked ? 'border-brand-400/70 bg-brand-400/15 shadow-[0_0_24px_rgba(34,197,94,0.12)]' : 'border-line bg-white/5 hover:border-brand-400/35'
+                        checked ? 'border-brand-400/70 bg-brand-400/15 shadow-[0_0_24px_rgba(34,197,94,0.12)]' : 'border-border bg-muted hover:border-brand-400/35'
                       }`}
                     >
                       <input type="checkbox" checked={checked} readOnly className="pointer-events-none mt-1" />
@@ -345,13 +344,13 @@ export default function AdminRecompensasPage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
-                          <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-xs font-bold text-brand-200">
+                          <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-xs font-bold text-brand-text">
                             {String(category.displayOrder).padStart(2, '0')}
                           </span>
-                          <span className="truncate font-semibold text-white">{category.displayTitle}</span>
+                          <span className="truncate font-semibold text-content">{category.displayTitle}</span>
                         </span>
-                        <span className="mt-1 block text-xs text-gray-400">{category.displaySubtitle}</span>
-                        {alreadyActive ? <span className="mt-1 inline-flex text-xs font-semibold text-brand-400">Ya tiene acceso</span> : null}
+                        <span className="mt-1 block text-xs text-content-secondary">{category.displaySubtitle}</span>
+                        {alreadyActive ? <span className="mt-1 inline-flex text-xs font-semibold text-brand-text">Ya tiene acceso</span> : null}
                       </span>
                     </div>
                   );
@@ -359,8 +358,8 @@ export default function AdminRecompensasPage() {
               </div>
 
               <label className="mt-5 grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Motivo del regalo</span>
-                <textarea value={note} onChange={(event) => setNote(sanitizeTextInput(event.target.value, 500))} rows={3} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" />
+                <span className="text-sm font-semibold text-content-secondary">Motivo del regalo</span>
+                <textarea value={note} onChange={(event) => setNote(sanitizeTextInput(event.target.value, 500))} rows={3} className="focus-ring rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-content" />
               </label>
 
               <button
@@ -374,7 +373,7 @@ export default function AdminRecompensasPage() {
               </button>
             </>
           ) : (
-            <div className="grid min-h-[360px] place-items-center text-center text-gray-400">Selecciona un usuario para preparar el regalo.</div>
+            <div className="grid min-h-[360px] place-items-center text-center text-content-secondary">Selecciona un usuario para preparar el regalo.</div>
           )}
         </section>
       </div>
@@ -382,18 +381,18 @@ export default function AdminRecompensasPage() {
       <section className="dopamine-card mt-6 rounded-2xl p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white">Misiones en revisión</h2>
-            <p className="mt-2 text-sm text-gray-400">Solicitudes enviadas por usuarios que quieren ganar contactos extra apoyando ContactHub.</p>
+            <h2 className="font-display text-2xl font-bold text-content">Misiones en revisión</h2>
+            <p className="mt-2 text-sm text-content-secondary">Solicitudes enviadas por usuarios que quieren ganar contactos extra apoyando ContactHub.</p>
           </div>
-          <button type="button" onClick={loadData} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white">
+          <button type="button" onClick={loadData} className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content">
             <RefreshCw className="h-4 w-4" />
             Actualizar
           </button>
         </div>
 
-        <div className="mt-5 overflow-x-auto rounded-xl border border-line">
+        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+            <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
               <tr>
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Estado</th>
@@ -404,20 +403,20 @@ export default function AdminRecompensasPage() {
             </thead>
             <tbody>
               {missionRequests.map((request) => (
-                <tr key={request.id} className="border-t border-line align-top">
-                  <td className="px-4 py-3 text-white">{profileById.get(request.user_id)?.email ?? request.user_id}</td>
+                <tr key={request.id} className="border-t border-border align-top">
+                  <td className="px-4 py-3 text-content">{profileById.get(request.user_id)?.email ?? request.user_id}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusBadgeClass(request.status)}`}>{request.status}</span>
                   </td>
-                  <td className="px-4 py-3 text-gray-400">{formatDate(request.created_at)}</td>
-                  <td className="px-4 py-3 text-gray-300">
+                  <td className="px-4 py-3 text-content-secondary">{formatDate(request.created_at)}</td>
+                  <td className="px-4 py-3 text-content-secondary">
                     <p>{request.admin_note ?? 'Solicitud sin nota.'}</p>
                     {request.screenshot_url ? (
-                      <a href={request.screenshot_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-bold text-brand-400 hover:text-white">
+                      <a href={request.screenshot_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-bold text-brand-text hover:text-content">
                         Ver evidencia
                       </a>
                     ) : (
-                      <span className="mt-2 inline-flex text-xs text-gray-500">Evidencia por chat o pendiente.</span>
+                      <span className="mt-2 inline-flex text-xs text-content-muted">Evidencia por chat o pendiente.</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -426,7 +425,7 @@ export default function AdminRecompensasPage() {
                         type="button"
                         disabled={updatingRequestId === request.id}
                         onClick={() => void updateMissionStatus(request, 'approved')}
-                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-2 text-xs font-bold text-brand-100"
+                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-2 text-xs font-bold text-brand-text"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Aprobar
@@ -443,7 +442,7 @@ export default function AdminRecompensasPage() {
                       <button
                         type="button"
                         onClick={() => prepareGiftFromMission(request)}
-                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white"
+                        className="focus-ring inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-2 text-xs font-bold text-content"
                       >
                         <Gift className="h-3.5 w-3.5" />
                         Otorgar recompensa
@@ -454,7 +453,7 @@ export default function AdminRecompensasPage() {
               ))}
               {!missionRequests.length ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-gray-400">Todavía no hay misiones pendientes.</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-content-secondary">Todavía no hay misiones pendientes.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -463,10 +462,10 @@ export default function AdminRecompensasPage() {
       </section>
 
       <section className="dopamine-card mt-6 rounded-2xl p-5">
-        <h2 className="font-display text-2xl font-bold text-white">Historial de regalos</h2>
-        <div className="mt-5 overflow-x-auto rounded-xl border border-line">
+        <h2 className="font-display text-2xl font-bold text-content">Historial de regalos</h2>
+        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+            <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
               <tr>
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Carpetas regaladas</th>
@@ -478,17 +477,17 @@ export default function AdminRecompensasPage() {
               {rewards.map((reward) => {
                 const [reason = '', folders = ''] = (reward.reason ?? '').split('\nCarpetas: ');
                 return (
-                  <tr key={reward.id} className="border-t border-line">
-                    <td className="px-4 py-3 text-white">{profileById.get(reward.user_id)?.email ?? reward.user_id}</td>
-                    <td className="px-4 py-3 text-gray-300">{folders || `${reward.quantity} carpeta(s)`}</td>
-                    <td className="px-4 py-3 text-gray-400">{formatDate(reward.created_at)}</td>
-                    <td className="px-4 py-3 text-gray-300">{reason || 'Regalo de carpetas'}</td>
+                  <tr key={reward.id} className="border-t border-border">
+                    <td className="px-4 py-3 text-content">{profileById.get(reward.user_id)?.email ?? reward.user_id}</td>
+                    <td className="px-4 py-3 text-content-secondary">{folders || `${reward.quantity} carpeta(s)`}</td>
+                    <td className="px-4 py-3 text-content-secondary">{formatDate(reward.created_at)}</td>
+                    <td className="px-4 py-3 text-content-secondary">{reason || 'Regalo de carpetas'}</td>
                   </tr>
                 );
               })}
               {!rewards.length ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-gray-400">Todavía no hay regalos registrados.</td>
+                  <td colSpan={4} className="px-4 py-10 text-center text-content-secondary">Todavía no hay regalos registrados.</td>
                 </tr>
               ) : null}
             </tbody>

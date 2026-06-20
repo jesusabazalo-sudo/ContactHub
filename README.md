@@ -1,27 +1,38 @@
 # ContactHub
 
-Directorio digital de contactos comerciales organizados en 25 categor�as.
+Directorio digital de contactos comerciales organizados por categorías.
 
-## Instalaci�n
+## Instalación
+
+```bash
 npm install
 cp .env.example .env.local
 # Edita .env.local con tus keys de Supabase
 npm run dev
+```
 
-## Producci�n
+## Producción
+
+```bash
 npm run build
+```
 
 ## Activar admin
+
 En Supabase SQL Editor:
+
+```sql
 select public.promote_user_to_admin_by_email('tu@email.com');
+```
 
 ## Migraciones
-Ejecutar en orden en Supabase SQL Editor:
-supabase/migrations/001_contacthub_security_base.sql
-supabase/migrations/002_customer_crm.sql
-supabase/migrations/003_category_sort_order.sql
-supabase/migrations/004_sync_contacts_count.sql
-supabase/migrations/005_chat_support.sql
+
+Todas las migraciones viven en una única carpeta: [`supabase/migrations/`](supabase/migrations/).
+Ejecútalas **en orden numérico** en el SQL Editor de Supabase (o con `supabase db push`).
+El orden completo y las notas (incluidos los dos pares de archivos que comparten
+número de prefijo) están documentados en
+[`supabase/migrations/README.md`](supabase/migrations/README.md).
 
 ## Stack
-React + TypeScript + Vite + Tailwind + Supabase
+
+React + TypeScript + Vite + Tailwind CSS + Supabase

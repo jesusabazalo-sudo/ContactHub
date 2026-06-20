@@ -62,9 +62,8 @@ export default function CategoryDetailPage() {
           if (trialError) console.error('No se pudo leer trial_claims:', trialError);
           else trialContactIds = trial?.contact_ids ?? [];
 
-          const rewardClient = client as unknown as { from: (table: string) => any };
           const { data: rewards, error: rewardsError } = await queryWithRetry<Array<{ bonus_contact_ids: string[] | null }>>(() =>
-            withTimeout(Promise.resolve(rewardClient.from('reward_requests').select('bonus_contact_ids').eq('user_id', user.id).eq('status', 'approved'))),
+            withTimeout(Promise.resolve(client.from('reward_requests').select('bonus_contact_ids').eq('user_id', user.id).eq('status', 'approved'))),
           );
 
           if (rewardsError) console.warn('No se pudieron leer recompensas aprobadas:', rewardsError);
@@ -97,13 +96,16 @@ export default function CategoryDetailPage() {
 
         if (!isMounted) return;
 
-        console.log('CONTACTHUB_CATEGORY_DEBUG', {
-          slug,
-          categoryId: nextDetail.category.id,
-          categoryName: nextDetail.category.name,
-          contactsCount: nextDetail.contacts.length,
-          firstContacts: nextDetail.contacts.slice(0, 5),
-        });
+        // Diagnóstico solo en desarrollo. NUNCA registrar contactos/teléfonos en
+        // producción: la consola del navegador es visible para cualquiera.
+        if (import.meta.env.DEV) {
+          console.debug('CONTACTHUB_CATEGORY_DEBUG', {
+            slug,
+            categoryId: nextDetail.category.id,
+            categoryName: nextDetail.category.name,
+            contactsCount: nextDetail.contacts.length,
+          });
+        }
 
         setDetail({ ...nextDetail, trialContactIds, rewardContactIds, phonesByContactId });
       } catch (loadError) {
@@ -128,11 +130,11 @@ export default function CategoryDetailPage() {
 
   if (isLoading || (isAdminLoading && !isAdmin) || isLoadingDetail) {
     return (
-      <section className="section-pad bg-ink-950">
+      <section className="section-pad bg-canvas">
         <div className="container-shell">
-          <div className="rounded-2xl border border-line bg-panel p-8 text-center">
-            <h1 className="font-display text-3xl font-bold text-white">Cargando carpeta</h1>
-            <p className="mt-3 text-sm leading-6 text-gray-400">Estamos leyendo los contactos reales desde Supabase.</p>
+          <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+            <h1 className="font-display text-3xl font-bold text-content">Cargando carpeta</h1>
+            <p className="mt-3 text-sm leading-6 text-content-secondary">Estamos leyendo los contactos reales desde Supabase.</p>
           </div>
         </div>
       </section>
@@ -141,11 +143,11 @@ export default function CategoryDetailPage() {
 
   if (!detail && !error) {
     return (
-      <section className="section-pad bg-ink-950">
+      <section className="section-pad bg-canvas">
         <div className="container-shell">
-          <div className="rounded-2xl border border-line bg-panel p-8 text-center">
-            <h1 className="font-display text-3xl font-bold text-white">Esta carpeta no existe o cambió de enlace.</h1>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-400">Vuelve al catálogo para elegir una carpeta activa.</p>
+          <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+            <h1 className="font-display text-3xl font-bold text-content">Esta carpeta no existe o cambió de enlace.</h1>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-content-secondary">Vuelve al catálogo para elegir una carpeta activa.</p>
             <Link to="/catalogo" className="mt-6 inline-flex rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950">
               Volver al catálogo
             </Link>
@@ -157,10 +159,10 @@ export default function CategoryDetailPage() {
 
   if (error) {
     return (
-      <section className="section-pad bg-ink-950">
+      <section className="section-pad bg-canvas">
         <div className="container-shell">
           <div className="rounded-2xl border border-amber-300/25 bg-amber-300/10 p-8 text-center">
-            <h1 className="font-display text-3xl font-bold text-white">No se pudo cargar esta carpeta.</h1>
+            <h1 className="font-display text-3xl font-bold text-content">No se pudo cargar esta carpeta.</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-amber-100">{error}</p>
             <button
               type="button"
@@ -186,47 +188,47 @@ export default function CategoryDetailPage() {
   const accessLevel: 0 | 1 | 2 = canViewFullCategory ? 2 : user ? 1 : 0;
 
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad bg-canvas">
       <div className="container-shell">
-        <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-400 transition hover:text-white">
+        <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm font-semibold text-content-secondary transition hover:text-content">
           <ArrowLeft className="h-4 w-4" />
           Volver al catálogo
         </Link>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="rounded-2xl border border-line bg-panel p-6">
+          <div className="rounded-2xl border border-border bg-surface p-6">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-400/10 text-2xl text-brand-400">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-400/10 text-2xl text-brand-text">
                 <Icon name={category.icon} className="h-7 w-7" />
               </div>
               {category.isTop ? <Badge tone="gold">Top</Badge> : null}
               {category.isNew ? <Badge>Nuevo</Badge> : null}
             </div>
-            <h1 className="mt-5 font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
+            <h1 className="mt-5 font-display text-3xl font-bold leading-tight text-content sm:text-5xl">
               {category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : ''}
               {category.icon} {category.name}
             </h1>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-gray-300">{category.description}</p>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-content-secondary">{category.description}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               {category.tags.map((tag) => (
-                <span key={tag} className="rounded-full border border-line bg-white/5 px-3 py-1 text-xs font-semibold text-gray-300">
+                <span key={tag} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-content-secondary">
                   {tag}
                 </span>
               ))}
             </div>
           </div>
 
-          <aside className="rounded-2xl border border-line bg-panel p-6">
-            <p className="text-sm font-semibold text-brand-400">{isAdmin ? 'Vista admin' : hasAccess ? 'Acceso activo' : 'Carpeta bloqueada'}</p>
-            <p className="mt-3 text-3xl font-bold text-white">
+          <aside className="rounded-2xl border border-border bg-surface p-6">
+            <p className="text-sm font-semibold text-brand-text">{isAdmin ? 'Vista admin' : hasAccess ? 'Acceso activo' : 'Carpeta bloqueada'}</p>
+            <p className="mt-3 text-3xl font-bold text-content">
               {contacts.length} {contacts.length === 1 ? 'contacto' : 'contactos'}
             </p>
-            <p className="mt-3 text-sm leading-6 text-gray-400">
+            <p className="mt-3 text-sm leading-6 text-content-secondary">
               {canViewFullCategory
                 ? 'Puedes ver los teléfonos completos de esta carpeta.'
                 : 'Puedes explorar la carpeta. Los números completos se muestran solo al desbloquear.'}
             </p>
-            {!canViewFullCategory && trialCount ? <p className="mt-3 text-xs font-semibold text-brand-300">{trialCount} contacto(s) visibles por prueba gratis.</p> : null}
+            {!canViewFullCategory && trialCount ? <p className="mt-3 text-xs font-semibold text-brand-text">{trialCount} contacto(s) visibles por prueba gratis.</p> : null}
             {!canViewFullCategory && rewardCount ? <p className="mt-2 text-xs font-semibold text-amber-200">{rewardCount} contacto(s) visibles por recompensa.</p> : null}
             {!canViewFullCategory ? (
               <div className="mt-6 grid gap-3">
@@ -238,7 +240,7 @@ export default function CategoryDetailPage() {
                   <MessageCircle className="h-4 w-4" />
                   Desbloquear carpeta
                 </button>
-                <Link to="/?trial=1" className="focus-ring inline-flex w-full items-center justify-center rounded-full border border-line bg-white/5 px-4 py-3 text-sm font-bold text-white transition hover:border-brand-400/35">
+                <Link to="/?trial=1" className="focus-ring inline-flex w-full items-center justify-center rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/35">
                   Probar 3 contactos gratis
                 </Link>
               </div>
@@ -248,8 +250,8 @@ export default function CategoryDetailPage() {
 
         <div className="mt-10">
           <div className="mb-5">
-            <h2 className="font-display text-2xl font-bold text-white">Contactos disponibles</h2>
-            <p className="mt-2 text-sm text-gray-400">
+            <h2 className="font-display text-2xl font-bold text-content">Contactos disponibles</h2>
+            <p className="mt-2 text-sm text-content-secondary">
               {canViewFullCategory ? 'Puedes ver los teléfonos completos de esta carpeta.' : 'Puedes explorar la carpeta. Los números completos se muestran solo al desbloquear.'}
             </p>
           </div>
@@ -260,14 +262,18 @@ export default function CategoryDetailPage() {
                 const unlockedPhone = phonesByContactId.get(contact.id);
                 const isTrialUnlocked = trialContactIds.includes(contact.id) && Boolean(unlockedPhone);
                 const isRewardUnlocked = rewardContactIds.includes(contact.id) && Boolean(unlockedPhone);
-                const canSeeFullPhone = accessLevel === 2;
+                // Un desbloqueo por prueba/recompensa eleva ESTE contacto a acceso
+                // completo, aunque la carpeta siga bloqueada para el resto.
+                const hasPerContactUnlock = isTrialUnlocked || isRewardUnlocked;
+                const effectiveAccessLevel: 0 | 1 | 2 = hasPerContactUnlock ? 2 : accessLevel;
+                const canSeeFullPhone = effectiveAccessLevel === 2;
                 return (
                   <ContactCard
                     key={contact.id}
                     contact={{ ...contact, phone: unlockedPhone ?? contact.phone }}
                     canSeeFullPhone={canSeeFullPhone}
-                    canContactDirect={accessLevel === 2}
-                    accessLevel={accessLevel}
+                    canContactDirect={effectiveAccessLevel === 2}
+                    accessLevel={effectiveAccessLevel}
                     isAdmin={isAdmin}
                     isTrialUnlocked={isTrialUnlocked}
                     isRewardUnlocked={isRewardUnlocked}
@@ -277,9 +283,9 @@ export default function CategoryDetailPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-line bg-panel p-8 text-center">
-              <h3 className="font-display text-2xl font-bold text-white">Esta carpeta todavía no tiene contactos cargados.</h3>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-400">Cuando agregues contactos activos desde el panel admin, aparecerán aquí automáticamente.</p>
+            <div className="rounded-2xl border border-border bg-surface p-8 text-center">
+              <h3 className="font-display text-2xl font-bold text-content">Esta carpeta todavía no tiene contactos cargados.</h3>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-content-secondary">Cuando agregues contactos activos desde el panel admin, aparecerán aquí automáticamente.</p>
             </div>
           )}
         </div>

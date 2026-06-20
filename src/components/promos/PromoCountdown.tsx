@@ -44,11 +44,11 @@ export default function PromoCountdown() {
   }, []);
 
   return (
-    <div className="rounded-2xl border border-brand-400/20 bg-ink-950/60 p-4">
-      <p className="text-xs font-black uppercase tracking-wide text-brand-400">{state.active ? 'Promo activa hoy' : 'Próxima promo en:'}</p>
-      <p className="mt-1 font-display text-xl font-bold text-white">{state.title}</p>
+    <div className="rounded-2xl border border-brand-400/20 bg-canvas/60 p-4">
+      <p className="text-xs font-black uppercase tracking-wide text-brand-text">{state.active ? 'Promo activa hoy' : 'Próxima promo en:'}</p>
+      <p className="mt-1 font-display text-xl font-bold text-content">{state.title}</p>
       <p className="mt-2 font-mono text-lg font-bold text-amber-200">{formatRemaining(state.target.getTime() - now.getTime())}</p>
-      <p className="mt-2 text-xs leading-5 text-gray-400">
+      <p className="mt-2 text-xs leading-5 text-content-secondary">
         Las promos se activan lunes, miércoles y viernes. Si hoy aparece activa, aprovéchala antes de que el contador llegue a cero.
       </p>
     </div>
