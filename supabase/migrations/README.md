@@ -42,6 +42,7 @@ la CLI (`supabase db push`). Todos están escritos para ser idempotentes
 023_my_contacts_access_read_rls.sql
 024_service_submissions.sql
 025_contacts_review_statuses.sql
+026_contacts_importer_columns.sql   # consolida TODAS las columnas que usa el importador
 ```
 
 ## Números duplicados (preexistentes)
