@@ -5,17 +5,20 @@ import { Toaster } from 'sonner';
 import App from './App';
 import ErrorBoundary from './components/system/ErrorBoundary';
 import { AuthProvider } from './features/auth/AuthProvider';
+import { ThemeProvider } from './features/theme/ThemeProvider';
 import './styles/index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-        <Toaster richColors position="top-right" />
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+          <Toaster richColors position="top-right" />
+        </BrowserRouter>
+      </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 );

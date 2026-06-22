@@ -13,10 +13,24 @@
       content="Explora categorías, entiende qué existe dentro y desbloquea contactos útiles según lo que quieres lograr."
     />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#071111" />
+    <meta name="theme-color" content="#08110E" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
     <title>ContactHub - Contactos y oportunidades para avanzar</title>
+    <script>
+      // Aplica el tema antes del primer pintado para evitar parpadeo (FOUC).
+      (function () {
+        try {
+          var stored = localStorage.getItem('contacthub_theme');
+          var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = stored === 'light' || stored === 'dark' ? stored : prefersLight ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

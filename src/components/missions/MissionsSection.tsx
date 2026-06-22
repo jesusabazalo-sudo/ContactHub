@@ -77,9 +77,9 @@ function statusLabel(status?: MissionStatus) {
 
 function statusClass(status?: MissionStatus) {
   if (status === 'pending') return 'border-amber-300/25 bg-amber-300/10 text-amber-100';
-  if (status === 'approved') return 'border-brand-400/25 bg-brand-400/10 text-brand-100';
+  if (status === 'approved') return 'border-brand-400/25 bg-brand-400/10 text-brand-text';
   if (status === 'rejected') return 'border-red-400/25 bg-red-400/10 text-red-100';
-  return 'border-line bg-white/5 text-gray-300';
+  return 'border-border bg-muted text-content-secondary';
 }
 
 export default function MissionsSection({ compact = false }: { compact?: boolean }) {
@@ -162,18 +162,18 @@ export default function MissionsSection({ compact = false }: { compact?: boolean
   }
 
   return (
-    <section className={compact ? 'mt-8' : 'bg-ink-950 py-14'}>
+    <section className={compact ? 'mt-8' : 'bg-canvas py-14'}>
       <div className={compact ? '' : 'container-shell'}>
         <div className="professional-card p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-400">Misiones</p>
-              <h2 className="mt-3 font-display text-3xl font-bold text-white">Gana contactos extra apoyando ContactHub</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-text">Misiones</p>
+              <h2 className="mt-3 font-display text-3xl font-bold text-content">Gana contactos extra apoyando ContactHub</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-content-secondary">
                 Si ahora no puedes pagar, igual puedes empezar. Completa una acción sencilla, envía evidencia por chat y el admin revisará tu recompensa.
               </p>
             </div>
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-200">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-text">
               <Gift className="h-4 w-4" />
               Revisión manual
             </span>
@@ -186,16 +186,16 @@ export default function MissionsSection({ compact = false }: { compact?: boolean
               const isPending = savingMissionId === mission.id;
 
               return (
-                <article key={mission.id} className="rounded-lg border border-line bg-ink-950/55 p-5 transition hover:border-brand-400/30">
+                <article key={mission.id} className="rounded-lg border border-border bg-canvas/55 p-5 transition hover:border-brand-400/30">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-400/10 text-brand-400">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-400/10 text-brand-text">
                       <Icon className="h-5 w-5" />
                     </div>
                     <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${statusClass(status)}`}>{statusLabel(status)}</span>
                   </div>
-                  <h3 className="mt-5 text-lg font-bold text-white">{mission.title}</h3>
-                  <p className="mt-3 min-h-16 text-sm leading-6 text-gray-400">{mission.description}</p>
-                  <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-brand-300">
+                  <h3 className="mt-5 text-lg font-bold text-content">{mission.title}</h3>
+                  <p className="mt-3 min-h-16 text-sm leading-6 text-content-secondary">{mission.description}</p>
+                  <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-brand-text">
                     <CheckCircle2 className="h-4 w-4" />
                     {mission.reward}
                   </p>

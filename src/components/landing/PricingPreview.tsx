@@ -13,7 +13,7 @@ export default function PricingPreview() {
             title="Opciones transparentes para avanzar a tu ritmo"
             description="Compara con calma, pregunta por chat y activa solo las carpetas que realmente encajan con tu objetivo."
           />
-          <Link to="/precios" className="text-sm font-bold text-brand-400 transition hover:text-white">
+          <Link to="/precios" className="text-sm font-bold text-brand-text transition hover:text-content">
             Comparar todos los planes
           </Link>
         </div>

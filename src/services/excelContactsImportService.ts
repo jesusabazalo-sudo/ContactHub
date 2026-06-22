@@ -191,21 +191,34 @@ export async function importContactsWorkbook(
     throw new Error(`Faltan categorías reales de Supabase para: ${missingOrders.join(', ')}.`);
   }
 
-  const existingKeys = new Set<string>();
+  // --- Detección de duplicados contra la BD y dentro del archivo ---
+  // Teléfono: dedup GLOBAL. Si el número ya existe en CUALQUIER carpeta activa,
+  // no se reinserta (evita duplicados entre carpetas). Para contactos SIN
+  // teléfono se usa carpeta + nombre contra los que ya están en revisión.
+  const existingPhones = new Set<string>();
+  {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('phone')
+      .neq('status', 'inactive')
+      .limit(100000);
+    if (error) throw new Error(`No se pudieron revisar duplicados por teléfono: ${error.message}`);
+    for (const row of data ?? []) {
+      const digits = String(row.phone ?? '').replace(/\D/g, '');
+      if (digits) existingPhones.add(digits);
+    }
+  }
+
   const existingReviewKeys = new Set<string>();
   for (const category of categoryByOrder.values()) {
     const { data, error } = await supabase
       .from('contacts')
-      .select('phone,status,name')
+      .select('name')
       .eq('category_id', category.id)
-      .neq('status', 'inactive');
+      .eq('status', 'review');
     if (error) throw new Error(`No se pudieron revisar duplicados de carpeta ${category.displayOrder}: ${error.message}`);
     for (const row of data ?? []) {
-      const digits = String(row.phone ?? '').replace(/\D/g, '');
-      if (digits) existingKeys.add(`${category.id}:${digits}`);
-      if (row.status === 'review') {
-        existingReviewKeys.add(`${category.id}:${sanitizeText(String(row.name ?? ''), 160).toLowerCase()}`);
-      }
+      existingReviewKeys.add(`${category.id}:${sanitizeText(String(row.name ?? ''), 160).toLowerCase()}`);
     }
   }
 
@@ -221,12 +234,12 @@ export async function importContactsWorkbook(
       existingReviewKeys.add(reviewKey);
       return true;
     }
-    const key = `${category?.id}:${contact.phone.replace(/\D/g, '')}`;
-    if (existingKeys.has(key)) {
+    const digits = contact.phone.replace(/\D/g, '');
+    if (existingPhones.has(digits)) {
       existingDuplicates += 1;
       return false;
     }
-    existingKeys.add(key);
+    existingPhones.add(digits); // también evita duplicados dentro del archivo (cualquier carpeta)
     return true;
   });
 

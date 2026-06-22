@@ -172,33 +172,33 @@ export default function PublicReviews() {
   }
 
   return (
-    <section className="bg-ink-950 py-14">
+    <section className="bg-canvas py-14">
       <div className="container-shell">
         <div className="mb-6 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5">
           <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-400">Confianza</p>
-              <h2 className="mt-2 font-display text-3xl font-bold text-white">Lo que la gente busca en ContactHub</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-text">Confianza</p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-content">Lo que la gente busca en ContactHub</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-content-secondary">
                 {reviews.length
                   ? 'Comentarios reales aprobados por el admin.'
                   : 'Primeras experiencias de usuarios y casos de uso frecuentes. Los comentarios reales aparecerán aquí cuando sean aprobados.'}
               </p>
             </div>
-            <div className="rounded-lg border border-line bg-ink-950/70 p-4 text-center">
+            <div className="rounded-lg border border-border bg-canvas/70 p-4 text-center">
               <Stars value={reviews.length ? Math.round(average) : 5} />
-              <p className="mt-2 font-display text-2xl font-bold text-white">{reviews.length ? `${average.toFixed(1)}/5` : 'Beta'}</p>
-              <p className="text-xs text-gray-500">{reviews.length ? `${reviews.length} comentario(s)` : 'Sección en construcción'}</p>
+              <p className="mt-2 font-display text-2xl font-bold text-content">{reviews.length ? `${average.toFixed(1)}/5` : 'Beta'}</p>
+              <p className="text-xs text-content-muted">{reviews.length ? `${reviews.length} comentario(s)` : 'Sección en construcción'}</p>
             </div>
           </div>
-          <div className="mt-5 grid gap-3 text-sm text-gray-300 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid gap-3 text-sm text-content-secondary sm:grid-cols-2 lg:grid-cols-4">
             {[
               'Primeras experiencias de usuarios',
               'Contactos organizados por metas',
               'Puedes explorar gratis antes de desbloquear',
               'Diseñado para encontrar oportunidades más rápido',
             ].map((item) => (
-              <span key={item} className="rounded-full border border-line bg-white/5 px-3 py-2 text-center">
+              <span key={item} className="rounded-full border border-border bg-muted px-3 py-2 text-center">
                 {item}
               </span>
             ))}
@@ -211,24 +211,24 @@ export default function PublicReviews() {
               <article key={card.id} className="professional-card p-5">
                 <div className="flex items-center justify-between gap-3">
                   <Stars value={card.rating} />
-                  <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-[11px] font-bold text-gray-300">{card.label}</span>
+                  <span className="rounded-full border border-border bg-muted px-3 py-1 text-[11px] font-bold text-content-secondary">{card.label}</span>
                 </div>
-                <p className="mt-4 text-sm leading-6 text-gray-300">"{card.text}"</p>
+                <p className="mt-4 text-sm leading-6 text-content-secondary">"{card.text}"</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-200">{card.intent}</span>
-                  <span className="rounded-full border border-line bg-white/5 px-3 py-1 text-xs font-semibold text-gray-400">{card.source}</span>
+                  <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-text">{card.intent}</span>
+                  <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-content-secondary">{card.source}</span>
                 </div>
               </article>
             ))}
           </div>
 
           <div className="professional-card p-5">
-            <h3 className="font-display text-xl font-bold text-white">Deja tu comentario</h3>
-            <p className="mt-2 text-sm leading-6 text-gray-400">Queda pendiente hasta revisión. No publicamos testimonios falsos.</p>
+            <h3 className="font-display text-xl font-bold text-content">Deja tu comentario</h3>
+            <p className="mt-2 text-sm leading-6 text-content-secondary">Queda pendiente hasta revisión. No publicamos testimonios falsos.</p>
             <div className="mt-4 grid gap-3">
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Puntuación</span>
-                <select value={rating} onChange={(event) => setRating(Number(event.target.value))} className="focus-ring h-10 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white">
+                <span className="text-sm font-semibold text-content-secondary">Puntuación</span>
+                <select value={rating} onChange={(event) => setRating(Number(event.target.value))} className="focus-ring h-10 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content">
                   {[5, 4, 3, 2, 1].map((value) => (
                     <option key={value} value={value}>
                       {value} estrellas
@@ -237,7 +237,7 @@ export default function PublicReviews() {
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Comentario</span>
+                <span className="text-sm font-semibold text-content-secondary">Comentario</span>
                 <textarea
                   ref={textareaRef}
                   value={comment}
@@ -250,24 +250,24 @@ export default function PublicReviews() {
                   }}
                   rows={2}
                   placeholder="Cuéntanos qué buscabas o cómo podemos mejorar…"
-                  className="chat-textarea focus-ring min-h-[76px] max-h-[140px] resize-none rounded-lg border border-line bg-ink-950/70 px-4 py-3 text-sm leading-6 text-white shadow-inner shadow-black/20 placeholder:text-gray-500"
+                  className="chat-textarea focus-ring min-h-[76px] max-h-[140px] resize-none rounded-lg border border-border bg-canvas/70 px-4 py-3 text-sm leading-6 text-content shadow-inner shadow-black/20 placeholder:text-content-muted"
                 />
-                <span className="text-xs text-gray-500">Ctrl + Enter también envía. Enter normal hace salto de línea.</span>
+                <span className="text-xs text-content-muted">Ctrl + Enter también envía. Enter normal hace salto de línea.</span>
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-300">
+              <label className="flex items-center gap-2 text-sm text-content-secondary">
                 <input type="checkbox" checked={isAnonymous} onChange={(event) => setIsAnonymous(event.target.checked)} />
                 Publicar como anónimo
               </label>
               {!isAnonymous ? (
-                <input value={displayName} onChange={(event) => setDisplayName(event.target.value.slice(0, 80))} placeholder="Nombre público opcional" className="focus-ring h-10 rounded-full border border-line bg-ink-950/70 px-4 text-sm text-white" />
+                <input value={displayName} onChange={(event) => setDisplayName(event.target.value.slice(0, 80))} placeholder="Nombre público opcional" className="focus-ring h-10 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content" />
               ) : null}
               <button type="button" disabled={isSaving} onClick={() => void submitReview()} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 disabled:opacity-60">
                 <Send className="h-4 w-4" />
                 {isSaving ? 'Enviando...' : 'Enviar comentario'}
               </button>
               {sent ? (
-                <div className="rounded-xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-gray-300">
-                  <p className="font-bold text-white">Tu comentario fue enviado y será revisado.</p>
+                <div className="rounded-xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-content-secondary">
+                  <p className="font-bold text-content">Tu comentario fue enviado y será revisado.</p>
                   <p className="mt-2">¿Quieres 3 contactos extra? Escríbenos por el chat para revisar tu recompensa.</p>
                   <button type="button" onClick={() => openChat('Hola, dejé mi comentario en ContactHub y quiero activar mis 3 contactos extra.')} className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-400 px-4 py-2 text-xs font-bold text-ink-950">
                     <MessageCircle className="h-4 w-4" />

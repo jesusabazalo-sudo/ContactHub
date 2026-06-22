@@ -9,14 +9,14 @@ const items = [
 
 export default function PrivacyPage() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad bg-canvas">
       <div className="container-shell">
         <SectionHeading eyebrow="Privacidad" title="Uso claro de tus datos" description="Tu correo funciona como llave para guardar tus accesos. Esta página resume qué usamos y por qué." />
         <div className="mt-10 grid gap-4 md:grid-cols-2">
           {items.map(([title, text]) => (
             <article key={title} className="professional-card p-6">
-              <h2 className="text-lg font-bold text-white">{title}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-400">{text}</p>
+              <h2 className="text-lg font-bold text-content">{title}</h2>
+              <p className="mt-3 text-sm leading-6 text-content-secondary">{text}</p>
             </article>
           ))}
         </div>

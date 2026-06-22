@@ -179,22 +179,22 @@ export default function AdminCategoriasPage() {
   return (
     <AdminShell>
       <AdminNotice />
-      <section className="rounded-2xl border border-line bg-panel p-5">
+      <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white">Carpetas oficiales</h2>
-            <p className="mt-2 text-sm text-gray-400">Orden fijo 01-25, visibilidad y textos del catálogo.</p>
+            <h2 className="font-display text-2xl font-bold text-content">Carpetas oficiales</h2>
+            <p className="mt-2 text-sm text-content-secondary">Orden fijo 01-25, visibilidad y textos del catálogo.</p>
           </div>
-          <button type="button" onClick={loadCategories} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white">
+          <button type="button" onClick={loadCategories} className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content">
             <RefreshCw className="h-4 w-4" />
             Actualizar
           </button>
         </div>
 
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-line">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-border">
           <table className="w-full min-w-[1180px] text-left text-sm">
-            <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
-              <tr className="border-b border-line">
+            <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
+              <tr className="border-b border-border">
                 <th className="px-4 py-3">Orden</th>
                 <th className="px-4 py-3">Carpeta</th>
                 <th className="px-4 py-3">Slug / ID</th>
@@ -209,39 +209,39 @@ export default function AdminCategoriasPage() {
             </thead>
             <tbody>
               {sortedCategories.map((category, index) => (
-                <tr key={category.id} className={`border-b border-line last:border-b-0 ${category.isPremiumOfficial ? 'bg-amber-300/5' : ''}`}>
+                <tr key={category.id} className={`border-b border-border last:border-b-0 ${category.isPremiumOfficial ? 'bg-amber-300/5' : ''}`}>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex h-9 min-w-10 items-center justify-center rounded-xl border px-2 font-display font-bold ${category.isPremiumOfficial ? 'border-amber-300/30 bg-amber-300/10 text-amber-200' : 'border-brand-400/25 bg-brand-400/10 text-brand-200'}`}>
+                      <span className={`inline-flex h-9 min-w-10 items-center justify-center rounded-xl border px-2 font-display font-bold ${category.isPremiumOfficial ? 'border-amber-300/30 bg-amber-300/10 text-amber-200' : 'border-brand-400/25 bg-brand-400/10 text-brand-text'}`}>
                         {String(category.sort_order ?? index + 1).padStart(2, '0')}
                       </span>
                       <input
                         defaultValue={category.sort_order ?? ''}
                         onBlur={(event) => void saveSortOrder(category, event.target.value)}
-                        className="focus-ring h-9 w-16 rounded-lg border border-line bg-ink-950/70 px-2 text-white"
+                        className="focus-ring h-9 w-16 rounded-lg border border-border bg-canvas/70 px-2 text-content"
                         type="number"
                       />
                     </div>
                   </td>
                   <td className="max-w-sm px-4 py-4">
-                    <p className="font-semibold text-white">{formatCategoryOptionLabel(category, index)}</p>
-                    <p className="mt-1 text-xs leading-5 text-gray-500">{category.short_description}</p>
+                    <p className="font-semibold text-content">{formatCategoryOptionLabel(category, index)}</p>
+                    <p className="mt-1 text-xs leading-5 text-content-muted">{category.short_description}</p>
                   </td>
                   <td className="px-4 py-4">
-                    <p className="font-mono text-xs text-gray-400">{category.slug}</p>
-                    <p className="mt-1 max-w-[180px] truncate font-mono text-[10px] text-gray-600">{category.id}</p>
+                    <p className="font-mono text-xs text-content-secondary">{category.slug}</p>
+                    <p className="mt-1 max-w-[180px] truncate font-mono text-[10px] text-content-muted">{category.id}</p>
                   </td>
                   <td className="max-w-xs px-4 py-4">
                     <div className="flex flex-wrap gap-1.5">
                       {(category.whatYouCanFind ?? category.tags ?? []).slice(0, 4).map((item) => (
-                        <span key={item} className="rounded-full border border-line bg-white/5 px-2 py-1 text-[11px] text-gray-300">
+                        <span key={item} className="rounded-full border border-border bg-muted px-2 py-1 text-[11px] text-content-secondary">
                           {item}
                         </span>
                       ))}
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-200">
+                    <span className="rounded-full border border-brand-400/25 bg-brand-400/10 px-3 py-1 text-xs font-bold text-brand-text">
                       {category.contactsCount}
                     </span>
                   </td>
@@ -258,7 +258,7 @@ export default function AdminCategoriasPage() {
                     </td>
                   ))}
                   <td className="px-4 py-4">
-                    <button type="button" onClick={() => setEditing(category)} className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-3 py-2 text-xs font-bold text-white">
+                    <button type="button" onClick={() => setEditing(category)} className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-2 text-xs font-bold text-content">
                       <Edit3 className="h-4 w-4" />
                       Editar
                     </button>
@@ -272,10 +272,10 @@ export default function AdminCategoriasPage() {
 
       {editing ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-line bg-ink-900 p-6">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
-              <h3 className="font-display text-2xl font-bold text-white">Editar carpeta</h3>
-              <button type="button" onClick={() => setEditing(null)} className="rounded-full border border-line p-2 text-white">
+              <h3 className="font-display text-2xl font-bold text-content">Editar carpeta</h3>
+              <button type="button" onClick={() => setEditing(null)} className="rounded-full border border-border p-2 text-content">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -287,21 +287,21 @@ export default function AdminCategoriasPage() {
                 ['short_description', 'Descripción corta'],
               ].map(([key, label]) => (
                 <label key={key} className="grid gap-2">
-                  <span className="text-sm font-semibold text-gray-300">{label}</span>
-                  <input value={String(editing[key as keyof AdminCategoryRow] ?? '')} onChange={(event) => setEditing({ ...editing, [key]: event.target.value })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" />
+                  <span className="text-sm font-semibold text-content-secondary">{label}</span>
+                  <input value={String(editing[key as keyof AdminCategoryRow] ?? '')} onChange={(event) => setEditing({ ...editing, [key]: event.target.value })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content" />
                 </label>
               ))}
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Descripción</span>
-                <textarea value={editing.description} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={4} className="focus-ring rounded-2xl border border-line bg-ink-950/70 px-4 py-3 text-white" />
+                <span className="text-sm font-semibold text-content-secondary">Descripción</span>
+                <textarea value={editing.description} onChange={(event) => setEditing({ ...editing, description: event.target.value })} rows={4} className="focus-ring rounded-2xl border border-border bg-canvas/70 px-4 py-3 text-content" />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-gray-300">Tags separados por coma</span>
-                <input value={editing.tags.join(', ')} onChange={(event) => setEditing({ ...editing, tags: event.target.value.split(',').map((tag) => tag.trim()).filter(Boolean) })} className="focus-ring h-11 rounded-full border border-line bg-ink-950/70 px-4 text-white" />
+                <span className="text-sm font-semibold text-content-secondary">Tags separados por coma</span>
+                <input value={editing.tags.join(', ')} onChange={(event) => setEditing({ ...editing, tags: event.target.value.split(',').map((tag) => tag.trim()).filter(Boolean) })} className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-content" />
               </label>
               <div className="grid gap-3 sm:grid-cols-4">
                 {(['is_active', 'is_featured', 'is_new', 'is_top'] as const).map((key) => (
-                  <label key={key} className="flex items-center gap-2 text-sm text-gray-300">
+                  <label key={key} className="flex items-center gap-2 text-sm text-content-secondary">
                     <input type="checkbox" checked={editing[key]} onChange={(event) => setEditing({ ...editing, [key]: event.target.checked })} />
                     {key}
                   </label>

@@ -24,47 +24,48 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
 
   return (
     <article
-      className={`card-hover professional-card relative p-5 transition duration-200 ${
-        plan.isRecommended
-          ? 'border-brand-400/45 bg-brand-400/[0.07]'
-          : plan.isPremium
-            ? 'border-brand-300/25 bg-brand-400/[0.04]'
-            : ''
+      className={`card-hover professional-card relative flex h-full flex-col p-6 transition duration-200 ${
+        plan.isRecommended ? 'border-brand/50 ring-1 ring-brand/30' : ''
       }`}
     >
+      {plan.isRecommended ? (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-contrast shadow-card-sm">
+          Recomendado
+        </span>
+      ) : null}
       <div className="flex min-h-7 items-start justify-between gap-3">
-        <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-        {plan.badge ? <Badge tone={plan.isPremium ? 'green' : 'green'}>{plan.badge}</Badge> : null}
+        <h3 className="font-display text-lg font-bold text-content">{plan.name}</h3>
+        {plan.badge && !plan.isRecommended ? <Badge tone={plan.isPremium ? 'gold' : 'green'}>{plan.badge}</Badge> : null}
       </div>
       <div className="mt-5 flex items-end gap-1">
-        <span className="text-sm font-semibold text-gray-400">{APP_CONFIG.defaultCurrency}</span>
-        <span className="stat-number font-display text-4xl font-bold">{plan.price}</span>
+        <span className="text-sm font-semibold text-content-secondary">{APP_CONFIG.defaultCurrency}</span>
+        <span className="font-display text-5xl font-bold tracking-tight text-content">{plan.price}</span>
       </div>
-      <p className="mt-3 text-sm font-semibold text-brand-400">{folderText}</p>
-      <p className={`mt-4 text-sm leading-6 text-gray-300 ${compact ? 'min-h-24' : 'min-h-16'}`}>{plan.description}</p>
-      <div className="mt-5 grid gap-2 text-sm text-gray-300">
-        <div className="flex items-center gap-2">
-          <Check className="h-4 w-4 text-brand-400" />
-          Activacion manual verificada
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="h-4 w-4 text-brand-400" />
-          Acceso privado por carpeta
-        </div>
-        <div className="flex items-center gap-2">
-          <Check className="h-4 w-4 text-brand-400" />
-          Orientacion por chat antes de pagar
-        </div>
+      <p className="mt-3 text-sm font-semibold text-brand-text">{folderText}</p>
+      <p className={`mt-4 text-sm leading-6 text-content-secondary ${compact ? 'min-h-24' : 'min-h-16'}`}>{plan.description}</p>
+      <div className="mt-5 grid gap-2.5 text-sm text-content-secondary">
+        {['Activación manual verificada', 'Acceso privado por carpeta', 'Orientación por chat antes de pagar'].map((feature) => (
+          <div key={feature} className="flex items-center gap-2.5">
+            <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand/15 text-brand-text">
+              <Check className="h-3 w-3" />
+            </span>
+            {feature}
+          </div>
+        ))}
       </div>
-      <div className="mt-5 border-t border-line pt-4 text-xs leading-5 text-gray-400">
-        <p className="font-bold text-white">Antes de pagar</p>
-        <p className="mt-2">Incluye acceso a las carpetas indicadas y telefonos completos cuando el permiso queda activo.</p>
-        <p className="mt-2">No incluye resultados garantizados, claves privadas ni acceso automatico sin revision.</p>
+      <div className="mt-5 border-t border-border pt-4 text-xs leading-5 text-content-secondary">
+        <p className="font-semibold text-content">Antes de pagar</p>
+        <p className="mt-2">Incluye acceso a las carpetas indicadas y teléfonos completos cuando el permiso queda activo.</p>
+        <p className="mt-2">No incluye resultados garantizados, claves privadas ni acceso automático sin revisión.</p>
       </div>
       <button
         type="button"
         onClick={openChat}
-        className="focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-400"
+        className={`focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition ${
+          plan.isRecommended
+            ? 'bg-brand text-brand-contrast hover:bg-brand-hover'
+            : 'border border-border bg-surface text-content hover:border-brand/40'
+        }`}
       >
         <MessageCircle className="h-4 w-4" />
         {plan.cta}

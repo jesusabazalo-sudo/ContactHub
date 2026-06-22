@@ -11,15 +11,15 @@ export default function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-ink-950/96 px-4 py-4 backdrop-blur-xl md:hidden">
+    <div className="fixed inset-0 z-50 bg-canvas/95 px-4 py-4 backdrop-blur-xl md:hidden">
       <div className="flex items-center justify-between">
-        <NavLink to="/" onClick={onClose} className="font-display text-xl font-bold text-white">
+        <NavLink to="/" onClick={onClose} className="font-display text-xl font-bold text-content">
           ContactHub
         </NavLink>
         <button
           type="button"
           onClick={onClose}
-          className="focus-ring rounded-full border border-line bg-white/5 p-2 text-white"
+          className="focus-ring rounded-full border border-border bg-surface p-2 text-content"
           aria-label="Cerrar menú"
         >
           <X className="h-5 w-5" />
@@ -33,8 +33,10 @@ export default function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) 
             to={link.to}
             onClick={onClose}
             className={({ isActive }) =>
-              `rounded-lg border px-4 py-3 text-base font-medium transition ${
-                isActive ? 'border-brand-400/40 bg-brand-400/10 text-brand-400' : 'border-line bg-white/5 text-gray-200'
+              `rounded-xl border px-4 py-3 text-base font-medium transition ${
+                isActive
+                  ? 'border-brand/40 bg-brand/10 text-brand-text'
+                  : 'border-border bg-surface text-content-secondary'
               }`
             }
           >

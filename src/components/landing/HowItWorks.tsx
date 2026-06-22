@@ -54,13 +54,13 @@ export default function HowItWorks() {
           {steps.map((step, index) => (
             <article key={step.title} className="professional-card relative p-6">
               <div className="flex items-center justify-between">
-                <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-400/20 bg-brand-400/[0.08] text-brand-400">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-brand-400/20 bg-brand-400/[0.08] text-brand-text">
                   <step.icon className="h-5 w-5" />
                 </span>
-                <span className="font-mono text-sm font-bold text-slate-600">0{index + 1}</span>
+                <span className="font-mono text-sm font-bold text-content-muted">0{index + 1}</span>
               </div>
-              <h3 className="mt-6 text-lg font-bold text-white">{step.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-400">{step.text}</p>
+              <h3 className="mt-6 text-lg font-bold text-content">{step.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-content-secondary">{step.text}</p>
             </article>
           ))}
         </div>

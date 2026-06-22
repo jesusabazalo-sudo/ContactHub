@@ -154,18 +154,18 @@ export default function PublishServicePage() {
       <div className="container-shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
           <p className="professional-kicker w-fit">Publica tu servicio</p>
-          <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-white">¿Vendes un producto o servicio? Postula tu contacto para aparecer en ContactHub.</h1>
-          <p className="mt-4 text-base leading-7 text-slate-300">
+          <h1 className="mt-5 font-display text-4xl font-bold leading-tight text-content">¿Vendes un producto o servicio? Postula tu contacto para aparecer en ContactHub.</h1>
+          <p className="mt-4 text-base leading-7 text-content-secondary">
             Revisamos cada solicitud antes de publicarla para mantener la calidad y seguridad de la plataforma. Puedes editar los datos autorrellenados antes de enviar.
           </p>
-          <div className="mt-6 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-slate-300">
-            <p className="font-bold text-white">Revisión antes de publicar</p>
+          <div className="mt-6 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-content-secondary">
+            <p className="font-bold text-content">Revisión antes de publicar</p>
             <p className="mt-2">Tu información no se publica automáticamente. Primero pasa por una revisión manual del equipo ContactHub.</p>
           </div>
-          <div className="mt-5 grid gap-3 text-sm text-slate-400">
+          <div className="mt-5 grid gap-3 text-sm text-content-secondary">
             {['Tus datos no se muestran sin revisión.', 'Puedes corregir la información antes de enviarla.', 'Usamos tus datos solo para gestionar la solicitud.'].map((item) => (
               <p key={item} className="flex gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-text" />
                 {item}
               </p>
             ))}
@@ -174,9 +174,9 @@ export default function PublishServicePage() {
 
         {isSent ? (
           <div className="professional-card p-8 text-center">
-            <CheckCircle2 className="mx-auto h-10 w-10 text-brand-400" />
-            <h2 className="mt-5 font-display text-2xl font-bold text-white">Solicitud recibida</h2>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-400">La revisaremos antes de publicar cualquier información. Si necesitamos un dato adicional, te contactaremos.</p>
+            <CheckCircle2 className="mx-auto h-10 w-10 text-brand-text" />
+            <h2 className="mt-5 font-display text-2xl font-bold text-content">Solicitud recibida</h2>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-content-secondary">La revisaremos antes de publicar cualquier información. Si necesitamos un dato adicional, te contactaremos.</p>
           </div>
         ) : (
           <form onSubmit={submit} className="professional-card p-5 sm:p-7">
@@ -222,7 +222,7 @@ export default function PublishServicePage() {
               <textarea rows={3} value={form.additionalMessage} onChange={(event) => update('additionalMessage', sanitizeTextInput(event.target.value, 500))} placeholder="Algún detalle que debamos considerar durante la revisión." className="publish-input min-h-20 py-3" />
             </Field>
 
-            <label className="mt-5 flex gap-3 rounded-lg border border-line bg-white/[0.03] p-4 text-sm leading-6 text-slate-300">
+            <label className="mt-5 flex gap-3 rounded-lg border border-border bg-muted p-4 text-sm leading-6 text-content-secondary">
               <input
                 type="checkbox"
                 checked={form.acceptedReview}
@@ -232,11 +232,11 @@ export default function PublishServicePage() {
               <span>Acepto que ContactHub revise mi información y, si es aprobada, pueda mostrar mi contacto dentro de una categoría relacionada.</span>
             </label>
 
-            <button type="submit" disabled={isSaving} className="focus-ring btn-primary-glow mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 text-sm font-bold text-white transition hover:bg-brand-400 disabled:opacity-60">
+            <button type="submit" disabled={isSaving} className="focus-ring btn-primary-glow mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 text-sm font-bold text-content transition hover:bg-brand-400 disabled:opacity-60">
               <Send className="h-4 w-4" />
               {isSaving ? 'Enviando...' : 'Enviar para revisión'}
             </button>
-            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: 'Hola, quiero ayuda para publicar mi servicio en ContactHub.' } }))} className="focus-ring mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-white/[0.03] px-5 text-sm font-bold text-white transition hover:border-brand-400/35">
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: 'Hola, quiero ayuda para publicar mi servicio en ContactHub.' } }))} className="focus-ring mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-muted px-5 text-sm font-bold text-content transition hover:border-brand-400/35">
               <MessageCircle className="h-4 w-4" />
               Pedir ayuda por chat
             </button>
@@ -250,7 +250,7 @@ export default function PublishServicePage() {
 function Field({ label, className = '', children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
     <label className={`grid gap-2 ${className}`}>
-      <span className="text-sm font-semibold text-slate-200">{label}</span>
+      <span className="text-sm font-semibold text-content">{label}</span>
       {children}
     </label>
   );

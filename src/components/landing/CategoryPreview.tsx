@@ -49,7 +49,7 @@ export default function CategoryPreview() {
             title="Empieza por el área que más se acerca a tu meta"
             description="Cada carpeta explica qué puedes encontrar y protege los datos privados hasta que tengas un acceso activo."
           />
-          <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm font-bold text-brand-400 transition hover:text-white">
+          <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm font-bold text-brand-text transition hover:text-content">
             Explorar todas las categorías
             <ArrowRight className="h-4 w-4" />
           </Link>

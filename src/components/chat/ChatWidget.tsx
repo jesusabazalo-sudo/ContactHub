@@ -369,29 +369,29 @@ function PaymentCard({
     <div className="dopamine-card neon-edge rounded-3xl p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-300">{primaryMethod.title}</p>
-          <p className="mt-1 text-sm font-semibold text-white">Titular asociado a ContactHub: {paymentName || 'Titular no configurado'}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">{primaryMethod.title}</p>
+          <p className="mt-1 text-sm font-semibold text-content">Titular asociado a ContactHub: {paymentName || 'Titular no configurado'}</p>
         </div>
         <span className="premium-chip rounded-full px-3 py-1 text-xs font-bold">Manual verificado</span>
       </div>
 
       {primaryMethod.qrUrl ? (
         <>
-          <p className="mt-4 text-xs leading-5 text-gray-400">Escanea este QR para pagar por Yape.</p>
-          <div className="mt-2 flex justify-center rounded-2xl border border-white/10 bg-white p-3">
+          <p className="mt-4 text-xs leading-5 text-content-secondary">Escanea este QR para pagar por Yape.</p>
+          <div className="mt-2 flex justify-center rounded-2xl border border-border bg-white p-3">
             <img src={primaryMethod.qrUrl} alt="QR de Yape para ContactHub" className="max-h-[260px] w-full max-w-[240px] rounded-xl object-contain" />
           </div>
         </>
       ) : (
-        <p className="mt-4 rounded-2xl border border-line bg-ink-950/60 p-3 text-xs text-gray-300">QR no configurado todavía.</p>
+        <p className="mt-4 rounded-2xl border border-border bg-canvas/60 p-3 text-xs text-content-secondary">QR no configurado todavía.</p>
       )}
 
       {primaryMethod.number ? (
-        <div className="mt-4 rounded-2xl border border-line bg-ink-950/60 p-3">
-          <p className="text-xs font-semibold text-gray-400">Número {primaryMethod.id === 'yape' ? 'Yape' : 'Plin'}</p>
+        <div className="mt-4 rounded-2xl border border-border bg-canvas/60 p-3">
+          <p className="text-xs font-semibold text-content-secondary">Número {primaryMethod.id === 'yape' ? 'Yape' : 'Plin'}</p>
           <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="font-mono text-sm font-bold text-white">{primaryMethod.number}</span>
-            <button type="button" onClick={() => onCopy(primaryMethod.number)} className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-200 transition hover:bg-brand-400/15">
+            <span className="font-mono text-sm font-bold text-content">{primaryMethod.number}</span>
+            <button type="button" onClick={() => onCopy(primaryMethod.number)} className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-text transition hover:bg-brand-400/15">
               <Copy className="h-3.5 w-3.5" />
               {copiedNumber === primaryMethod.number ? 'Copiado' : 'Copiar número'}
             </button>
@@ -399,16 +399,16 @@ function PaymentCard({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-3 text-xs leading-5 text-gray-300">
+      <div className="mt-4 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-3 text-xs leading-5 text-content-secondary">
         Paga solo cuando tengas claro el plan o carpeta. ContactHub nunca te pedira claves bancarias, codigos privados ni contrasenas externas. La activacion se revisa manualmente.
       </div>
 
       {extraMethods.length ? (
         <div className="mt-3 grid gap-2">
           {extraMethods.map((method) => (
-            <div key={method.id} className="rounded-2xl border border-line bg-ink-950/50 p-3">
-              <p className="text-xs font-bold text-gray-300">{method.title}</p>
-              {method.number ? <p className="mt-1 font-mono text-xs text-white">{method.number}</p> : null}
+            <div key={method.id} className="rounded-2xl border border-border bg-canvas/50 p-3">
+              <p className="text-xs font-bold text-content-secondary">{method.title}</p>
+              {method.number ? <p className="mt-1 font-mono text-xs text-content">{method.number}</p> : null}
               {method.qrUrl ? <img src={method.qrUrl} alt={`QR de ${method.title}`} className="mt-2 max-h-36 rounded-lg bg-white object-contain p-2" /> : null}
             </div>
           ))}
@@ -417,10 +417,10 @@ function PaymentCard({
 
       {receipt ? (
         <div className="mt-4 rounded-2xl border border-brand-400/25 bg-gradient-to-br from-brand-400/10 to-accent-violet/10 p-3">
-          <p className="text-xs font-bold text-brand-200">Comprobante recibido</p>
-          <p className="mt-1 break-all text-xs text-gray-300">{receipt.fileName}</p>
-          {receipt.previewUrl ? <img src={receipt.previewUrl} alt="Vista previa del comprobante" className="mt-3 max-h-40 rounded-xl border border-line object-contain" /> : null}
-          <p className="mt-2 text-xs leading-5 text-gray-300">
+          <p className="text-xs font-bold text-brand-text">Comprobante recibido</p>
+          <p className="mt-1 break-all text-xs text-content-secondary">{receipt.fileName}</p>
+          {receipt.previewUrl ? <img src={receipt.previewUrl} alt="Vista previa del comprobante" className="mt-3 max-h-40 rounded-xl border border-border object-contain" /> : null}
+          <p className="mt-2 text-xs leading-5 text-content-secondary">
             {receipt.status === 'uploaded'
               ? 'Lo revisaremos para activar tu acceso.'
               : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.'}
@@ -437,11 +437,11 @@ function PaymentCard({
           Ya pagué
         </button>
         {canOpenWhatsApp ? (
-          <button type="button" onClick={onWhatsApp} className="rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2.5 text-sm font-bold text-brand-200 transition hover:bg-brand-400/15">
+          <button type="button" onClick={onWhatsApp} className="rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2.5 text-sm font-bold text-brand-text transition hover:bg-brand-400/15">
             Enviar comprobante por WhatsApp
           </button>
         ) : null}
-        <button type="button" onClick={onMain} className="rounded-full border border-line bg-white/5 px-4 py-2.5 text-sm font-semibold text-gray-200 transition hover:border-brand-400/40">
+        <button type="button" onClick={onMain} className="rounded-full border border-border bg-muted px-4 py-2.5 text-sm font-semibold text-content transition hover:border-brand-400/40">
           Volver al inicio
         </button>
       </div>
@@ -1036,26 +1036,26 @@ export default function ChatWidget() {
         <div className="dopamine-card neon-edge fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
           <div className="flex items-center justify-between border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-5 py-4">
             <div>
-              <p className="font-display text-lg font-bold text-white">Soporte ContactHub</p>
-              <p className="mt-1 flex items-center gap-2 text-xs text-brand-400">
+              <p className="font-display text-lg font-bold text-content">Soporte ContactHub</p>
+              <p className="mt-1 flex items-center gap-2 text-xs text-brand-text">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
                 Guía de precios, carpetas, pagos y acceso
               </p>
             </div>
-            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-line bg-white/5 p-2 text-white transition hover:border-brand-400/40 hover:bg-brand-400/10">
+            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-border bg-muted p-2 text-content transition hover:border-brand-400/40 hover:bg-brand-400/10">
               <X className="h-4 w-4" />
             </button>
           </div>
 
           <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
-            <p className="rounded-2xl border border-brand-400/15 bg-white/[0.035] px-3 py-2 text-center text-[11px] leading-5 text-gray-400">{chatRetentionNote}</p>
+            <p className="rounded-2xl border border-brand-400/15 bg-muted px-3 py-2 text-center text-[11px] leading-5 text-content-secondary">{chatRetentionNote}</p>
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] rounded-2xl border px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md border-brand-400/30 bg-gradient-to-br from-[#1a4a32] to-[#113423] text-white' : 'rounded-bl-md border-brand-400/15 bg-gradient-to-br from-[#0d2a1f] to-[#091612] text-white'}`}>
+                <div className={`max-w-[88%] rounded-2xl border px-4 py-3 text-[15px] leading-6 shadow-sm ${message.sender === 'user' ? 'rounded-br-md border-transparent bg-brand text-brand-contrast' : 'rounded-bl-md border-border bg-muted text-content'}`}>
                   {message.has_attachment && attachmentUrls[message.id] ? (
                     <div className="mb-2">
                       <img src={attachmentUrls[message.id]} alt="Comprobante enviado" className="max-h-48 max-w-[220px] rounded-xl border border-brand-400/25 object-contain" />
-                      <div className="mt-2 text-[11px] text-white/50">📎 Comprobante enviado</div>
+                      <div className="mt-2 text-[11px] opacity-70">📎 Comprobante enviado</div>
                     </div>
                   ) : null}
                   {message.kind === 'yapeQr' ? <YapeQrMessage paymentName={paymentName} /> : <p className="whitespace-pre-wrap">{message.message}</p>}
@@ -1065,7 +1065,7 @@ export default function ChatWidget() {
             ))}
             {isTyping ? (
               <div className="flex justify-start">
-                <div className="rounded-2xl rounded-bl-md border border-brand-400/15 bg-[#0d2a1f] px-4 py-3 text-sm text-gray-300">
+                <div className="rounded-2xl rounded-bl-md border border-brand-400/15 bg-surface px-4 py-3 text-sm text-content-secondary">
                   Soporte esta escribiendo<span className="animate-pulse">...</span>
                 </div>
               </div>
@@ -1093,13 +1093,13 @@ export default function ChatWidget() {
             ) : null}
           </div>
 
-          <div className="border-t border-brand-400/15 bg-ink-950/60 p-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-gray-500">
+          <div className="border-t border-brand-400/15 bg-canvas/60 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-content-muted">
               {currentFlow === 'main'
                 ? 'Elige una opción rápida'
                 : `Opciones de ${currentFlow === 'folderDetail' ? 'carpeta' : currentFlow === 'privacy' ? 'privacidad' : currentFlow === 'newUser' ? 'inicio' : currentFlow}`}
             </p>
-            <div className="mb-4 max-h-48 overflow-y-auto rounded-2xl border border-line bg-white/[0.03] p-3">
+            <div className="mb-4 max-h-48 overflow-y-auto rounded-2xl border border-border bg-muted p-3">
               <div className="flex flex-wrap gap-2">
                 {quickActions.map((action) => (
                   <button
@@ -1107,7 +1107,7 @@ export default function ChatWidget() {
                     type="button"
                     onClick={() => void handleAction(action)}
                     className={`rounded-full border px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-400/10 ${
-                      action.type === 'whatsapp' ? 'border-brand-400/35 bg-brand-400/10 text-brand-200' : 'border-line bg-white/5 text-gray-200'
+                      action.type === 'whatsapp' ? 'border-brand-400/35 bg-brand-400/10 text-brand-text' : 'border-border bg-muted text-content'
                     }`}
                   >
                     {action.label}
@@ -1121,7 +1121,7 @@ export default function ChatWidget() {
                 <div className="flex items-center gap-3">
                   <img src={selectedReceiptPreviewUrl} alt="Vista previa del comprobante" className="h-20 w-20 rounded-xl border border-purple-400/40 object-cover" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-white">{selectedReceiptFile.name}</p>
+                    <p className="truncate text-sm font-bold text-content">{selectedReceiptFile.name}</p>
                     <p className="mt-1 text-xs text-purple-100/70">Revisa la imagen antes de enviarla.</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
@@ -1136,13 +1136,13 @@ export default function ChatWidget() {
                         type="button"
                         onClick={clearSelectedReceipt}
                         disabled={isUploadingReceipt}
-                        className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-bold text-white/70 transition hover:border-white/30 hover:text-white disabled:opacity-60"
+                        className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-content/70 transition hover:border-border hover:text-content disabled:opacity-60"
                       >
                         Cancelar
                       </button>
                     </div>
                   </div>
-                  <button type="button" onClick={clearSelectedReceipt} className="rounded-full border border-white/15 p-1.5 text-white/70 transition hover:text-white">
+                  <button type="button" onClick={clearSelectedReceipt} className="rounded-full border border-border p-1.5 text-content/70 transition hover:text-content">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -1152,14 +1152,14 @@ export default function ChatWidget() {
             <button
               type="button"
               onClick={() => receiptInputRef.current?.click()}
-              className="btn-primary-glow mb-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-purple-400/35 bg-purple-500/15 px-4 py-2.5 text-sm font-black text-purple-100 transition hover:border-purple-300/60 hover:bg-purple-500/20"
+              className="btn-primary-glow mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/10 px-4 py-2.5 text-sm font-semibold text-brand-text transition hover:border-brand/50 hover:bg-brand/15"
             >
               <UploadCloud className="h-4 w-4" />
               Enviar comprobante Yape/Plin
             </button>
 
-            <div className="flex items-end gap-2 rounded-2xl border border-brand-400/15 bg-ink-950/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-line bg-white/5 text-gray-200 transition hover:border-purple-400/50 hover:text-purple-200">
+            <div className="flex items-end gap-2 rounded-2xl border border-brand-400/15 bg-canvas/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-border bg-muted text-content transition hover:border-purple-400/50 hover:text-purple-200">
                 <Paperclip className="h-4 w-4" />
               </button>
               <textarea
@@ -1174,7 +1174,7 @@ export default function ChatWidget() {
                 }}
                 placeholder="Cuéntame qué necesitas"
                 rows={1}
-                className="chat-textarea focus-ring max-h-[132px] min-h-11 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 text-white placeholder:text-gray-500"
+                className="chat-textarea focus-ring max-h-[132px] min-h-11 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 text-content placeholder:text-content-muted"
               />
               <button type="button" onClick={() => void sendMessage()} className="focus-ring btn-primary-glow inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 transition hover:bg-white active:scale-95">
                 <Send className="h-4 w-4" />
@@ -1186,7 +1186,7 @@ export default function ChatWidget() {
 
       <button type="button" onClick={() => setIsOpen((current) => !current)} className="badge-pulse relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 via-accent-cyan to-brand-500 text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
         <MessageCircle className="h-6 w-6" />
-        {unread ? <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">{unread}</span> : null}
+        {unread ? <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-content">{unread}</span> : null}
       </button>
     </div>
   );

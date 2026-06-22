@@ -89,19 +89,12 @@ export async function getCatalogCategories() {
       return [];
     }
 
-    const withCounts = await Promise.all(
-      (data ?? []).map(async (cat) => {
-        const { count, error: countError } = await client
-          .from('contacts')
-          .select('id', { count: 'exact', head: true })
-          .eq('category_id', cat.id)
-          .eq('status', 'active');
-        if (countError) console.error('getCatalogCategories count:', countError.message);
-        return mapCategory(cat, count ?? 0);
-      }),
-    );
+    // `categories.contacts_count` se mantiene por trigger (migración 004) contando
+    // solo contactos con status='active'. Usar la columna evita una consulta COUNT
+    // por categoría (problema N+1: antes eran ~25 round-trips para pintar el catálogo).
+    const mapped = (data ?? []).map((cat) => mapCategory(cat, cat.contacts_count ?? 0));
 
-    return withCounts
+    return mapped
       .filter((category) => category.sortOrder !== 18)
       .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name));
   } catch (err) {
@@ -163,9 +156,18 @@ export async function checkUserCategoryAccess(userId: string | undefined, catego
 
 export async function checkUserTotalAccess(userId: string): Promise<boolean> {
   if (!supabase) return false;
-  const { data, error } = await supabase.from('purchases').select('id, plans(is_total_access)').eq('user_id', userId).eq('status', 'active').maybeSingle();
+  // Un usuario puede tener varias compras activas. `.maybeSingle()` lanzaba error
+  // con más de una fila y negaba el acceso total por equivocación. Misma regla de
+  // negocio (acceso total si alguna compra activa apunta a un plan total), pero
+  // tolerante a múltiples filas.
+  const { data, error } = await supabase
+    .from('purchases')
+    .select('id, plans(is_total_access)')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .limit(50);
   if (error) return false;
-  return !!(data as any)?.plans?.is_total_access;
+  return (data ?? []).some((row) => Boolean((row as { plans?: { is_total_access?: boolean } | null }).plans?.is_total_access));
 }
 
 export async function getCategoryDetail(params: { slug: string; userId?: string; isAdmin: boolean }) {

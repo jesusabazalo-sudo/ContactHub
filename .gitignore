@@ -8,3 +8,12 @@ dist
 .codex-dev*.log
 devserver.log
 devserver-error.log
+
+# Salidas generadas por tsc desde los config .ts (no versionar)
+tailwind.config.js
+tailwind.config.d.ts
+vite.config.js
+vite.config.d.ts
+
+# Temporales de importación de contactos (no versionar)
+.import-tmp/

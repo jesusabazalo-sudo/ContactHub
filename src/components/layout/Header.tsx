@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../../features/auth/AuthProvider';
+import ThemeToggle from '../ui/ThemeToggle';
 import MobileMenu from './MobileMenu';
 
 const links = [
@@ -16,14 +17,24 @@ const links = [
 
 function HubLogoMark() {
   return (
-    <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-brand-400/30 bg-brand-400/10 shadow-[0_0_22px_rgba(29,180,122,0.18)]" aria-hidden="true">
+    <span
+      className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-brand/25 bg-brand/10"
+      aria-hidden="true"
+    >
       <svg viewBox="0 0 36 36" className="h-7 w-7">
-        <path d="M18 18 9 11M18 18l10-5M18 18l4 11" fill="none" stroke="#1DB47A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="18" cy="18" r="4.4" fill="#1DB47A" />
-        <circle cx="9" cy="11" r="3.2" fill="#09E193" />
-        <circle cx="28" cy="13" r="3.2" fill="#09E193" />
-        <circle cx="22" cy="29" r="3.2" fill="#09E193" />
-        <circle cx="18" cy="18" r="1.35" fill="#071111" />
+        <path
+          d="M18 18 9 11M18 18l10-5M18 18l4 11"
+          fill="none"
+          stroke="rgb(var(--brand))"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="18" cy="18" r="4.4" fill="rgb(var(--brand))" />
+        <circle cx="9" cy="11" r="3.2" fill="rgb(var(--brand-hover))" />
+        <circle cx="28" cy="13" r="3.2" fill="rgb(var(--brand-hover))" />
+        <circle cx="22" cy="29" r="3.2" fill="rgb(var(--brand-hover))" />
+        <circle cx="18" cy="18" r="1.35" fill="rgb(var(--surface))" />
       </svg>
     </span>
   );
@@ -58,13 +69,19 @@ export default function Header() {
 
   return (
     <>
-      <header className={`sticky top-0 z-40 border-b border-line bg-[#050b0a]/90 backdrop-blur-xl transition-all ${isCompact ? 'navbar-compact' : ''}`}>
+      <header
+        className={`sticky top-0 z-40 border-b border-border bg-canvas/80 backdrop-blur-xl transition-all ${
+          isCompact ? 'navbar-compact' : ''
+        }`}
+      >
         <div className="container-shell flex h-16 items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3">
             <HubLogoMark />
             <span>
-              <span className="block font-display text-base font-bold leading-none text-white">ContactHub</span>
-              <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500 lg:block">Contactos con propósito</span>
+              <span className="block font-display text-base font-bold leading-none text-content">ContactHub</span>
+              <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.12em] text-content-muted lg:block">
+                Contactos con propósito
+              </span>
             </span>
           </Link>
 
@@ -75,7 +92,7 @@ export default function Header() {
                 to={link.to}
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium transition duration-200 ${
-                    isActive ? 'bg-white/[0.08] text-white' : 'text-gray-300 hover:bg-white/[0.06] hover:text-white'
+                    isActive ? 'bg-muted text-content' : 'text-content-secondary hover:bg-muted hover:text-content'
                   }`
                 }
               >
@@ -85,33 +102,62 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             {isAdmin ? (
-              <Link to="/admin" className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-brand-400/30 bg-brand-400/10 text-brand-400 transition hover:bg-brand-400 hover:text-ink-950" aria-label="Panel Admin">
+              <Link
+                to="/admin"
+                className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-brand/30 bg-brand/10 text-brand-text transition hover:bg-brand hover:text-brand-contrast"
+                aria-label="Panel Admin"
+              >
                 <ShieldCheck className="h-4 w-4" />
               </Link>
             ) : null}
             {session ? (
               <>
-                <Link to="/mis-contactos" className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white/5 text-white transition hover:border-brand-400/30 hover:bg-brand-400/10" aria-label="Mis contactos">
+                <Link
+                  to="/mis-contactos"
+                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-content-secondary transition hover:border-brand/40 hover:text-content"
+                  aria-label="Mis contactos"
+                >
                   <UserRound className="h-4 w-4" />
                 </Link>
-                <button type="button" onClick={handleSignOut} className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white/5 text-white transition hover:border-brand-400/30 hover:bg-brand-400/10" aria-label="Cerrar sesión">
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-content-secondary transition hover:border-brand/40 hover:text-content"
+                  aria-label="Cerrar sesión"
+                >
                   <LogOut className="h-4 w-4" />
                 </button>
               </>
             ) : (
-              <Link to="/auth" className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white/5 text-white transition hover:border-brand-400/30 hover:bg-brand-400/10" aria-label="Entrar a mi cuenta">
-                <UserRound className="h-4 w-4" />
+              <Link
+                to="/auth"
+                className="focus-ring inline-flex h-10 items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-content transition hover:border-brand/40"
+                aria-label="Entrar a mi cuenta"
+              >
+                Entrar
               </Link>
             )}
-            <Link to="/catalogo" className="focus-ring inline-flex items-center justify-center rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-bold text-white transition duration-200 hover:bg-brand-400">
+            <Link
+              to="/catalogo"
+              className="btn-primary-glow focus-ring inline-flex h-10 items-center justify-center rounded-lg bg-brand px-5 text-sm font-semibold text-brand-contrast"
+            >
               Explorar catálogo
             </Link>
           </div>
 
-          <button type="button" onClick={() => setIsMenuOpen(true)} className="focus-ring rounded-full border border-line bg-white/5 p-2 text-white md:hidden" aria-label="Abrir menú">
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(true)}
+              className="focus-ring rounded-full border border-border bg-surface p-2 text-content"
+              aria-label="Abrir menú"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
       <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} links={mobileLinks} />

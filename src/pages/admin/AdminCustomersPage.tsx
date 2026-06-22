@@ -104,16 +104,16 @@ export default function AdminCustomersPage() {
   return (
     <AdminShell>
       <AdminNotice />
-      <section className="rounded-2xl border border-line bg-panel p-5">
+      <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white">Clientes</h2>
-            <p className="mt-2 text-sm text-gray-400">Versión estable: perfiles registrados y resumen simple de compras.</p>
+            <h2 className="font-display text-2xl font-bold text-content">Clientes</h2>
+            <p className="mt-2 text-sm text-content-secondary">Versión estable: perfiles registrados y resumen simple de compras.</p>
           </div>
           <button
             type="button"
             onClick={loadCustomers}
-            className="focus-ring inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-brand-400/35"
+            className="focus-ring inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold text-content hover:border-brand-400/35"
           >
             <RefreshCw className="h-4 w-4" />
             Reintentar
@@ -126,18 +126,18 @@ export default function AdminCustomersPage() {
 
         <label className="relative mt-6 block max-w-lg">
           <span className="sr-only">Buscar clientes</span>
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
           <input
             value={query}
             onChange={(event) => setQuery(sanitizeTextInput(event.target.value, 80))}
             placeholder="Buscar por email, nombre o teléfono"
-            className="focus-ring h-11 w-full rounded-full border border-line bg-ink-950/70 pl-11 pr-4 text-sm text-white"
+            className="focus-ring h-11 w-full rounded-full border border-border bg-canvas/70 pl-11 pr-4 text-sm text-content"
           />
         </label>
 
-        <div className="mt-6 overflow-x-auto rounded-xl border border-line">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[1060px] text-left text-sm">
-            <thead className="bg-ink-950/70 text-xs uppercase text-gray-500">
+            <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
               <tr>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Teléfono</th>
@@ -151,18 +151,18 @@ export default function AdminCustomersPage() {
               {filteredProfiles.map((profile) => {
                 const counts = purchaseCountByUser.get(profile.id) ?? { pending: 0, active: 0, revoked: 0 };
                 return (
-                  <tr key={profile.id} className="border-t border-line">
+                  <tr key={profile.id} className="border-t border-border">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-white">{profile.email ?? 'Sin email'}</p>
-                      <p className="mt-1 text-xs text-gray-500">{profile.full_name ?? 'Sin nombre'}</p>
+                      <p className="font-semibold text-content">{profile.email ?? 'Sin email'}</p>
+                      <p className="mt-1 text-xs text-content-muted">{profile.full_name ?? 'Sin nombre'}</p>
                     </td>
-                    <td className="px-4 py-3 text-gray-300">{profile.phone ?? 'No registrado'}</td>
-                    <td className="px-4 py-3 text-gray-400">{formatDate(profile.created_at)}</td>
-                    <td className="px-4 py-3 text-gray-400">{formatDate(profile.updated_at)}</td>
-                    <td className="px-4 py-3 text-gray-300">
+                    <td className="px-4 py-3 text-content-secondary">{profile.phone ?? 'No registrado'}</td>
+                    <td className="px-4 py-3 text-content-secondary">{formatDate(profile.created_at)}</td>
+                    <td className="px-4 py-3 text-content-secondary">{formatDate(profile.updated_at)}</td>
+                    <td className="px-4 py-3 text-content-secondary">
                       {counts.active} activas · {counts.pending} pendientes · {counts.revoked} revocadas
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-xs text-content-secondary">
                       <p>Busca: {profile.onboarding_answers?.busca ?? 'Pendiente'}</p>
                       <p className="mt-1">Uso: {profile.onboarding_answers?.uso ?? 'Pendiente'}</p>
                       <p className="mt-1">Contacto preferido: {profile.onboarding_answers?.contacto ?? 'Pendiente'}</p>
@@ -172,7 +172,7 @@ export default function AdminCustomersPage() {
               })}
               {!filteredProfiles.length ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-10 text-center text-content-secondary">
                     No hay clientes con ese filtro.
                   </td>
                 </tr>

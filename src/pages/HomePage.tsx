@@ -112,9 +112,9 @@ function SuggestionBanner({ suggestion }: { suggestion: { slug: string; name: st
       <div className="my-4 flex flex-col gap-3 rounded-xl border border-brand-400/20 bg-brand-400/10 p-4 sm:flex-row sm:items-center sm:px-5">
         <span className="text-2xl">🎯</span>
         <div className="min-w-0">
-          <div className="text-[13px] text-white/70">Basado en lo que buscas:</div>
-          <div className="text-sm font-bold text-white sm:text-[15px]">
-            Te recomendamos explorar <span className="text-brand-400">{suggestion.name}</span>
+          <div className="text-[13px] text-content/70">Basado en lo que buscas:</div>
+          <div className="text-sm font-bold text-content sm:text-[15px]">
+            Te recomendamos explorar <span className="text-brand-text">{suggestion.name}</span>
           </div>
         </div>
         <button
@@ -226,21 +226,21 @@ function TrialModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-4">
-      <div className="w-full max-w-4xl rounded-2xl border border-line bg-ink-900 p-6">
+      <div className="w-full max-w-4xl rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white">{step === 'category' ? 'Elige una carpeta para tu prueba' : step === 'contacts' ? 'Elige 3 contactos' : 'Prueba gratuita'}</h2>
-            <p className="mt-2 text-sm text-gray-400">Verás 3 contactos reales. Solo puedes hacer esto una vez.</p>
+            <h2 className="font-display text-2xl font-bold text-content">{step === 'category' ? 'Elige una carpeta para tu prueba' : step === 'contacts' ? 'Elige 3 contactos' : 'Prueba gratuita'}</h2>
+            <p className="mt-2 text-sm text-content-secondary">Verás 3 contactos reales. Solo puedes hacer esto una vez.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-line px-3 py-1 text-white">X</button>
+          <button type="button" onClick={onClose} className="rounded-full border border-border px-3 py-1 text-content">X</button>
         </div>
         {error ? <div className="mt-4 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">{error}<button type="button" onClick={() => setError(null)} className="ml-3 underline">Reintentar</button></div> : null}
-        {isLoading ? <p className="mt-6 text-sm text-gray-300">Cargando...</p> : null}
+        {isLoading ? <p className="mt-6 text-sm text-content-secondary">Cargando...</p> : null}
         {step === 'category' ? (
           <div className="mt-6 grid max-h-[60vh] gap-3 overflow-auto sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((category) => (
-              <button key={category.id} type="button" onClick={() => void chooseCategory(category)} className="focus-ring rounded-lg border border-line bg-panel p-4 text-left text-white hover:border-brand-400/40">
-                <span className="text-xs text-brand-400">{category.icon}</span>
+              <button key={category.id} type="button" onClick={() => void chooseCategory(category)} className="focus-ring rounded-lg border border-border bg-surface p-4 text-left text-content hover:border-brand-400/40">
+                <span className="text-xs text-brand-text">{category.icon}</span>
                 <p className="mt-2 font-semibold">{formatCategoryOptionLabel(category, categories.indexOf(category))}</p>
               </button>
             ))}
@@ -248,14 +248,14 @@ function TrialModal({ onClose }: { onClose: () => void }) {
         ) : null}
         {step === 'contacts' ? (
           <div className="mt-6">
-            <p className="mb-4 text-sm font-semibold text-brand-400">{selectedIds.length} / 3 seleccionados</p>
+            <p className="mb-4 text-sm font-semibold text-brand-text">{selectedIds.length} / 3 seleccionados</p>
             <div className="grid max-h-[50vh] gap-2 overflow-auto">
               {contacts.map((contact) => {
                 const checked = selectedSet.has(contact.id);
                 return (
-                  <label key={contact.id} className={`flex items-center justify-between gap-3 rounded-lg border border-line bg-panel p-3 ${!checked && selectedIds.length >= 3 ? 'opacity-50' : ''}`}>
-                    <span className="text-sm text-white">
-                      {contact.name} <span className="font-mono text-gray-500">{maskPhone(contact.phone ?? contact.phone_masked)}</span>
+                  <label key={contact.id} className={`flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 ${!checked && selectedIds.length >= 3 ? 'opacity-50' : ''}`}>
+                    <span className="text-sm text-content">
+                      {contact.name} <span className="font-mono text-content-muted">{maskPhone(contact.phone ?? contact.phone_masked)}</span>
                     </span>
                     <input type="checkbox" checked={checked} disabled={!checked && selectedIds.length >= 3} onChange={() => toggleContact(contact.id)} />
                   </label>
@@ -270,13 +270,13 @@ function TrialModal({ onClose }: { onClose: () => void }) {
         {step === 'done' && selectedCategory ? (
           <div className="mt-8 rounded-xl border border-brand-400/30 bg-brand-400/10 p-6 text-center">
             <p className="text-4xl">✅</p>
-            <p className="mt-3 font-display text-2xl font-bold text-white">¡Listo! Ya puedes ver tus 3 contactos en {selectedCategory.name}</p>
+            <p className="mt-3 font-display text-2xl font-bold text-content">¡Listo! Ya puedes ver tus 3 contactos en {selectedCategory.name}</p>
             <button type="button" onClick={() => navigate(`/catalogo/${selectedCategory.slug}`)} className="mt-5 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950">Ir a la carpeta</button>
           </div>
         ) : null}
         {step === 'used' ? (
           <div className="mt-8 text-center">
-            <p className="font-display text-2xl font-bold text-white">Ya reclamaste tu prueba.</p>
+            <p className="font-display text-2xl font-bold text-content">Ya reclamaste tu prueba.</p>
             <button type="button" onClick={() => navigate('/precios')} className="mt-5 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950">Ver precios</button>
           </div>
         ) : null}

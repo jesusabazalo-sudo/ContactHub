@@ -8,15 +8,15 @@ type AdminPlaceholderPageProps = {
 
 export default function AdminPlaceholderPage({ title }: AdminPlaceholderPageProps) {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad bg-canvas">
       <div className="container-shell">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-line bg-panel p-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-400/10 text-brand-400">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-surface p-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-400/10 text-brand-text">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="mt-6 font-display text-3xl font-bold text-white">{title}</h1>
-          <p className="mt-4 text-base leading-7 text-gray-300">Ruta admin protegida y lista para la siguiente fase.</p>
-          <p className="mt-4 text-sm leading-6 text-gray-400">
+          <h1 className="mt-6 font-display text-3xl font-bold text-content">{title}</h1>
+          <p className="mt-4 text-base leading-7 text-content-secondary">Ruta admin protegida y lista para la siguiente fase.</p>
+          <p className="mt-4 text-sm leading-6 text-content-secondary">
             AdminGuard ya valida sesión y rol con Supabase. Esta sección específica queda reservada para fases posteriores.
             El correo administrativo se configura con `VITE_OWNER_ADMIN_EMAIL` y actualmente apunta a `{APP_CONFIG.ownerAdminEmail}`.
           </p>

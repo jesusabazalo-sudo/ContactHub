@@ -38,7 +38,7 @@ function openChat(message: string) {
 
 export default function ServicesPage() {
   return (
-    <section className="section-pad bg-ink-950">
+    <section className="section-pad bg-canvas">
       <div className="container-shell">
         <SectionHeading
           eyebrow="Servicios digitales"
@@ -58,11 +58,11 @@ export default function ServicesPage() {
                   openChat(service.message);
                 }
               }}
-              className={`card-hover relative rounded-lg border border-line bg-panel p-6 ${service.message ? 'cursor-pointer transition hover:border-brand-400/35' : ''}`}
+              className={`card-hover relative rounded-lg border border-border bg-surface p-6 ${service.message ? 'cursor-pointer transition hover:border-brand-400/35' : ''}`}
             >
-              {service.badge ? <span className="absolute right-4 top-4 rounded-md bg-amber-700 px-2.5 py-1 text-xs font-bold text-white">{service.badge}</span> : null}
-              <h2 className="pr-28 text-lg font-bold text-white">{service.name}</h2>
-              <p className="mt-3 text-sm leading-6 text-gray-400">{service.text}</p>
+              {service.badge ? <span className="absolute right-4 top-4 rounded-md bg-amber-700 px-2.5 py-1 text-xs font-bold text-content">{service.badge}</span> : null}
+              <h2 className="pr-28 text-lg font-bold text-content">{service.name}</h2>
+              <p className="mt-3 text-sm leading-6 text-content-secondary">{service.text}</p>
             </article>
           ))}
         </div>

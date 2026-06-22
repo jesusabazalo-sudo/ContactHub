@@ -9,9 +9,9 @@ type CatalogGridProps = {
 export default function CatalogGrid({ categories, getAccessLevel }: CatalogGridProps) {
   if (categories.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-panel p-10 text-center">
-        <h3 className="font-display text-2xl font-bold text-white">No apareció una carpeta con ese filtro.</h3>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-400">
+      <div className="rounded-2xl border border-border bg-surface p-10 text-center">
+        <h3 className="font-display text-2xl font-bold text-content">No apareció una carpeta con ese filtro.</h3>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-content-secondary">
           Puede que esté con otro nombre o que todavía falte clasificarla. Prueba con un término más amplio como marketing, cursos, proveedores o IA.
         </p>
       </div>
@@ -25,8 +25,10 @@ export default function CatalogGrid({ categories, getAccessLevel }: CatalogGridP
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {regularCategories.map((category) => (
-          <CategoryCard key={category.id} category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
+        {regularCategories.map((category, index) => (
+          <div key={category.id} className="float-in h-full" style={{ animationDelay: `${Math.min(index, 11) * 45}ms` }}>
+            <CategoryCard category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
+          </div>
         ))}
       </div>
       {premiumCategory ? (

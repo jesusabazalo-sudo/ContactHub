@@ -14,7 +14,7 @@ export default function SupabaseMissingAlert({ className = '' }: SupabaseMissing
           <p className="mt-2 text-sm leading-6">
             Crea un archivo `.env.local` en la raíz del proyecto con las variables necesarias.
           </p>
-          <pre className="mt-4 overflow-x-auto rounded-lg border border-amber-300/20 bg-ink-950/70 p-3 text-xs leading-5 text-amber-50">
+          <pre className="mt-4 overflow-x-auto rounded-lg border border-amber-300/20 bg-canvas/70 p-3 text-xs leading-5 text-amber-50">
 {`VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
 VITE_SUPABASE_ANON_KEY=TU_ANON_KEY_PUBLICA
 VITE_OWNER_ADMIN_EMAIL=tu_correo_admin@ejemplo.com`}
