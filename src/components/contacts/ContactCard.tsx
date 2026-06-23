@@ -10,14 +10,17 @@ import {
   FlaskConical,
   Folder,
   Gamepad2,
+  Gift,
   GraduationCap,
   Lock,
   MessageCircle,
   Music,
   Palette,
+  Scissors,
   ShieldCheck,
   Sparkles,
   Store,
+  Trophy,
   TrendingUp,
   Wallet,
   Wrench,
@@ -73,6 +76,9 @@ const CATEGORY_ICONS: Array<[RegExp, LucideIcon]> = [
   [/oficio|herramienta|reparaci|pro tools|tech repair/, Wrench],
   [/gastronom|cocina|chef|comida/, ChefHat],
   [/espiritual|sacred|soul|bienestar/, Sparkles],
+  [/manualidad|sports lab/, Scissors],
+  [/deporte|f[uú]tbol/, Trophy],
+  [/bonus|hunt|hallazgo|oportunidad/, Gift],
 ];
 
 function getCategoryIcon(categoryName: string): LucideIcon {
@@ -173,7 +179,7 @@ export default function ContactCard({
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-content-muted">Teléfono</p>
               <p
-                className={`mt-1 font-mono text-lg tracking-[0.04em] ${
+                className={`mt-1 font-mono text-[22px] font-medium leading-tight tracking-[0.03em] ${
                   showDirectActions ? 'text-content' : 'text-content-muted'
                 }`}
               >
@@ -216,7 +222,7 @@ export default function ContactCard({
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white shadow-[0_4px_14px_rgba(37,211,102,0.25)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#1eb858] hover:shadow-[0_12px_28px_rgba(37,211,102,0.45)] active:translate-y-0 active:scale-[0.98]"
+                  className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(37,211,102,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1eb858] hover:shadow-[0_14px_32px_rgba(37,211,102,0.40)] active:translate-y-0 active:scale-[0.98]"
                 >
                   <MessageCircle className="h-[18px] w-[18px]" />
                   Consultar por WhatsApp
@@ -247,7 +253,7 @@ export default function ContactCard({
               className={`focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition duration-200 ${
                 resolvedAccessLevel === 0
                   ? 'border border-border bg-surface text-content-secondary hover:border-brand/40 hover:text-content'
-                  : 'bg-brand text-brand-contrast shadow-[0_4px_14px_rgb(var(--brand)/0.22)] hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_12px_28px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]'
+                  : 'bg-brand text-brand-contrast shadow-[0_2px_12px_rgb(var(--brand)/0.16)] transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_14px_32px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]'
               }`}
             >
               {resolvedAccessLevel === 0 ? 'Regístrate gratis para ver más' : 'Desbloquea esta carpeta para contactar'}
