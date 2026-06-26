@@ -152,11 +152,14 @@ function TrialModal({ onClose }: { onClose: () => void }) {
           setStep('used');
           return;
         }
-        const categoriesWithSort = await supabase.from('categories').select('id,name,slug,icon,sort_order').eq('is_active', true).order('sort_order').order('name');
-        const categoriesResult = categoriesWithSort.error?.message.toLowerCase().includes('sort_order')
-          ? await supabase.from('categories').select('id,name,slug,icon').eq('is_active', true).order('name')
-          : categoriesWithSort;
-        const { data, error: categoriesError } = categoriesResult;
+        // No pedimos ni ordenamos por sort_order: esa columna puede no existir en
+        // la BD (causaba 400 y dejaba el modal en blanco). El orden lo aplica
+        // sortByOfficialOrder en el cliente a partir de officialCategories.
+        const { data, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id,name,slug,icon')
+          .eq('is_active', true)
+          .order('name');
         if (categoriesError) throw categoriesError;
         setCategories(
           sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))).filter((category) => {

@@ -43,6 +43,8 @@ la CLI (`supabase db push`). Todos están escritos para ser idempotentes
 024_service_submissions.sql
 025_contacts_review_statuses.sql
 026_contacts_importer_columns.sql   # consolida TODAS las columnas que usa el importador
+027_categories_order_columns.sql    # sort_order/display_order en categories (arregla 400 del catálogo)
+028_reward_requests_and_reviews.sql # crea reward_requests + public_reviews + vista trial (arregla misiones)
 ```
 
 ## Números duplicados (preexistentes)
