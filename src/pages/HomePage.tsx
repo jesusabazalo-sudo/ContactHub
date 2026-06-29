@@ -183,16 +183,15 @@ function TrialModal({ onClose }: { onClose: () => void }) {
     setIsLoading(true);
     setError(null);
     try {
+      // Vista enmascarada (definer): nunca trae el teléfono real al cliente.
+      // El número completo solo se revela tras reclamar, vía contact_trial_secure.
       const { data, error: contactsError } = await supabase
-        .from('contacts')
-        .select('id,name,phone,phone_masked')
+        .from('contact_public_preview')
+        .select('id,name,phone_masked')
         .eq('category_id', category.id)
-        .or('status.eq.active,status.is.null')
-        .or('risk_level.neq.prohibited,risk_level.is.null')
-        .order('created_at', { ascending: false })
         .limit(15);
       if (contactsError) throw contactsError;
-      setContacts(data ?? []);
+      setContacts((data ?? []).map((row) => ({ id: row.id, name: row.name, phone: null, phone_masked: row.phone_masked })));
       setStep('contacts');
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar contactos.');
