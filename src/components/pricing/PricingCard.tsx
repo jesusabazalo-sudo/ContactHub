@@ -1,7 +1,9 @@
 import { Check, MessageCircle } from 'lucide-react';
 import { APP_CONFIG } from '../../config/app';
+import { isCulqiEnabled } from '../../lib/culqi';
 import type { PricingPlan } from '../../types';
 import Badge from '../ui/Badge';
+import CulqiPayButton from './CulqiPayButton';
 
 type PricingCardProps = {
   plan: PricingPlan;
@@ -58,17 +60,25 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
         <p className="mt-2">Incluye acceso a las carpetas indicadas y teléfonos completos cuando el permiso queda activo.</p>
         <p className="mt-2">No incluye resultados garantizados, claves privadas ni acceso automático sin revisión.</p>
       </div>
+      {/* Pago automático con Culqi: solo para acceso total (activación 100%
+          automática). Los planes multi-carpeta necesitan elegir carpetas antes
+          (pendiente), así que siguen con el CTA de chat. Inerte sin Culqi. */}
+      {isCulqiEnabled && plan.folderLimit === 'total' ? (
+        <div className="mt-6">
+          <CulqiPayButton plan={plan} />
+        </div>
+      ) : null}
       <button
         type="button"
         onClick={openChat}
-        className={`focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition ${
-          plan.isRecommended
+        className={`focus-ring ${isCulqiEnabled && plan.folderLimit === 'total' ? 'mt-3' : 'mt-6'} inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition ${
+          plan.isRecommended && !(isCulqiEnabled && plan.folderLimit === 'total')
             ? 'bg-brand text-brand-contrast hover:bg-brand-hover'
             : 'border border-border bg-surface text-content hover:border-brand/40'
         }`}
       >
         <MessageCircle className="h-4 w-4" />
-        {plan.cta}
+        {isCulqiEnabled && plan.folderLimit === 'total' ? 'Pagar por Yape manual (sin comisión)' : plan.cta}
       </button>
     </article>
   );
