@@ -54,11 +54,12 @@ hasta que crees la cuenta de Culqi, configures las llaves y despliegues. Mientra
 
 ## Alcance actual (honesto)
 
-- ✅ **Acceso total**: activación 100% automática.
-- ✅ **1 carpeta**: automático si el front envía `categoryIds` (p. ej. desde el
-  detalle de la carpeta).
-- ⏳ **Planes multi-carpeta (Starter/Power/Fast Track):** el cobro funciona, pero
-  falta una pantalla "elige tus N carpetas" antes de pagar. Por eso, en /precios
-  el botón Culqi se muestra **solo en el plan total** por ahora; el resto sigue
-  con el chat manual. Es el siguiente incremento.
+- ✅ **Acceso total**: activación 100% automática (cobro directo).
+- ✅ **Planes multi-carpeta (Starter/Power/Fast Track):** el botón abre el
+  selector "elige tus N carpetas" (`FolderPicker`), luego cobra y concede esas
+  carpetas. El límite se valida también en el servidor.
+- ✅ **1 carpeta**: automático pasando `categoryIds` al botón (p. ej. desde el
+  detalle de una carpeta).
 - El **Yape manual sin comisión** se mantiene como respaldo en todos los planes.
+- Todo sigue **inerte** hasta definir `VITE_CULQI_PUBLIC_KEY` + desplegar
+  functions + aplicar la migración 031.

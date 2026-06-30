@@ -6,31 +6,50 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import { isCulqiEnabled, openCulqiCheckout } from '../../lib/culqi';
 import { supabase } from '../../lib/supabaseClient';
 import type { PricingPlan } from '../../types';
+import FolderPicker from './FolderPicker';
 
 type Props = {
   plan: PricingPlan;
-  /** Carpetas elegidas (obligatorio para planes no-totales). */
+  /** Carpetas ya elegidas (p. ej. desde el detalle de una carpeta). Si el plan
+   *  no es total y no se pasan, se abre el selector de carpetas. */
   categoryIds?: string[];
 };
 
 /**
  * Botón de pago automático con Culqi. Inerte si no hay VITE_CULQI_PUBLIC_KEY:
- * en ese caso no se renderiza y el usuario sigue con el flujo manual (Yape + chat).
- * El cobro y la activación los hace la Edge Function `culqi-charge` (servidor).
+ * no se renderiza y el usuario sigue con el flujo manual (Yape + chat).
+ * - Plan total: cobra directo (acceso a todo).
+ * - Plan multi-carpeta: abre el selector "elige tus N carpetas" antes de cobrar.
+ * El cobro y la activación los hace la Edge Function `culqi-charge` (servidor),
+ * que vuelve a validar el límite de carpetas.
  */
 export default function CulqiPayButton({ plan, categoryIds }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   if (!isCulqiEnabled || !supabase) return null;
 
-  async function pay() {
+  const isTotal = plan.folderLimit === 'total';
+  const maxFolders = typeof plan.folderLimit === 'number' ? plan.folderLimit : 0;
+
+  function start() {
     if (!user) {
       toast.info('Crea tu cuenta para pagar y activar tu acceso al instante.');
       navigate('/auth?redirect=/precios');
       return;
     }
+    // Total o con carpetas ya definidas → cobrar directo. Si no, elegir carpetas.
+    if (isTotal || (categoryIds && categoryIds.length > 0)) {
+      void pay(categoryIds);
+    } else {
+      setPickerOpen(true);
+    }
+  }
+
+  async function pay(folderIds?: string[]) {
+    if (!user) return;
     setLoading(true);
     try {
       // Resolver el plan real (id + precio) desde la BD; nunca confiar en el front.
@@ -46,7 +65,7 @@ export default function CulqiPayButton({ plan, categoryIds }: Props) {
       });
 
       const { data, error } = await supabase!.functions.invoke('culqi-charge', {
-        body: { token: token.id, planId: dbPlan.id, categoryIds, email: token.email ?? user.email },
+        body: { token: token.id, planId: dbPlan.id, categoryIds: isTotal ? undefined : folderIds, email: token.email ?? user!.email },
       });
       if (error) throw new Error(error.message);
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
@@ -61,14 +80,25 @@ export default function CulqiPayButton({ plan, categoryIds }: Props) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void pay()}
-      disabled={loading}
-      className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:opacity-60"
-    >
-      <CreditCard className="h-4 w-4" />
-      {loading ? 'Procesando…' : 'Pagar con tarjeta o Yape'}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={start}
+        disabled={loading}
+        className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:opacity-60"
+      >
+        <CreditCard className="h-4 w-4" />
+        {loading ? 'Procesando…' : 'Pagar con tarjeta o Yape'}
+      </button>
+
+      {pickerOpen ? (
+        <FolderPicker
+          planName={plan.name}
+          max={maxFolders}
+          onClose={() => setPickerOpen(false)}
+          onConfirm={(ids) => { setPickerOpen(false); void pay(ids); }}
+        />
+      ) : null}
+    </>
   );
 }
