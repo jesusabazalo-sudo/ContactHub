@@ -46,6 +46,7 @@ la CLI (`supabase db push`). Todos están escritos para ser idempotentes
 027_categories_order_columns.sql    # sort_order/display_order en categories (arregla 400 del catálogo)
 028_reward_requests_and_reviews.sql # crea reward_requests + public_reviews + vista trial (arregla misiones)
 029_fix_contacts_phone_leak.sql     # P0: cierra fuga de teléfonos a usuarios sin acceso pagado
+030_harden_trial_reward_selfgrant.sql # P0: cierra auto-otorgamiento vía trial_claims/reward_requests
 ```
 
 ## Números duplicados (preexistentes)
