@@ -8,6 +8,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import AuthPage from './pages/AuthPage';
 import CatalogPage from './pages/CatalogPage';
 import CategoryDetailPage from './pages/CategoryDetailPage';
+import DevolucionesPage from './pages/DevolucionesPage';
 import ErrorPage from './pages/ErrorPage';
 import FAQPage from './pages/FAQPage';
 import GuidePage from './pages/GuidePage';
@@ -17,6 +18,7 @@ import MyContactsPage from './pages/MyContactsPage';
 import PricingPage from './pages/PricingPage';
 import PrivacyPage from './pages/PrivacyPage';
 import PublishServicePage from './pages/PublishServicePage';
+import ReclamacionesPage from './pages/ReclamacionesPage';
 import PromosPage from './pages/PromosPage';
 import ServicesPage from './pages/ServicesPage';
 import SupportPage from './pages/SupportPage';
@@ -52,7 +54,10 @@ export default function App() {
           <Route path="/servicios" element={<ServicesPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/politica-privacidad" element={<PrivacyPage />} />
+          <Route path="/privacidad" element={<PrivacyPage />} />
           <Route path="/terminos" element={<TermsPage />} />
+          <Route path="/devoluciones" element={<DevolucionesPage />} />
+          <Route path="/reclamaciones" element={<ReclamacionesPage />} />
           <Route path="/soporte" element={<SupportPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="/admin" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />

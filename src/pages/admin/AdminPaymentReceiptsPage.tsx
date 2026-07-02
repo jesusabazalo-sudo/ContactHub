@@ -1,4 +1,4 @@
-import { CheckCircle2, Eye, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
+import { Eye, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
@@ -27,7 +27,14 @@ type ChatReceipt = {
   signedUrl?: string;
   user_email?: string;
   user_name?: string | null;
+  inferredCategoryIds?: string[]; // carpetas que el cliente pidió por chat
+  inferredNames?: string[];
 };
+
+// minúsculas sin acentos, para emparejar el nombre de carpeta en el texto del chat
+function fold(value: string) {
+  return (value ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 
 type AdminCategory = {
   id: string;
@@ -151,8 +158,45 @@ export default function AdminPaymentReceiptsPage() {
         };
       }));
 
-      setReceipts(signedRows);
-      setCategories(normalizeOfficialCategoryRows((categoriesRes.data ?? []) as AdminCategory[]) as AdminCategory[]);
+      const normalizedCats = normalizeOfficialCategoryRows((categoriesRes.data ?? []) as AdminCategory[]) as AdminCategory[];
+
+      // Inferir carpeta(s) pedidas: buscar el nombre/subtítulo de cada carpeta en
+      // los mensajes de texto recientes del usuario (flujo "Desbloquear la carpeta X").
+      const textByUser = new Map<string, string>();
+      if (userIds.length) {
+        const msgsRes = await dynamicSupabase()
+          .from('chat_messages')
+          .select('user_id,message')
+          .in('user_id', userIds)
+          .eq('sender', 'user')
+          .order('created_at', { ascending: false })
+          .limit(600);
+        for (const m of (msgsRes.data ?? []) as Array<{ user_id: string | null; message: string | null }>) {
+          if (!m.user_id) continue;
+          textByUser.set(m.user_id, `${textByUser.get(m.user_id) ?? ''} ${fold(m.message ?? '')}`);
+        }
+      }
+      const inferFor = (userId: string | null) => {
+        const text = userId ? textByUser.get(userId) : '';
+        if (!text) return { ids: [] as string[], names: [] as string[] };
+        const ids: string[] = [];
+        const names: string[] = [];
+        for (const cat of normalizedCats) {
+          const title = fold(cat.displayTitle ?? cat.name ?? '');
+          const sub = fold(cat.displaySubtitle ?? '');
+          if ((title.length > 3 && text.includes(title)) || (sub.length > 3 && text.includes(sub))) {
+            ids.push(cat.id);
+            names.push(cat.displayLabel ?? cat.name);
+          }
+        }
+        return { ids, names };
+      };
+
+      setReceipts(signedRows.map((row) => {
+        const inf = inferFor(row.user_id);
+        return { ...row, inferredCategoryIds: inf.ids, inferredNames: inf.names };
+      }));
+      setCategories(normalizedCats);
     } catch (loadError) {
       console.error('AdminPaymentReceiptsPage catch:', loadError);
       setError('Error al cargar comprobantes. Revisa consola o configuracion de Supabase.');
@@ -197,57 +241,54 @@ export default function AdminPaymentReceiptsPage() {
     toast.success('Comprobante rechazado y usuario notificado.');
   }
 
-  async function activateAccess() {
-    if (!selectedReceipt || !supabase || !isSupabaseConfigured) return;
-    if (!adminUser?.id) {
-      toast.error('No se encontró la sesión admin.');
-      return;
-    }
-    if (!selectedReceipt.user_id) {
-      toast.error('Este comprobante no tiene usuario vinculado.');
-      return;
-    }
-    const targetUserId = selectedReceipt.user_id;
-    if (!selectedCategoryIds.length) {
-      toast.error('Elige al menos una carpeta para activar.');
-      return;
-    }
+  // Núcleo único: concede acceso + marca verificado + notifica al cliente.
+  // Lo usan tanto el 1-clic (carpeta inferida) como el modal (elección manual).
+  async function runActivation(receipt: ChatReceipt, categoryIds: string[]) {
+    if (!supabase || !isSupabaseConfigured) return;
+    if (!adminUser?.id) { toast.error('No se encontró la sesión admin.'); return; }
+    if (!receipt.user_id) { toast.error('Este comprobante no tiene usuario vinculado.'); return; }
+    if (!categoryIds.length) { toast.error('Elige al menos una carpeta para activar.'); return; }
 
-    setIsUpdatingId(selectedReceipt.id);
+    const names = categories.filter((category) => categoryIds.includes(category.id)).map((category) => category.displayLabel);
+    setIsUpdatingId(receipt.id);
     try {
       const accessResult = await grantCategoryAccess({
-        targetUserId,
-        targetUserEmail: selectedReceipt.user_email,
-        categoryIds: selectedCategoryIds,
+        targetUserId: receipt.user_id,
+        targetUserEmail: receipt.user_email,
+        categoryIds,
         grantedBy: adminUser.id,
         accessType: 'receipt',
         source: 'payment_receipt',
-        note: `Comprobante aprobado: ${selectedReceipt.id}`,
+        note: `Comprobante aprobado: ${receipt.id}`,
       });
       if (!accessResult.ok) {
         toast.error(accessResult.error ?? 'No se pudo activar el acceso.');
         return;
       }
 
-      await dynamicSupabase().from('chat_messages').update({ comprobante_status: 'verificado', read: true }).eq('id', selectedReceipt.id);
+      await dynamicSupabase().from('chat_messages').update({ comprobante_status: 'verificado', read: true }).eq('id', receipt.id);
       await supabase.from('chat_messages').insert({
-        user_id: selectedReceipt.user_id,
-        session_id: selectedReceipt.user_id,
+        user_id: receipt.user_id,
+        session_id: receipt.user_id,
         sender: 'admin',
         read: false,
-        message: `Tu pago fue verificado.\n\nYa tienes acceso a: ${selectedCategoryNames.join(', ')}.\n\nPuedes ver todos los contactos ahora mismo. Gracias por confiar en ContactHub.`,
+        message: `Tu pago fue verificado.\n\nYa tienes acceso a: ${names.join(', ')}.\n\nPuedes ver todos los contactos ahora mismo. Gracias por confiar en ContactHub.`,
       });
 
       setSelectedReceipt(null);
       setSelectedCategoryIds([]);
       await loadReceipts();
-      toast.success(`Comprobante aprobado y acceso confirmado para ${accessResult.targetUserEmail ?? 'el cliente'}.`);
+      toast.success(`Acceso activado para ${accessResult.targetUserEmail ?? 'el cliente'}: ${names.join(', ')}.`);
     } catch (activationError) {
       console.error('AdminPaymentReceiptsPage activate catch:', activationError);
       toast.error('Error al activar. Intenta de nuevo.');
     } finally {
       setIsUpdatingId(null);
     }
+  }
+
+  function activateAccess() {
+    if (selectedReceipt) void runActivation(selectedReceipt, selectedCategoryIds);
   }
 
   function toggleCategory(categoryId: string) {
@@ -364,17 +405,29 @@ export default function AdminPaymentReceiptsPage() {
                     ) : null}
                     {normalizeStatus(receipt.comprobante_status) === 'pendiente' ? (
                       <>
+                        {receipt.inferredCategoryIds?.length ? (
+                          <button
+                            type="button"
+                            disabled={isUpdatingId === receipt.id}
+                            onClick={() => void runActivation(receipt, receipt.inferredCategoryIds ?? [])}
+                            title="Activar la carpeta que el cliente pidió por chat"
+                            className="inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-brand-contrast disabled:opacity-60"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Activar: {receipt.inferredNames?.join(', ')}
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           disabled={isUpdatingId === receipt.id}
                           onClick={() => {
                             setSelectedReceipt(receipt);
-                            setSelectedCategoryIds([]);
+                            setSelectedCategoryIds(receipt.inferredCategoryIds ?? []);
                           }}
-                          className="inline-flex items-center gap-1 rounded-full bg-brand-400 px-3 py-1.5 text-xs font-black text-ink-950 disabled:opacity-60"
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-content disabled:opacity-60"
                         >
                           <ShieldCheck className="h-3.5 w-3.5" />
-                          Activar acceso
+                          {receipt.inferredCategoryIds?.length ? 'Otras carpetas…' : 'Elegir carpetas…'}
                         </button>
                         <button
                           type="button"
@@ -395,17 +448,6 @@ export default function AdminPaymentReceiptsPage() {
                         className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-bold text-content disabled:opacity-60"
                       >
                         Reabrir revision
-                      </button>
-                    ) : null}
-                    {normalizeStatus(receipt.comprobante_status) === 'pendiente' ? (
-                      <button
-                        type="button"
-                        disabled={isUpdatingId === receipt.id}
-                        onClick={() => void updateReceiptStatus(receipt, 'verificado')}
-                        className="inline-flex items-center gap-1 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-text disabled:opacity-60"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Marcar revisado
                       </button>
                     ) : null}
                   </div>

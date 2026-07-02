@@ -152,11 +152,14 @@ function TrialModal({ onClose }: { onClose: () => void }) {
           setStep('used');
           return;
         }
-        const categoriesWithSort = await supabase.from('categories').select('id,name,slug,icon,sort_order').eq('is_active', true).order('sort_order').order('name');
-        const categoriesResult = categoriesWithSort.error?.message.toLowerCase().includes('sort_order')
-          ? await supabase.from('categories').select('id,name,slug,icon').eq('is_active', true).order('name')
-          : categoriesWithSort;
-        const { data, error: categoriesError } = categoriesResult;
+        // No pedimos ni ordenamos por sort_order: esa columna puede no existir en
+        // la BD (causaba 400 y dejaba el modal en blanco). El orden lo aplica
+        // sortByOfficialOrder en el cliente a partir de officialCategories.
+        const { data, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id,name,slug,icon')
+          .eq('is_active', true)
+          .order('name');
         if (categoriesError) throw categoriesError;
         setCategories(
           sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))).filter((category) => {
@@ -180,16 +183,15 @@ function TrialModal({ onClose }: { onClose: () => void }) {
     setIsLoading(true);
     setError(null);
     try {
+      // Vista enmascarada (definer): nunca trae el teléfono real al cliente.
+      // El número completo solo se revela tras reclamar, vía contact_trial_secure.
       const { data, error: contactsError } = await supabase
-        .from('contacts')
-        .select('id,name,phone,phone_masked')
+        .from('contact_public_preview')
+        .select('id,name,phone_masked')
         .eq('category_id', category.id)
-        .or('status.eq.active,status.is.null')
-        .or('risk_level.neq.prohibited,risk_level.is.null')
-        .order('created_at', { ascending: false })
         .limit(15);
       if (contactsError) throw contactsError;
-      setContacts(data ?? []);
+      setContacts((data ?? []).map((row) => ({ id: row.id, name: row.name, phone: null, phone_masked: row.phone_masked })));
       setStep('contacts');
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar contactos.');
