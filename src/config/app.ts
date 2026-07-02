@@ -15,3 +15,16 @@ export const APP_CONFIG = {
   welcomeChatMessage:
     'Hola 👋 Soy el asistente de ContactHub. Antes de mostrarte algo: ¿qué estás buscando lograr?',
 } as const;
+
+// Datos legales para Términos, Privacidad, Devoluciones y Libro de Reclamaciones.
+// ⚠️ COMPLETA razón social, RUC y domicilio antes de la revisión de Culqi/INDECOPI.
+// Puedes sobreescribir por variables de entorno (VITE_LEGAL_*) sin tocar código.
+export const LEGAL = {
+  razonSocial: import.meta.env.VITE_LEGAL_RAZON_SOCIAL || '[Razón social o titular — COMPLETAR]',
+  ruc: import.meta.env.VITE_LEGAL_RUC || '[RUC — COMPLETAR]',
+  domicilio: import.meta.env.VITE_LEGAL_DOMICILIO || '[Domicilio fiscal — COMPLETAR]',
+  email: import.meta.env.VITE_LEGAL_EMAIL || '[correo de contacto — COMPLETAR]',
+  telefono: import.meta.env.VITE_LEGAL_TELEFONO || APP_CONFIG.whatsappNumber,
+  ciudad: 'Lima, Perú',
+  updated: '01 de julio de 2026',
+} as const;
