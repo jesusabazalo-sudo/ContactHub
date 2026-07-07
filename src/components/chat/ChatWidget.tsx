@@ -366,47 +366,51 @@ function PaymentCard({
   }
 
   return (
-    <div className="dopamine-card neon-edge rounded-3xl p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+    <div className="dopamine-card neon-edge rounded-3xl p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text">{primaryMethod.title}</p>
           <p className="mt-1 text-sm font-semibold text-content">Titular asociado a ContactHub: {paymentName || 'Titular no configurado'}</p>
         </div>
-        <span className="premium-chip rounded-full px-3 py-1 text-xs font-bold">Manual verificado</span>
+        <span className="premium-chip flex-none rounded-full px-3 py-1 text-xs font-bold">Manual verificado</span>
       </div>
 
       {primaryMethod.qrUrl ? (
-        <>
-          <p className="mt-4 text-xs leading-5 text-content-secondary">Escanea este QR para pagar por Yape.</p>
-          <div className="mt-2 flex justify-center rounded-2xl border border-border bg-white p-3">
+        <div className="mt-5 border-t border-border/60 pt-5">
+          <p className="text-xs leading-5 text-content-secondary">Escanea este QR para pagar por Yape.</p>
+          <div className="mt-3 flex justify-center rounded-2xl border border-border bg-white p-3">
             <img src={primaryMethod.qrUrl} alt="QR de Yape para ContactHub" className="max-h-[260px] w-full max-w-[240px] rounded-xl object-contain" />
           </div>
-        </>
+        </div>
       ) : (
-        <p className="mt-4 rounded-2xl border border-border bg-canvas/60 p-3 text-xs text-content-secondary">QR no configurado todavía.</p>
+        <p className="mt-5 rounded-2xl border border-border bg-canvas/60 p-3 text-xs text-content-secondary">QR no configurado todavía.</p>
       )}
 
       {primaryMethod.number ? (
-        <div className="mt-4 rounded-2xl border border-border bg-canvas/60 p-3">
-          <p className="text-xs font-semibold text-content-secondary">Número {primaryMethod.id === 'yape' ? 'Yape' : 'Plin'}</p>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="font-mono text-sm font-bold text-content">{primaryMethod.number}</span>
-            <button type="button" onClick={() => onCopy(primaryMethod.number)} className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-text transition hover:bg-brand-400/15">
-              <Copy className="h-3.5 w-3.5" />
-              {copiedNumber === primaryMethod.number ? 'Copiado' : 'Copiar número'}
-            </button>
+        <div className="mt-5 border-t border-border/60 pt-5">
+          <div className="rounded-2xl border border-border bg-canvas/60 p-4">
+            <p className="text-xs font-semibold text-content-secondary">Número {primaryMethod.id === 'yape' ? 'Yape' : 'Plin'}</p>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span className="font-mono text-sm font-bold text-content">{primaryMethod.number}</span>
+              <button type="button" onClick={() => onCopy(primaryMethod.number)} className="inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-bold text-brand-text transition hover:bg-brand-400/15">
+                <Copy className="h-3.5 w-3.5" />
+                {copiedNumber === primaryMethod.number ? 'Copiado' : 'Copiar número'}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-2xl border border-brand-400/20 bg-brand-400/10 p-3 text-xs leading-5 text-content-secondary">
-        Paga solo cuando tengas claro el plan o carpeta. ContactHub nunca te pedira claves bancarias, codigos privados ni contrasenas externas. La activacion se revisa manualmente.
+      <div className="mt-5 border-t border-border/60 pt-5">
+        <div className="rounded-2xl border border-brand-400/20 bg-brand-400/10 p-4 text-xs leading-5 text-content-secondary">
+          Paga solo cuando tengas claro el plan o carpeta. ContactHub nunca te pedira claves bancarias, codigos privados ni contrasenas externas. La activacion se revisa manualmente.
+        </div>
       </div>
 
       {extraMethods.length ? (
-        <div className="mt-3 grid gap-2">
+        <div className="mt-5 grid gap-3 border-t border-border/60 pt-5">
           {extraMethods.map((method) => (
-            <div key={method.id} className="rounded-2xl border border-border bg-canvas/50 p-3">
+            <div key={method.id} className="rounded-2xl border border-border bg-canvas/50 p-4">
               <p className="text-xs font-bold text-content-secondary">{method.title}</p>
               {method.number ? <p className="mt-1 font-mono text-xs text-content">{method.number}</p> : null}
               {method.qrUrl ? <img src={method.qrUrl} alt={`QR de ${method.title}`} className="mt-2 max-h-36 rounded-lg bg-white object-contain p-2" /> : null}
@@ -416,32 +420,34 @@ function PaymentCard({
       ) : null}
 
       {receipt ? (
-        <div className="mt-4 rounded-2xl border border-brand-400/25 bg-gradient-to-br from-brand-400/10 to-accent-violet/10 p-3">
-          <p className="text-xs font-bold text-brand-text">Comprobante recibido</p>
-          <p className="mt-1 break-all text-xs text-content-secondary">{receipt.fileName}</p>
-          {receipt.previewUrl ? <img src={receipt.previewUrl} alt="Vista previa del comprobante" className="mt-3 max-h-40 rounded-xl border border-border object-contain" /> : null}
-          <p className="mt-2 text-xs leading-5 text-content-secondary">
-            {receipt.status === 'uploaded'
-              ? 'Lo revisaremos para activar tu acceso.'
-              : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.'}
-          </p>
+        <div className="mt-5 border-t border-border/60 pt-5">
+          <div className="rounded-2xl border border-brand-400/25 bg-gradient-to-br from-brand-400/10 to-accent-violet/10 p-4">
+            <p className="text-xs font-bold text-brand-text">Comprobante recibido</p>
+            <p className="mt-1 break-all text-xs text-content-secondary">{receipt.fileName}</p>
+            {receipt.previewUrl ? <img src={receipt.previewUrl} alt="Vista previa del comprobante" className="mt-3 max-h-40 rounded-xl border border-border object-contain" /> : null}
+            <p className="mt-2 text-xs leading-5 text-content-secondary">
+              {receipt.status === 'uploaded'
+                ? 'Lo revisaremos para activar tu acceso.'
+                : 'Tu comprobante está listo. Si la carga aún no está conectada, envíalo por WhatsApp para revisión.'}
+            </p>
+          </div>
         </div>
       ) : null}
 
-      <div className="mt-4 grid gap-2">
-        <button type="button" onClick={onUpload} className="btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full border border-purple-400/30 bg-purple-500/15 px-4 py-2.5 text-sm font-bold text-purple-100 transition hover:bg-purple-500/20">
-          <UploadCloud className="h-4 w-4" />
+      <div className="mt-5 grid gap-3 border-t border-border/60 pt-5">
+        <button type="button" onClick={onUpload} className="btn-primary-glow inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-purple-400/30 bg-purple-500/15 px-5 py-4 text-base font-bold text-purple-100 transition hover:bg-purple-500/20">
+          <UploadCloud className="h-5 w-5" />
           Subir comprobante
         </button>
-        <button type="button" onClick={onPaid} className="btn-primary-glow rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan px-4 py-2.5 text-sm font-bold text-ink-950 transition hover:bg-white">
+        <button type="button" onClick={onPaid} className="btn-primary-glow w-full rounded-2xl bg-gradient-to-r from-brand-400 to-accent-cyan px-5 py-4 text-base font-bold text-ink-950 transition hover:bg-white">
           Ya pagué
         </button>
         {canOpenWhatsApp ? (
-          <button type="button" onClick={onWhatsApp} className="rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2.5 text-sm font-bold text-brand-text transition hover:bg-brand-400/15">
+          <button type="button" onClick={onWhatsApp} className="w-full rounded-2xl border border-brand-400/30 bg-brand-400/10 px-5 py-4 text-base font-bold text-brand-text transition hover:bg-brand-400/15">
             Enviar comprobante por WhatsApp
           </button>
         ) : null}
-        <button type="button" onClick={onMain} className="rounded-full border border-border bg-muted px-4 py-2.5 text-sm font-semibold text-content transition hover:border-brand-400/40">
+        <button type="button" onClick={onMain} className="w-full rounded-2xl border border-border bg-muted px-5 py-3.5 text-sm font-semibold text-content transition hover:border-brand-400/40">
           Volver al inicio
         </button>
       </div>
@@ -1015,7 +1021,7 @@ export default function ChatWidget() {
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = 'auto';
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 132)}px`;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
   }, [text, isOpen]);
 
   useEffect(() => {
@@ -1033,17 +1039,17 @@ export default function ChatWidget() {
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
       <input ref={receiptInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
-        <div className="dopamine-card neon-edge fixed inset-x-3 bottom-24 flex h-[min(88vh,760px)] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[740px] sm:w-[490px] sm:max-w-[calc(100vw-2rem)]">
-          <div className="flex items-center justify-between border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-5 py-4">
-            <div>
-              <p className="font-display text-lg font-bold text-content">Soporte ContactHub</p>
-              <p className="mt-1 flex items-center gap-2 text-xs text-brand-text">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-brand-400 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
+        <div className="dopamine-card neon-edge fixed inset-x-[5vw] bottom-24 flex h-[85vh] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[min(680px,85vh)] sm:min-h-[520px] sm:w-[460px] sm:min-w-[380px] sm:max-w-[calc(100vw-2rem)]">
+          <div className="flex items-start justify-between gap-4 border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-6 py-6">
+            <div className="min-w-0">
+              <p className="font-display text-2xl font-bold leading-tight text-content">Soporte ContactHub</p>
+              <p className="mt-2 flex items-center gap-2 text-sm text-brand-text">
+                <span className="h-2 w-2 flex-none animate-pulse rounded-full bg-brand-400 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
                 Guía de precios, carpetas, pagos y acceso
               </p>
             </div>
-            <button type="button" onClick={() => setIsOpen(false)} className="rounded-full border border-border bg-muted p-2 text-content transition hover:border-brand-400/40 hover:bg-brand-400/10">
-              <X className="h-4 w-4" />
+            <button type="button" onClick={() => setIsOpen(false)} className="focus-ring flex-none rounded-full border border-border bg-muted p-2.5 text-content transition hover:border-brand-400/40 hover:bg-brand-400/10">
+              <X className="h-5 w-5" />
             </button>
           </div>
 
@@ -1093,27 +1099,39 @@ export default function ChatWidget() {
             ) : null}
           </div>
 
-          <div className="border-t border-brand-400/15 bg-canvas/60 p-4">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-content-muted">
+          <div className="border-t border-brand-400/15 bg-canvas/60 px-5 pt-3 pb-5">
+            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-content-muted">
               {currentFlow === 'main'
                 ? 'Elige una opción rápida'
-                : `Opciones de ${currentFlow === 'folderDetail' ? 'carpeta' : currentFlow === 'privacy' ? 'privacidad' : currentFlow === 'newUser' ? 'inicio' : currentFlow}`}
+                : `Opciones de ${
+                    currentFlow === 'folderDetail' ? 'carpeta' :
+                    currentFlow === 'privacy' ? 'privacidad' :
+                    currentFlow === 'newUser' ? 'inicio' :
+                    currentFlow === 'payment' ? 'pago' :
+                    currentFlow === 'paid' ? 'pago' :
+                    currentFlow === 'qr' ? 'pago' :
+                    currentFlow === 'help' ? 'ayuda' :
+                    currentFlow === 'missions' ? 'misiones' :
+                    currentFlow === 'human' ? 'soporte' :
+                    currentFlow === 'prices' ? 'precios' :
+                    currentFlow === 'promos' ? 'promociones' :
+                    currentFlow === 'folders' ? 'carpetas' :
+                    currentFlow
+                  }`}
             </p>
-            <div className="mb-4 max-h-48 overflow-y-auto rounded-2xl border border-border bg-muted p-3">
-              <div className="flex flex-wrap gap-2">
-                {quickActions.map((action) => (
-                  <button
-                    key={`${action.type}-${action.value ?? action.label}`}
-                    type="button"
-                    onClick={() => void handleAction(action)}
-                    className={`rounded-full border px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-400/10 ${
-                      action.type === 'whatsapp' ? 'border-brand-400/35 bg-brand-400/10 text-brand-text' : 'border-border bg-muted text-content'
-                    }`}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
+            <div className="mb-4 flex h-11 items-center gap-1.5 overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-muted px-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+              {quickActions.map((action) => (
+                <button
+                  key={`${action.type}-${action.value ?? action.label}`}
+                  type="button"
+                  onClick={() => void handleAction(action)}
+                  className={`flex-none whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-400/10 ${
+                    action.type === 'whatsapp' ? 'border-brand-400/35 bg-brand-400/10 text-brand-text' : 'border-border bg-muted text-content'
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
             </div>
 
             {selectedReceiptFile && selectedReceiptPreviewUrl ? (
@@ -1152,14 +1170,14 @@ export default function ChatWidget() {
             <button
               type="button"
               onClick={() => receiptInputRef.current?.click()}
-              className="btn-primary-glow mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/10 px-4 py-2.5 text-sm font-semibold text-brand-text transition hover:border-brand/50 hover:bg-brand/15"
+              className="btn-primary-glow mb-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/10 px-5 py-3.5 text-sm font-semibold text-brand-text transition hover:border-brand/50 hover:bg-brand/15"
             >
               <UploadCloud className="h-4 w-4" />
               Enviar comprobante Yape/Plin
             </button>
 
-            <div className="flex items-end gap-2 rounded-2xl border border-brand-400/15 bg-canvas/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-11 w-11 flex-none items-center justify-center rounded-full border border-border bg-muted text-content transition hover:border-purple-400/50 hover:text-purple-200">
+            <div className="flex items-end gap-2.5 rounded-2xl border border-brand-400/15 bg-canvas/70 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-border bg-muted text-content transition hover:border-purple-400/50 hover:text-purple-200">
                 <Paperclip className="h-4 w-4" />
               </button>
               <textarea
@@ -1173,11 +1191,11 @@ export default function ChatWidget() {
                   }
                 }}
                 placeholder="Cuéntame qué necesitas"
-                rows={1}
-                className="chat-textarea focus-ring max-h-[132px] min-h-11 flex-1 resize-none bg-transparent px-3 py-2 text-sm leading-6 text-content placeholder:text-content-muted"
+                rows={2}
+                className="chat-textarea focus-ring min-h-[60px] max-h-[160px] flex-1 resize-none bg-transparent px-4 py-3 text-[15px] leading-6 text-content placeholder:text-content-muted"
               />
-              <button type="button" onClick={() => void sendMessage()} className="focus-ring btn-primary-glow inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 transition hover:bg-white active:scale-95">
-                <Send className="h-4 w-4" />
+              <button type="button" onClick={() => void sendMessage()} className="focus-ring btn-primary-glow inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-glow transition hover:bg-white active:scale-95">
+                <Send className="h-5 w-5" />
               </button>
             </div>
           </div>
