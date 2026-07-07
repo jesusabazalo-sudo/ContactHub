@@ -39,9 +39,8 @@ export default function TermsPage() {
       <LegalSection title="4. Planes, precios y pagos">
         <ul>
           <li>Los precios se muestran en Soles (S/) e incluyen los impuestos aplicables.</li>
-          <li>El pago puede realizarse con tarjeta o Yape a través de la pasarela <strong>Culqi</strong>, o por Yape/Plin
-            manual enviando el comprobante por el chat.</li>
-          <li>La activación con pasarela es automática; la activación por comprobante manual se realiza tras verificación.</li>
+          <li>El pago se realiza por Yape o Plin enviando el comprobante por el chat.</li>
+          <li>La activación del acceso se realiza tras verificar el comprobante enviado.</li>
           <li>El acceso otorga la visualización del teléfono completo de las carpetas indicadas mientras el permiso esté activo.</li>
         </ul>
       </LegalSection>
