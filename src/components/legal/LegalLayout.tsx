@@ -36,10 +36,11 @@ export function LegalSection({ title, children }: { title: string; children: Rea
 export function LegalIdentity() {
   return (
     <div className="rounded-xl border border-border bg-muted p-4 text-sm leading-6 text-content-secondary">
-      <p><strong className="text-content">Titular:</strong> {LEGAL.razonSocial}</p>
+      <p><strong className="text-content">Titular:</strong> {LEGAL.titular}</p>
+      <p><strong className="text-content">Operado por:</strong> {LEGAL.operadoPor}</p>
       <p><strong className="text-content">RUC:</strong> {LEGAL.ruc}</p>
       <p><strong className="text-content">Domicilio:</strong> {LEGAL.domicilio}</p>
-      <p><strong className="text-content">Contacto:</strong> {LEGAL.email} · {LEGAL.telefono}</p>
+      <p><strong className="text-content">Contacto:</strong> {LEGAL.email}</p>
     </div>
   );
 }

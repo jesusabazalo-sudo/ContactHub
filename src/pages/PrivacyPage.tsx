@@ -30,7 +30,6 @@ export default function PrivacyPage() {
         <p>Trabajamos con encargados de tratamiento que solo procesan datos para prestarnos su servicio:</p>
         <ul>
           <li><strong>Supabase</strong> — base de datos y autenticación.</li>
-          <li><strong>Culqi</strong> — procesamiento de pagos con tarjeta/Yape.</li>
           <li><strong>Vercel</strong> — alojamiento del sitio.</li>
           <li><strong>Google Analytics</strong> — estadísticas de uso agregadas.</li>
         </ul>

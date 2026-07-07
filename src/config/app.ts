@@ -17,14 +17,15 @@ export const APP_CONFIG = {
 } as const;
 
 // Datos legales para Términos, Privacidad, Devoluciones y Libro de Reclamaciones.
-// ⚠️ COMPLETA razón social, RUC y domicilio antes de la revisión de Culqi/INDECOPI.
-// Puedes sobreescribir por variables de entorno (VITE_LEGAL_*) sin tocar código.
+// Solo se muestra el nombre comercial, tipo de operador, RUC, ciudad y correo
+// de contacto (sin nombre completo, dirección exacta ni teléfono).
+// Puedes sobreescribir RUC/domicilio/correo por variables de entorno (VITE_LEGAL_*).
 export const LEGAL = {
-  razonSocial: import.meta.env.VITE_LEGAL_RAZON_SOCIAL || '[Razón social o titular — COMPLETAR]',
-  ruc: import.meta.env.VITE_LEGAL_RUC || '[RUC — COMPLETAR]',
-  domicilio: import.meta.env.VITE_LEGAL_DOMICILIO || '[Domicilio fiscal — COMPLETAR]',
-  email: import.meta.env.VITE_LEGAL_EMAIL || '[correo de contacto — COMPLETAR]',
-  telefono: import.meta.env.VITE_LEGAL_TELEFONO || APP_CONFIG.whatsappNumber,
+  titular: 'ContactHub',
+  operadoPor: 'Persona natural con negocio registrada en SUNAT',
+  ruc: import.meta.env.VITE_LEGAL_RUC || '10713374216',
+  domicilio: import.meta.env.VITE_LEGAL_DOMICILIO || 'Callao, Perú',
+  email: import.meta.env.VITE_LEGAL_EMAIL || 'jesusabazalo@gmail.com',
   ciudad: 'Lima, Perú',
   updated: '01 de julio de 2026',
 } as const;

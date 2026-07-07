@@ -1,4 +1,3 @@
-import { BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 
@@ -11,9 +10,6 @@ const exploreLinks = [
 ];
 
 const trustLinks = [
-  { label: 'Términos y condiciones', to: '/terminos' },
-  { label: 'Política de privacidad', to: '/privacidad' },
-  { label: 'Política de devoluciones', to: '/devoluciones' },
   { label: 'Preguntas frecuentes', to: '/faq' },
   { label: 'Soporte', to: '/soporte' },
 ];
@@ -86,15 +82,8 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-border py-5">
-        <div className="container-shell flex flex-col gap-3 text-xs text-content-muted sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-shell text-xs text-content-muted">
           <span>© {year} ContactHub · Hecho en Perú</span>
-          <Link
-            to="/reclamaciones"
-            className="focus-ring inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 font-semibold text-content transition hover:border-brand/40"
-          >
-            <BookOpen className="h-4 w-4 text-brand-text" />
-            Libro de Reclamaciones
-          </Link>
         </div>
       </div>
     </footer>
