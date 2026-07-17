@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { onOverlayClick, useModalDismiss } from '../../hooks/useModalDismiss';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type ProfileWelcome = {
@@ -59,9 +60,9 @@ export default function WelcomeModal() {
             duration: 4000,
             position: 'top-center',
             style: {
-              background: '#0d2a1f',
-              border: '1px solid rgba(29,180,122,0.45)',
-              color: '#fff',
+              background: 'rgb(var(--surface))',
+              border: '1px solid rgb(var(--brand) / 0.45)',
+              color: 'rgb(var(--content))',
             },
           });
           window.localStorage.setItem(lastWelcomeKey, String(Date.now()));
@@ -87,10 +88,12 @@ export default function WelcomeModal() {
     setIsOpen(false);
   }
 
+  useModalDismiss(isOpen, closeWelcome);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md">
+    <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md" onClick={onOverlayClick(closeWelcome)}>
       <div className="welcome-particles absolute inset-0" />
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-brand-400/30 bg-surface p-6 text-center shadow-[0_26px_90px_rgba(0,0,0,0.55)] sm:p-8">
         <div className="onboarding-confetti" />

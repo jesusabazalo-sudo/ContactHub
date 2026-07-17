@@ -8,6 +8,7 @@ import ContactsMaintenancePanel from '../../components/admin/ContactsMaintenance
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { buildOfficialCategoryOptions, officialCategories, type OfficialCategoryDisplay } from '../../data/officialCategories';
+import { onOverlayClick, useModalDismiss } from '../../hooks/useModalDismiss';
 import { sanitizePhone, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { normalizeSearchText, searchContacts } from '../../lib/searchUtils';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
@@ -482,6 +483,7 @@ function getLegacyFolderValues(row: Record<string, unknown>) {
 export default function AdminContactsPage() {
   const persistedState = useMemo(loadPersistedAdminContactsState, []);
   const hasLoadedContactsRef = useRef(false);
+  const loadContactsRequestIdRef = useRef(0);
   const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(persistedState.selectedCategory ?? 'all');
@@ -675,6 +677,7 @@ export default function AdminContactsPage() {
   };
 
   const loadContacts = async () => {
+    const requestId = ++loadContactsRequestIdRef.current;
     if (!supabase || !isSupabaseConfigured) {
       setContacts([]);
       setTotalCount(0);
@@ -757,6 +760,8 @@ export default function AdminContactsPage() {
         ? locallyFilteredRows.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
         : locallyFilteredRows;
 
+      if (requestId !== loadContactsRequestIdRef.current) return; // filtro cambió mientras cargaba: descarta respuesta obsoleta
+
       setContacts(enriched);
       hasLoadedContactsRef.current = true;
       setSelectedIds([]);
@@ -772,6 +777,7 @@ export default function AdminContactsPage() {
       if (selectedCategory && selectedCategory !== 'all') countQuery = countQuery.eq('category_id', selectedCategory);
       countQuery = applyStatusVisibility(countQuery);
       const { count, error: countError } = await countQuery;
+      if (requestId !== loadContactsRequestIdRef.current) return;
       if (countError) {
         logSupabaseError('AdminContactsPage count query failed:', countError);
         setTotalCount(enriched.length);
@@ -779,11 +785,14 @@ export default function AdminContactsPage() {
         setTotalCount(count ?? 0);
       }
     } catch (err) {
+      if (requestId !== loadContactsRequestIdRef.current) return;
       console.error('loadContacts error:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar contactos. Revisa consola o configuración de Supabase.');
     } finally {
-      setLoading(false);
-      setIsSearching(false);
+      if (requestId === loadContactsRequestIdRef.current) {
+        setLoading(false);
+        setIsSearching(false);
+      }
     }
   };
 
@@ -828,14 +837,13 @@ export default function AdminContactsPage() {
   }, [debouncedSearch, selectedCategory, selectedStatus, currentPage, realCategoryIds.join('|')]);
 
   useEffect(() => {
-    if (!isAddOpen) return undefined;
+    if (!isAddOpen) return;
     void loadCategories();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeAddModal();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
   }, [isAddOpen]);
+
+  useModalDismiss(isAddOpen, closeAddModal);
+  useModalDismiss(Boolean(repairPlan), () => setRepairPlan(null));
+  useModalDismiss(Boolean(editing), () => setEditing(null));
 
   function openEdit(contact: ContactRow) {
     setEditing(contact);
@@ -1187,6 +1195,12 @@ export default function AdminContactsPage() {
 
   async function bulkUpdateStatus() {
     if (!selectedIds.length) return;
+    if (
+      (bulkStatus === 'inactive' || bulkStatus === 'rejected') &&
+      !window.confirm(`Vas a cambiar el estado de ${selectedIds.length} contacto(s) a "${bulkStatus}". Dejarán de verse en el catálogo público. ¿Deseas continuar?`)
+    ) {
+      return;
+    }
     setActionLoading(true);
     try {
       await Promise.all(selectedIds.map((id) => updateContactCompat(id, { status: bulkStatus, is_active: bulkStatus !== 'inactive' })));
@@ -1865,7 +1879,7 @@ export default function AdminContactsPage() {
       ) : null}
 
       {repairPlan ? (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/75 p-4">
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/75 p-4" onClick={onOverlayClick(() => setRepairPlan(null))}>
           <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-yellow-300/25 bg-surface p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1924,7 +1938,7 @@ export default function AdminContactsPage() {
       ) : null}
 
       {editing ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onOverlayClick(() => setEditing(null))}>
           <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1961,7 +1975,7 @@ export default function AdminContactsPage() {
       ) : null}
 
       {isAddOpen ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onOverlayClick(closeAddModal)}>
           <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
               <div>

@@ -7,6 +7,7 @@ import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { onOverlayClick, useModalDismiss } from '../../hooks/useModalDismiss';
 import { formatDate } from '../../lib/format';
 import { sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
@@ -49,6 +50,8 @@ export default function AdminUsersPage() {
   const [isGiftSaving, setIsGiftSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useModalDismiss(Boolean(giftUser), () => setGiftUser(null));
 
   async function loadUsers() {
     setIsLoading(true);
@@ -245,7 +248,7 @@ export default function AdminUsersPage() {
                     <td className="py-4 pr-4">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`h-2 w-2 rounded-full ${item.isOnline ? 'animate-pulse bg-brand-400' : 'bg-gray-600'}`}
+                          className={`h-2 w-2 rounded-full ${item.isOnline ? 'animate-pulse bg-brand-400' : 'bg-border-strong'}`}
                           aria-hidden="true"
                         />
                         <span className={`text-xs font-semibold ${item.isOnline ? 'text-brand-text' : 'text-content-muted'}`}>
@@ -339,7 +342,7 @@ export default function AdminUsersPage() {
       </div>
 
       {giftUser ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onOverlayClick(() => setGiftUser(null))}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-canvas p-6">
             <h3 className="font-display text-2xl font-bold text-content">Regalar acceso</h3>
             <p className="mt-2 text-sm text-content-secondary">{giftUser.email ?? 'Usuario sin email'}</p>

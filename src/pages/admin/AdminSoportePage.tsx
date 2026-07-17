@@ -42,6 +42,7 @@ export default function AdminSoportePage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(searchParams.get('user'));
   const [reply, setReply] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadSupport() {
@@ -128,21 +129,33 @@ export default function AdminSoportePage() {
   }
 
   async function sendReply() {
-    if (!selectedUserId || !reply.trim() || !user?.id) return;
+    if (!selectedUserId || !user?.id) return;
+    if (!reply.trim()) {
+      toast.error('Escribe una respuesta antes de enviar.');
+      return;
+    }
     const message = sanitizeText(reply, 500);
-    setReply('');
     const client = ensureClient();
     if (!client) return;
-    const { error: insertError } = await client.from('chat_messages').insert({
-      user_id: selectedUserId,
-      session_id: selectedUserId,
-      sender: 'admin',
-      read: false,
-      message,
-    });
-    if (insertError) toast.error(insertError.message);
-    else toast.success('Respuesta enviada.');
-    await loadSupport();
+    setIsSending(true);
+    try {
+      const { error: insertError } = await client.from('chat_messages').insert({
+        user_id: selectedUserId,
+        session_id: selectedUserId,
+        sender: 'admin',
+        read: false,
+        message,
+      });
+      if (insertError) {
+        toast.error(insertError.message);
+        return;
+      }
+      setReply('');
+      toast.success('Respuesta enviada.');
+      await loadSupport();
+    } finally {
+      setIsSending(false);
+    }
   }
 
   if (isLoading) return <LoadingState title="Cargando soporte" message="Leyendo conversaciones internas." />;
@@ -158,10 +171,10 @@ export default function AdminSoportePage() {
             {conversations.map((conversation) => (
               <button key={conversation.userId} type="button" onClick={() => void openConversation(conversation.userId)} className="block w-full py-4 text-left">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-content">{conversation.email ?? conversation.userId}</p>
-                  {conversation.unread ? <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-content">{conversation.unread} nuevos</span> : null}
+                  <p className="min-w-0 flex-1 truncate font-semibold text-content">{conversation.email ?? conversation.userId}</p>
+                  {conversation.unread ? <span className="flex-none rounded-full bg-red-500 px-2 py-1 text-xs font-bold text-content">{conversation.unread} nuevos</span> : null}
                 </div>
-                <p className="mt-1 text-sm text-content-secondary">{conversation.lastMessage}</p>
+                <p className="mt-1 truncate text-sm text-content-secondary">{conversation.lastMessage}</p>
                 <p className="mt-1 text-xs text-content-muted">{formatDate(conversation.lastDate)}</p>
               </button>
             ))}
@@ -183,10 +196,21 @@ export default function AdminSoportePage() {
                 ))}
               </div>
               <div className="mt-4 flex gap-2">
-                <input value={reply} onChange={(event) => setReply(sanitizeTextInput(event.target.value, 500))} className="focus-ring h-11 flex-1 rounded-full border border-border bg-canvas/70 px-4 text-content" placeholder="Respuesta" />
-                <button type="button" onClick={() => void sendReply()} className="focus-ring inline-flex h-11 items-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950">
+                <input
+                  value={reply}
+                  onChange={(event) => setReply(sanitizeTextInput(event.target.value, 500))}
+                  disabled={isSending}
+                  className="focus-ring h-11 flex-1 rounded-full border border-border bg-canvas/70 px-4 text-content disabled:opacity-60"
+                  placeholder="Respuesta"
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendReply()}
+                  disabled={isSending}
+                  className="focus-ring inline-flex h-11 items-center gap-2 rounded-full bg-brand-400 px-5 text-sm font-bold text-ink-950 transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   <Send className="h-4 w-4" />
-                  Enviar respuesta
+                  {isSending ? 'Enviando...' : 'Enviar respuesta'}
                 </button>
               </div>
             </>

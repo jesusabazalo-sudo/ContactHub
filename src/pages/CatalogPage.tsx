@@ -42,13 +42,16 @@ export default function CatalogPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadPurchasedCategories() {
       if (!user?.id || !supabase) {
-        setPurchasedCategoryIds(new Set());
+        if (!cancelled) setPurchasedCategoryIds(new Set());
         return;
       }
 
       const { data, error: accessError } = await supabase.from('user_category_access').select('category_id').eq('user_id', user.id).eq('status', 'active');
+      if (cancelled) return; // usuario cambió mientras cargaba: descarta respuesta obsoleta
       if (accessError) {
         console.error('CatalogPage access error:', accessError);
         setPurchasedCategoryIds(new Set());
@@ -59,6 +62,9 @@ export default function CatalogPage() {
     }
 
     void loadPurchasedCategories();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   const categoryIdsKey = useMemo(() => categories.map((category) => category.id).join('|'), [categories]);
