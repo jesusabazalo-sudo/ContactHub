@@ -312,19 +312,19 @@ function findCategoryFromText(text: string) {
 
 function YapeQrMessage({ paymentName }: { paymentName: string }) {
   return (
-    <div style={{ textAlign: 'center', padding: '12px' }}>
-      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>
+    <div className="p-3 text-center">
+      <p className="mb-3 text-[13px] text-content-secondary">
         💜 Escanea este QR con tu app Yape para pagar:
       </p>
       <img
         src={APP_CONFIG.qrYapeUrl}
         alt="QR Yape - titular asociado a ContactHub"
-        style={{ width: '200px', maxWidth: '100%', borderRadius: '12px', border: '2px solid #1DB47A', margin: '0 auto' }}
+        className="mx-auto w-[200px] max-w-full rounded-xl border-2 border-brand"
       />
-      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '8px' }}>
+      <p className="mt-2 text-[11px] text-content-muted">
         Titular asociado a ContactHub: {paymentName}
       </p>
-      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+      <p className="text-[11px] text-content-muted">
         Después de pagar, toca "Ya pagué" y envía el comprobante
       </p>
     </div>
@@ -462,6 +462,8 @@ export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([localMessage(welcomeMessage, 'admin')]);
   const [text, setText] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const isSendingMessageRef = useRef(false);
   const [unread, setUnread] = useState(0);
   const [currentFlow, setCurrentFlow] = useState<ChatFlow>('main');
   const [selectedPlan, setSelectedPlan] = useState<ChatPlan | null>(null);
@@ -589,7 +591,7 @@ export default function ChatWidget() {
 
   async function persistMessage(message: string, sender: 'user' | 'admin', read = false, extras: Partial<ChatMessage> = {}) {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
-    await dynamicSupabase().from('chat_messages').insert({
+    const { error } = await dynamicSupabase().from('chat_messages').insert({
       user_id: user.id,
       session_id: user.id,
       sender,
@@ -604,6 +606,7 @@ export default function ChatWidget() {
       attachment_size: extras.attachment_size ?? null,
       comprobante_status: extras.comprobante_status ?? 'pendiente',
     });
+    if (error) console.error('chat_messages insert:', error.message);
   }
 
   async function addAssistantMessage(message: string, nextFlow?: ChatFlow, kind: ChatMessage['kind'] = 'text') {
@@ -735,7 +738,7 @@ export default function ChatWidget() {
       const uploaded = await uploadReceiptToSupabase(file);
       if (!uploaded) throw new Error('No se pudo subir el comprobante.');
 
-      const localAttachmentId = await addUserMessage(`ðŸ“Ž Comprobante adjuntado: ${file.name}`, {
+      const localAttachmentId = await addUserMessage(`📎 Comprobante adjuntado: ${file.name}`, {
         has_attachment: true,
         attachment_path: uploaded.path,
         attachment_type: file.type,
@@ -748,7 +751,7 @@ export default function ChatWidget() {
       setSelectedReceiptFile(null);
       setSelectedReceiptPreviewUrl(null);
       if (receiptInputRef.current) receiptInputRef.current.value = '';
-      toast.success('âœ… Comprobante enviado correctamente');
+      toast.success('✅ Comprobante enviado correctamente');
 
       setIsTyping(true);
       await delay(2000);
@@ -759,7 +762,7 @@ export default function ChatWidget() {
       );
     } catch (error) {
       console.error('Error subiendo comprobante:', error);
-      toast.error('Error al enviar. Intenta de nuevo.');
+      toast.error(error instanceof Error ? error.message : 'Error al enviar. Intenta de nuevo.');
     } finally {
       setIsUploadingReceipt(false);
     }
@@ -940,17 +943,25 @@ export default function ChatWidget() {
   }
 
   async function sendMessage(messageOverride?: string) {
+    if (isSendingMessageRef.current) return;
     const message = sanitizeText(messageOverride ?? text, 500);
     if (!message) return;
+    isSendingMessageRef.current = true;
+    setIsSendingMessage(true);
     setText('');
     setIsOpen(true);
-    await addUserMessage(message);
-    window.setTimeout(() => {
-      void handleTextIntent(message);
-    }, 250);
+    try {
+      await addUserMessage(message);
+      window.setTimeout(() => {
+        void handleTextIntent(message);
+      }, 250);
+    } finally {
+      isSendingMessageRef.current = false;
+      setIsSendingMessage(false);
+    }
   }
 
-  async function loadMessages() {
+  async function loadMessages(isRetry = false) {
     if (!user?.id || !supabase || !isSupabaseConfigured) return;
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const client = dynamicSupabase();
@@ -960,9 +971,16 @@ export default function ChatWidget() {
       .eq('user_id', user.id)
       .gte('created_at', oneDayAgo)
       .order('created_at', { ascending: true });
-    if (error) return;
+    if (error) {
+      console.error('chat_messages load:', error.message);
+      return;
+    }
     if (!data?.length) {
-      await dynamicSupabase().from('chat_messages').insert({
+      if (isRetry) {
+        console.error('chat_messages renewal insert did not produce a message; keeping local welcome message.');
+        return;
+      }
+      const { error: insertError } = await dynamicSupabase().from('chat_messages').insert({
         user_id: user.id,
         session_id: user.id,
         sender: 'admin',
@@ -970,7 +988,11 @@ export default function ChatWidget() {
         message: renewedMessage,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       });
-      await loadMessages();
+      if (insertError) {
+        console.error('chat_messages renewal insert:', insertError.message);
+        return;
+      }
+      await loadMessages(true);
       return;
     }
     const nextMessages = (data ?? []) as ChatMessage[];
@@ -1194,7 +1216,12 @@ export default function ChatWidget() {
                 rows={2}
                 className="chat-textarea focus-ring min-h-[60px] max-h-[160px] flex-1 resize-none bg-transparent px-4 py-3 text-[15px] leading-6 text-content placeholder:text-content-muted"
               />
-              <button type="button" onClick={() => void sendMessage()} className="focus-ring btn-primary-glow inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-glow transition hover:bg-white active:scale-95">
+              <button
+                type="button"
+                onClick={() => void sendMessage()}
+                disabled={isSendingMessage}
+                className="focus-ring btn-primary-glow inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-glow transition hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 <Send className="h-5 w-5" />
               </button>
             </div>

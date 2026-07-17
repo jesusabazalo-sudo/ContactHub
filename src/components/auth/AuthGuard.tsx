@@ -27,7 +27,7 @@ export default function AuthGuard({ children }: PropsWithChildren) {
     return (
       <div className="min-h-screen bg-surface px-4 py-10 text-content">
         <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-2xl place-items-center">
-          <div className="w-full rounded-3xl border border-brand-400/25 bg-[rgba(15,32,39,0.94)] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+          <div className="w-full rounded-3xl border border-brand-400/25 bg-surface p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-400/15 text-2xl">🔐</div>
             <h1 className="mt-5 font-display text-2xl font-bold text-content">Para guardar tu acceso necesitamos que inicies sesión.</h1>
             <p className="mt-4 text-sm leading-6 text-content-secondary">

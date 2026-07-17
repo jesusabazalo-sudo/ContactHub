@@ -153,12 +153,13 @@ export default function PublicReviews() {
         return;
       }
 
-      await client.from('reward_requests').insert({
+      const { error: rewardError } = await client.from('reward_requests').insert({
         user_id: user.id,
         review_id: data?.id ?? null,
         status: 'pending',
         admin_note: 'Solicitud creada desde reseña pública. Falta validar captura por chat si aplica.',
       });
+      if (rewardError) console.error('reward_requests insert:', rewardError.message);
 
       setSent(true);
       setComment('');

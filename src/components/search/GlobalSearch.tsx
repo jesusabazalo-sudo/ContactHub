@@ -199,7 +199,7 @@ export default function GlobalSearch() {
                           navigate(`/catalogo/${contact.categorySlug}`);
                           setIsOpen(false);
                         }}
-                        className="focus-ring rounded-lg border border-border bg-black/15 p-3 text-left transition hover:border-brand-400/30"
+                        className="focus-ring rounded-lg border border-border bg-muted p-3 text-left transition hover:border-brand-400/30"
                       >
                         <span className="line-clamp-1 text-sm font-bold text-content"><Highlight text={contact.name} query={debouncedQuery} /></span>
                         <span className="mt-1 line-clamp-2 block text-xs leading-5 text-content-secondary">{contact.description || contact.categoryName}</span>

@@ -7,6 +7,7 @@ import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { onOverlayClick, useModalDismiss } from '../../hooks/useModalDismiss';
 import { sanitizeEmail, sanitizeText, sanitizeTextInput } from '../../lib/sanitize';
 import { formatDate } from '../../lib/format';
 import {
@@ -56,6 +57,8 @@ export default function AdminAccessPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [activationError, setActivationError] = useState<string | null>(null);
+
+  useModalDismiss(isTotalConfirmOpen, () => setIsTotalConfirmOpen(false));
 
   const selectedPending = useMemo(
     () => pendingPurchases.find((purchase) => purchase.id === selectedPendingId) ?? null,
@@ -791,7 +794,7 @@ export default function AdminAccessPage() {
         </section>
       </div>
       {isTotalConfirmOpen && selectedUser ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" onClick={onOverlayClick(() => setIsTotalConfirmOpen(false))}>
           <div className="w-full max-w-md rounded-2xl border border-brand-400/30 bg-surface p-6 shadow-2xl shadow-brand-400/10">
             <h3 className="text-xl font-bold text-content">Confirmar acceso total</h3>
             <p className="mt-3 text-sm leading-6 text-content-secondary">

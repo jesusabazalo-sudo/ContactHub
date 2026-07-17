@@ -132,7 +132,7 @@ export default function PromoOffers({ compact = false }: { compact?: boolean }) 
               ) : (
                 <span className="mt-3 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-bold text-content">Precio base</span>
               )}
-              <div className="mt-4 rounded-xl border border-brand-400/20 bg-brand-400/10 p-3 text-sm leading-6 text-gray-100">{offer.gift}</div>
+              <div className="mt-4 rounded-xl border border-brand-400/20 bg-brand-400/10 p-3 text-sm leading-6 text-content-secondary">{offer.gift}</div>
               <button
                 type="button"
                 onClick={() => openChat(offer.message)}

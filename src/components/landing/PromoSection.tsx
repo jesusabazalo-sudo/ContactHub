@@ -14,7 +14,7 @@ export default function PromoSection() {
             <h2 className="font-display text-2xl font-bold text-content">Hoy los precios son estos.</h2>
             <p className="mt-2 text-sm leading-6 text-content-secondary">Mañana no prometo nada.</p>
           </div>
-          <Link to="/promos" className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-ink-950 transition hover:bg-brand-400">
+          <Link to="/promos" className="focus-ring btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-bold text-brand-contrast transition hover:bg-brand-hover">
             Ver promociones
             <ArrowRight className="h-4 w-4" />
           </Link>

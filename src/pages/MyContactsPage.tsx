@@ -34,10 +34,12 @@ export default function MyContactsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastSilentRefreshRef = useRef(0);
+  const currentUserIdRef = useRef<string | null>(null);
   const debouncedQuery = useDebouncedValue(query, 350);
 
   async function loadMyContacts(options?: { silent?: boolean }) {
-    if (!user?.id) {
+    const requestUserId = user?.id ?? null;
+    if (!requestUserId) {
       setData(null);
       setIsLoading(false);
       return;
@@ -48,9 +50,10 @@ export default function MyContactsPage() {
     setError(null);
 
     try {
-      const nextData = await getMyContactsData(user.id);
+      const nextData = await getMyContactsData(requestUserId);
+      if (currentUserIdRef.current !== requestUserId) return; // usuario cambió mientras cargaba: descarta respuesta obsoleta
       const nextUnlockedCount = nextData.folders.length;
-      const storageKey = `contacthub:unlocked-folders:${user.id}`;
+      const storageKey = `contacthub:unlocked-folders:${requestUserId}`;
       const previousValue = window.localStorage.getItem(storageKey);
 
       if (previousValue !== null && nextUnlockedCount > Number(previousValue)) {
@@ -63,6 +66,7 @@ export default function MyContactsPage() {
         setActiveCategoryId('all');
       }
     } catch (loadError) {
+      if (currentUserIdRef.current !== requestUserId) return;
       const message = loadError instanceof Error ? loadError.message : 'No se pudieron cargar tus contactos.';
       if (options?.silent && data) {
         toast.error('No se pudieron actualizar tus accesos. Conservamos los datos anteriores.');
@@ -71,12 +75,15 @@ export default function MyContactsPage() {
         setError(message);
       }
     } finally {
-      if (options?.silent) setIsRefreshing(false);
-      else setIsLoading(false);
+      if (currentUserIdRef.current === requestUserId) {
+        if (options?.silent) setIsRefreshing(false);
+        else setIsLoading(false);
+      }
     }
   }
 
   useEffect(() => {
+    currentUserIdRef.current = user?.id ?? null;
     void loadMyContacts();
   }, [user?.id]);
 
@@ -166,7 +173,7 @@ export default function MyContactsPage() {
             {autofill.fullName || autofill.displayName ? (
               <p className="mb-2 text-base font-semibold text-content">Hola, {autofill.displayName || autofill.fullName} 👋</p>
             ) : null}
-            <h1 className="font-display text-4xl font-bold leading-tight text-content">Tu camino dentro de ContactHub.</h1>
+            <h1 className="font-display text-3xl font-bold leading-tight text-content sm:text-4xl">Tu camino dentro de ContactHub.</h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-content-secondary">
               Aquí ves tus carpetas activas, tus contactos disponibles y el progreso hacia un acceso más completo.
             </p>
@@ -192,7 +199,7 @@ export default function MyContactsPage() {
               <p className="mt-2 text-sm text-content-secondary">Ya tienes carpetas desbloqueadas. Puedes ver tus contactos completos aqui.</p>
             </div>
             <div className="text-right">
-              <p className="font-display text-3xl font-bold text-brand-text">{progress}%</p>
+              <p className="font-display text-4xl font-bold text-brand-text">{progress}%</p>
               <p className="mt-1 text-sm text-content-secondary">{data.contacts.length} contactos visibles</p>
             </div>
           </div>

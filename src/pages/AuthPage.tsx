@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Eye, EyeOff, LockKeyhole, Mail, UserRound } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, Mail, UserRound, X } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import SupabaseMissingAlert from '../components/system/SupabaseMissingAlert';
 import { useAuth } from '../features/auth/AuthProvider';
+import { onOverlayClick, useModalDismiss } from '../hooks/useModalDismiss';
 import { checkRateLimit, getRateLimitMessage } from '../lib/rateLimit';
 import { sanitizeEmail, sanitizeText } from '../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
@@ -61,6 +62,7 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [taglineIndex, setTaglineIndex] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -178,12 +180,15 @@ export default function AuthPage() {
       return;
     }
 
+    setIsResettingPassword(true);
     try {
       await resetPassword(safeEmail);
       toast.success('Te enviamos las instrucciones al correo.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo enviar la recuperación.';
       toast.error(message);
+    } finally {
+      setIsResettingPassword(false);
     }
   }
 
@@ -242,6 +247,14 @@ export default function AuthPage() {
 
     void completeOnboarding();
   }
+
+  function closeOnboarding() {
+    window.localStorage.removeItem('contacthub_pending_onboarding');
+    setShowOnboarding(false);
+    navigate('/catalogo', { replace: true });
+  }
+
+  useModalDismiss(showOnboarding && !onboardingDone, closeOnboarding);
 
   return (
     <section className={`relative min-h-screen overflow-hidden bg-canvas px-4 py-8 ${isLoading ? 'auth-loading' : ''}`}>
@@ -369,16 +382,29 @@ export default function AuthPage() {
             <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="focus-ring rounded-full px-3 py-2 font-semibold text-brand-text hover:text-content">
               {mode === 'login' ? '¿Nuevo aquí? Crea tu cuenta gratis' : 'Ya tengo cuenta, quiero entrar'}
             </button>
-            <button type="button" onClick={handlePasswordReset} className="focus-ring rounded-full px-3 py-2 text-xs font-semibold text-content-muted transition hover:text-content">
-              Olvidé mi contraseña
+            <button type="button" onClick={handlePasswordReset} disabled={isResettingPassword} className="focus-ring rounded-full px-3 py-2 text-xs font-semibold text-content-muted transition hover:text-content disabled:cursor-not-allowed disabled:opacity-60">
+              {isResettingPassword ? 'Enviando...' : 'Olvidé mi contraseña'}
             </button>
           </div>
         </div>
       </div>
 
       {showOnboarding ? (
-        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/70 p-4 backdrop-blur-md"
+          onClick={onboardingDone ? undefined : onOverlayClick(closeOnboarding)}
+        >
           <div className="relative w-full max-w-[480px] overflow-hidden rounded-3xl border border-brand-400/20 bg-surface p-5 shadow-[0_24px_80px_rgba(0,0,0,0.48)] sm:p-7">
+            {!onboardingDone ? (
+              <button
+                type="button"
+                onClick={closeOnboarding}
+                aria-label="Cerrar"
+                className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-muted p-2 text-content-secondary transition hover:text-content"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
             {onboardingDone ? (
               <div className="relative py-12 text-center">
                 <div className="onboarding-confetti" />

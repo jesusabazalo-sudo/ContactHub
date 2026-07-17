@@ -81,41 +81,13 @@ export default function AuthCallbackPage() {
   }, [navigate]);
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0F2027',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '20px',
-        color: '#fff',
-        padding: '20px',
-        textAlign: 'center',
-      }}
-    >
-      <div style={{ fontSize: '48px' }}>{state === 'soft-error' ? '⚠️' : '✅'}</div>
-      <h2 style={{ fontSize: '22px', fontWeight: 700 }}>ContactHub</h2>
-      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px', maxWidth: '320px', lineHeight: 1.6 }}>{status}</p>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-canvas p-5 text-center text-content">
+      <div className="text-5xl">{state === 'soft-error' ? '⚠️' : '✅'}</div>
+      <h2 className="text-xl font-bold text-content">ContactHub</h2>
+      <p className="max-w-xs text-[15px] leading-7 text-content-secondary">{status}</p>
       {state === 'loading' ? (
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid rgba(29,180,122,0.3)',
-            borderTop: '3px solid #1DB47A',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-          }}
-        />
+        <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-brand/30 border-t-brand" />
       ) : null}
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

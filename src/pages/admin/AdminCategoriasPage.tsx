@@ -6,6 +6,7 @@ import AdminShell from '../../components/admin/AdminShell';
 import FriendlyErrorState from '../../components/system/FriendlyErrorState';
 import LoadingState from '../../components/system/LoadingState';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../../data/officialCategories';
+import { onOverlayClick, useModalDismiss } from '../../hooks/useModalDismiss';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
 type AdminCategoryRow = {
@@ -38,7 +39,10 @@ export default function AdminCategoriasPage() {
   const [editing, setEditing] = useState<AdminCategoryRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useModalDismiss(Boolean(editing), () => setEditing(null));
 
   async function loadCategories() {
     setIsLoading(true);
@@ -125,11 +129,19 @@ export default function AdminCategoriasPage() {
   }
 
   async function toggleValue(category: AdminCategoryRow, key: 'is_active' | 'is_featured' | 'is_new' | 'is_top') {
+    if (key === 'is_active' && category.is_active) {
+      const confirmed = window.confirm(`Vas a desactivar "${category.name}". Dejará de verse en el catálogo público. ¿Deseas continuar?`);
+      if (!confirmed) return;
+    }
+    const cellKey = `${category.id}-${key}`;
+    setTogglingKey(cellKey);
     try {
       const ok = await updateCategory(category.id, { [key]: !category[key] });
       toast[ok ? 'success' : 'error'](ok ? 'Carpeta actualizada.' : 'No se pudo actualizar.');
     } catch (toggleError) {
       toast.error(toggleError instanceof Error ? toggleError.message : 'No se pudo actualizar.');
+    } finally {
+      setTogglingKey((current) => (current === cellKey ? null : current));
     }
   }
 
@@ -250,7 +262,8 @@ export default function AdminCategoriasPage() {
                       <button
                         type="button"
                         onClick={() => void toggleValue(category, key)}
-                        className={`h-6 w-11 rounded-full p-1 transition ${category[key] ? 'bg-brand-400' : 'bg-gray-700'}`}
+                        disabled={togglingKey === `${category.id}-${key}`}
+                        className={`h-6 w-11 rounded-full p-1 transition disabled:cursor-not-allowed disabled:opacity-60 ${category[key] ? 'bg-brand-400' : 'bg-muted'}`}
                         aria-label={key}
                       >
                         <span className={`block h-4 w-4 rounded-full bg-white transition ${category[key] ? 'translate-x-5' : ''}`} />
@@ -271,7 +284,7 @@ export default function AdminCategoriasPage() {
       </section>
 
       {editing ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={onOverlayClick(() => setEditing(null))}>
           <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
               <h3 className="font-display text-2xl font-bold text-content">Editar carpeta</h3>

@@ -65,6 +65,7 @@ export default function AdminRewardsPage() {
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [categoryId, setCategoryId] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadData() {
@@ -125,6 +126,7 @@ export default function AdminRewardsPage() {
       return;
     }
 
+    setProcessingId(selectedRequest.id);
     try {
       const client = clientAny();
       if (!client) {
@@ -147,10 +149,14 @@ export default function AdminRewardsPage() {
     } catch (approveError) {
       console.error('Error aprobando recompensa:', approveError);
       toast.error(approveError instanceof Error ? approveError.message : 'No se pudo aprobar.');
+    } finally {
+      setProcessingId(null);
     }
   }
 
   async function rejectRequest(request: RewardRow) {
+    if (!window.confirm('Vas a rechazar esta solicitud de recompensa. ¿Deseas continuar?')) return;
+    setProcessingId(request.id);
     try {
       const client = clientAny();
       if (!client) {
@@ -168,6 +174,8 @@ export default function AdminRewardsPage() {
     } catch (rejectError) {
       console.error('Error rechazando recompensa:', rejectError);
       toast.error(rejectError instanceof Error ? rejectError.message : 'No se pudo rechazar.');
+    } finally {
+      setProcessingId(null);
     }
   }
 
@@ -217,11 +225,21 @@ export default function AdminRewardsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => setSelectedRequestId(request.id)} className="focus-ring rounded-full bg-brand-400 px-3 py-2 text-xs font-bold text-ink-950">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRequestId(request.id)}
+                          disabled={processingId === request.id}
+                          className="focus-ring rounded-full bg-brand-400 px-3 py-2 text-xs font-bold text-ink-950 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
                           Seleccionar
                         </button>
-                        <button type="button" onClick={() => void rejectRequest(request)} className="focus-ring rounded-full border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-100">
-                          Rechazar
+                        <button
+                          type="button"
+                          onClick={() => void rejectRequest(request)}
+                          disabled={processingId === request.id}
+                          className="focus-ring rounded-full border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs font-bold text-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {processingId === request.id ? 'Procesando...' : 'Rechazar'}
                         </button>
                       </div>
                     </td>
@@ -260,9 +278,14 @@ export default function AdminRewardsPage() {
                 );
               })}
             </div>
-            <button type="button" onClick={() => void approveRequest()} disabled={!selectedRequest || selectedContactIds.length !== 3} className="focus-ring mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 disabled:opacity-50">
+            <button
+              type="button"
+              onClick={() => void approveRequest()}
+              disabled={!selectedRequest || selectedContactIds.length !== 3 || processingId === selectedRequest?.id}
+              className="focus-ring mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <Gift className="h-4 w-4" />
-              Aprobar recompensa
+              {processingId === selectedRequest?.id ? 'Procesando...' : 'Aprobar recompensa'}
             </button>
           </aside>
         </div>

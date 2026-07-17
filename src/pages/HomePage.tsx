@@ -15,6 +15,7 @@ import MissionsSection from '../components/missions/MissionsSection';
 import PublicReviews from '../components/reviews/PublicReviews';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../data/officialCategories';
 import { useAuth } from '../features/auth/AuthProvider';
+import { onOverlayClick, useModalDismiss } from '../hooks/useModalDismiss';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import { maskPhone } from '../utils/phone';
 
@@ -142,6 +143,8 @@ function TrialModal({ onClose }: { onClose: () => void }) {
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
+  useModalDismiss(true, onClose);
+
   useEffect(() => {
     async function load() {
       if (!user?.id || !supabase || !isSupabaseConfigured) return;
@@ -227,7 +230,7 @@ function TrialModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-4">
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-4" onClick={onOverlayClick(onClose)}>
       <div className="w-full max-w-4xl rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-start justify-between gap-4">
           <div>

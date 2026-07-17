@@ -6,6 +6,7 @@ import AdminShell from '../../components/admin/AdminShell';
 import LoadingState from '../../components/system/LoadingState';
 import { normalizeOfficialCategoryRows, type OfficialCategoryDisplay } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { onOverlayClick, useModalDismiss } from '../../hooks/useModalDismiss';
 import { formatDate } from '../../lib/format';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { grantCategoryAccess } from '../../services/accessService';
@@ -64,8 +65,8 @@ function statusLabel(status: ReceiptStatus | null | undefined) {
 
 function statusClass(status: ReceiptStatus | null | undefined) {
   if (status === 'verificado') return 'border-brand-400/30 bg-brand-400/10 text-brand-text';
-  if (status === 'rechazado') return 'border-red-400/30 bg-red-400/10 text-red-200';
-  return 'border-red-400/30 bg-red-400/10 text-red-100';
+  if (status === 'rechazado') return 'border-red-400/30 bg-red-400/10 text-danger';
+  return 'border-red-400/30 bg-red-400/10 text-danger/70';
 }
 
 function normalizeStatus(status: ReceiptStatus | null | undefined): ReceiptStatus {
@@ -82,6 +83,8 @@ export default function AdminPaymentReceiptsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingId, setIsUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useModalDismiss(Boolean(selectedReceipt), () => setSelectedReceipt(null));
 
   const counts = useMemo(() => ({
     all: receipts.length,
@@ -229,16 +232,27 @@ export default function AdminPaymentReceiptsPage() {
 
   async function rejectReceipt(receipt: ChatReceipt) {
     if (!receipt.user_id || !supabase || !isSupabaseConfigured) return;
+    if (!window.confirm('Vas a rechazar este comprobante y notificar al cliente que no se pudo verificar su pago. ¿Deseas continuar?')) return;
     const ok = await updateReceiptStatus(receipt, 'rechazado');
     if (!ok) return;
-    await supabase.from('chat_messages').insert({
-      user_id: receipt.user_id,
-      session_id: receipt.user_id,
-      sender: 'admin',
-      read: false,
-      message: 'Revisamos tu comprobante pero no pudimos verificarlo.\n\nPuedes enviarnos una captura mas clara del pago con monto y numero visible.\n\nEstamos aqui para ayudarte.',
-    });
-    toast.success('Comprobante rechazado y usuario notificado.');
+    setIsUpdatingId(receipt.id);
+    try {
+      const { error: notifyError } = await supabase.from('chat_messages').insert({
+        user_id: receipt.user_id,
+        session_id: receipt.user_id,
+        sender: 'admin',
+        read: false,
+        message: 'Revisamos tu comprobante pero no pudimos verificarlo.\n\nPuedes enviarnos una captura mas clara del pago con monto y numero visible.\n\nEstamos aqui para ayudarte.',
+      });
+      if (notifyError) {
+        console.error('reject notify insert:', notifyError.message);
+        toast.error('Comprobante rechazado, pero no pudimos notificar al cliente por chat.');
+        return;
+      }
+      toast.success('Comprobante rechazado y usuario notificado.');
+    } finally {
+      setIsUpdatingId(null);
+    }
   }
 
   // Núcleo único: concede acceso + marca verificado + notifica al cliente.
@@ -267,13 +281,14 @@ export default function AdminPaymentReceiptsPage() {
       }
 
       await dynamicSupabase().from('chat_messages').update({ comprobante_status: 'verificado', read: true }).eq('id', receipt.id);
-      await supabase.from('chat_messages').insert({
+      const { error: notifyError } = await supabase.from('chat_messages').insert({
         user_id: receipt.user_id,
         session_id: receipt.user_id,
         sender: 'admin',
         read: false,
         message: `Tu pago fue verificado.\n\nYa tienes acceso a: ${names.join(', ')}.\n\nPuedes ver todos los contactos ahora mismo. Gracias por confiar en ContactHub.`,
       });
+      if (notifyError) console.error('activation notify insert:', notifyError.message);
 
       setSelectedReceipt(null);
       setSelectedCategoryIds([]);
@@ -281,7 +296,7 @@ export default function AdminPaymentReceiptsPage() {
       toast.success(`Acceso activado para ${accessResult.targetUserEmail ?? 'el cliente'}: ${names.join(', ')}.`);
     } catch (activationError) {
       console.error('AdminPaymentReceiptsPage activate catch:', activationError);
-      toast.error('Error al activar. Intenta de nuevo.');
+      toast.error(activationError instanceof Error ? `Error al activar: ${activationError.message}` : 'Error al activar. Intenta de nuevo.');
     } finally {
       setIsUpdatingId(null);
     }
@@ -466,7 +481,7 @@ export default function AdminPaymentReceiptsPage() {
       </section>
 
       {selectedReceipt ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onOverlayClick(() => setSelectedReceipt(null))}>
           <div className="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-brand-400/25 bg-surface p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>

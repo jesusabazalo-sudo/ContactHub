@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useModalDismiss } from '../../hooks/useModalDismiss';
 
 type MobileMenuProps = {
   isOpen: boolean;
@@ -8,6 +9,7 @@ type MobileMenuProps = {
 };
 
 export default function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
+  useModalDismiss(isOpen, onClose);
   if (!isOpen) return null;
 
   return (

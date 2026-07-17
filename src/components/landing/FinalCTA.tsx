@@ -20,7 +20,7 @@ export default function FinalCTA() {
           <p className="mt-4 max-w-xl text-sm leading-7 text-content-secondary">
             Si ofreces un servicio, recurso o solución útil, envíanos tu información. Revisamos cada publicación antes de incorporarla.
           </p>
-          <Link to="/publica-tu-servicio" className="focus-ring mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-ink-950 transition hover:bg-emerald-100">
+          <Link to="/publica-tu-servicio" className="focus-ring mt-7 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-brand-contrast transition hover:bg-brand-hover">
             Publicar mi servicio
             <ArrowRight className="h-4 w-4" />
           </Link>
