@@ -118,6 +118,11 @@ export default function Hero() {
 
   return (
     <section className="hero-platform relative overflow-hidden border-b border-border">
+      <div className="hero-aurora" aria-hidden="true" />
+      <div className="hero-dots" aria-hidden="true" />
+      <div className="hero-particles" aria-hidden="true">
+        <span /><span /><span /><span /><span /><span />
+      </div>
       <div className="container-shell relative z-10 pb-16 pt-16 sm:pt-24 lg:pb-20 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center">
           <div className="professional-kicker mx-auto w-fit">
@@ -125,7 +130,7 @@ export default function Hero() {
             Plataforma organizada y acceso verificado
           </div>
           <h1 className="mt-7 font-display text-[2.5rem] font-bold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-7xl">
-            Encuentra contactos que te acerquen a tus metas.
+            <span className="gradient-heading">Encuentra</span> contactos que te acerquen a tus metas.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-content-secondary">
             Explora categorías, prueba contactos gratis y desbloquea solo la información que realmente necesitas.
@@ -134,7 +139,7 @@ export default function Hero() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               to="/catalogo"
-              className="btn-primary-glow focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast"
+              className="btn-primary-glow btn-glow-animated focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast"
             >
               Explorar catálogo
               <ArrowRight className="h-4 w-4" />
