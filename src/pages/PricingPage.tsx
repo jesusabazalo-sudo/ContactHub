@@ -21,7 +21,7 @@ export default function PricingPage() {
           <div className="mt-6 rounded-lg border border-brand-400/15 bg-brand-400/[0.05] p-5 text-sm leading-6 text-content-secondary">
             <p className="font-bold text-content">Proceso transparente</p>
             <p className="mt-2">
-              Los pagos se revisan manualmente. ContactHub no pide claves bancarias, codigos privados ni contrasenas externas. Si tienes dudas, abre el chat y pide orientacion antes de enviar un comprobante.
+              Los pagos se revisan manualmente. ContactHub no pide claves bancarias, códigos privados ni contraseñas externas. Si tienes dudas, abre el chat y pide orientación antes de enviar un comprobante.
             </p>
             <p className="mt-2 font-semibold text-brand-text">
               Paga solo si ya tienes claro qué carpeta o acceso quieres. Si tienes dudas, usa el chat antes.

@@ -54,7 +54,7 @@ export default function App() {
           <Route path="/servicios" element={<ServicesPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/politica-privacidad" element={<PrivacyPage />} />
-          <Route path="/privacidad" element={<PrivacyPage />} />
+          <Route path="/privacidad" element={<Navigate to="/politica-privacidad" replace />} />
           <Route path="/terminos" element={<TermsPage />} />
           <Route path="/devoluciones" element={<DevolucionesPage />} />
           <Route path="/reclamaciones" element={<ReclamacionesPage />} />
