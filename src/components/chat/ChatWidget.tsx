@@ -1061,7 +1061,7 @@ export default function ChatWidget() {
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
       <input ref={receiptInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
-        <div className="dopamine-card neon-edge fixed inset-x-[5vw] bottom-24 flex h-[85vh] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[min(680px,85vh)] sm:min-h-[520px] sm:w-[460px] sm:min-w-[380px] sm:max-w-[calc(100vw-2rem)]">
+        <div className="dopamine-card neon-edge fixed inset-x-[2vw] bottom-20 flex h-[90vh] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[min(780px,90vh)] sm:min-h-[600px] sm:w-[680px] sm:min-w-[480px] sm:max-w-[calc(100vw-2rem)]">
           <div className="flex items-start justify-between gap-4 border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-6 py-6">
             <div className="min-w-0">
               <p className="font-display text-2xl font-bold leading-tight text-content">Soporte ContactHub</p>
