@@ -1029,10 +1029,8 @@ export default function AdminContactsPage() {
       toast.error('No se puede aprobar: asigna una carpeta oficial válida.');
       return;
     }
-    if (!contact.description?.trim()) {
-      toast.error('No se puede aprobar: agrega una descripción útil.');
-      return;
-    }
+    const category = categoryById.get(contact.category_id);
+    const autoDescription = contact.description?.trim() || defaultDescriptionFor(category);
 
     setActionLoading(true);
     try {
@@ -1048,6 +1046,7 @@ export default function AdminContactsPage() {
         is_active: true,
         country_flag: detected.country_flag,
         country_code: detected.country_code,
+        description: autoDescription,
         internal_note: sanitizeText(`${contact.internal_note ?? ''}\nAprobado manualmente desde Admin Contactos.`, 700),
       });
       if (!ok) {
@@ -1807,19 +1806,19 @@ export default function AdminContactsPage() {
                     <td className="px-4 py-3 text-xs text-content-muted">{contact.created_at ? new Date(contact.created_at).toLocaleDateString('es-PE') : '-'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" disabled={actionLoading} onClick={() => openEdit(contact)} className="rounded-full border border-border bg-muted p-2 text-brand-text hover:border-brand-400/40" title="Editar">
+                        <button type="button" disabled={actionLoading} onClick={(e) => { e.stopPropagation(); openEdit(contact); }} className="rounded-full border border-border bg-muted p-2 text-brand-text hover:border-brand-400/40" title="Editar">
                           ✏️
                         </button>
-                        <button type="button" disabled={actionLoading || isPublicableContact(contact)} onClick={() => void approveContact(contact)} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-text hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
+                        <button type="button" disabled={actionLoading || isPublicableContact(contact)} onClick={(e) => { e.stopPropagation(); void approveContact(contact); }} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-text hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
                           <Check className="h-4 w-4" />
                         </button>
-                        <button type="button" disabled={actionLoading} onClick={() => openDuplicate(contact)} className="rounded-full border border-border bg-muted p-2 text-content hover:border-brand-400/40" title="Duplicar">
+                        <button type="button" disabled={actionLoading} onClick={(e) => { e.stopPropagation(); openDuplicate(contact); }} className="rounded-full border border-border bg-muted p-2 text-content hover:border-brand-400/40" title="Duplicar">
                           <Copy className="h-4 w-4" />
                         </button>
-                        <button type="button" disabled={actionLoading || contact.status === 'inactive'} onClick={() => void archiveRow(contact)} className="rounded-full border border-border bg-muted p-2 text-yellow-100 hover:border-yellow-300/40" title="Archivar">
+                        <button type="button" disabled={actionLoading || contact.status === 'inactive'} onClick={(e) => { e.stopPropagation(); void archiveRow(contact); }} className="rounded-full border border-border bg-muted p-2 text-yellow-100 hover:border-yellow-300/40" title="Archivar">
                           <Archive className="h-4 w-4" />
                         </button>
-                        <button type="button" disabled={actionLoading} onClick={() => void deleteRow(contact)} className="rounded-full border border-red-400/20 bg-red-500/10 p-2 text-red-300 hover:border-red-300/50" title="Archivar con confirmación">
+                        <button type="button" disabled={actionLoading} onClick={(e) => { e.stopPropagation(); void deleteRow(contact); }} className="rounded-full border border-red-400/20 bg-red-500/10 p-2 text-red-300 hover:border-red-300/50" title="Archivar con confirmación">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
