@@ -118,7 +118,21 @@ export default function Hero() {
 
   return (
     <section className="hero-platform relative overflow-hidden border-b border-border">
-      <div className="hero-aurora" aria-hidden="true" />
+      <div className="hero-nebula" aria-hidden="true">
+        <div className="nebula-orb nebula-orb-1" />
+        <div className="nebula-orb nebula-orb-2" />
+        <div className="nebula-orb nebula-orb-3" />
+        <div className="nebula-orb nebula-orb-4" />
+        <div className="nebula-orb nebula-orb-5" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+        <span className="nebula-sparkle" />
+      </div>
       <div className="hero-dots" aria-hidden="true" />
       <div className="hero-particles" aria-hidden="true">
         <span /><span /><span /><span /><span /><span />
