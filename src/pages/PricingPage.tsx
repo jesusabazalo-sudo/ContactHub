@@ -1,5 +1,8 @@
 import PromoSection from '../components/landing/PromoSection';
 import PricingCard from '../components/pricing/PricingCard';
+import PricingFAQ from '../components/pricing/PricingFAQ';
+import PricingSteps from '../components/pricing/PricingSteps';
+import TrustBadges from '../components/pricing/TrustBadges';
 import SectionHeading from '../components/ui/SectionHeading';
 import { pricingPlans } from '../data/pricing';
 import { Link } from 'react-router-dom';
@@ -27,6 +30,10 @@ export default function PricingPage() {
               Paga solo si ya tienes claro qué carpeta o acceso quieres. Si tienes dudas, usa el chat antes.
             </p>
           </div>
+          <div className="mt-10">
+            <TrustBadges />
+          </div>
+          <PricingSteps />
           <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {pricingPlans.map((plan, index) => (
               <div key={plan.id} className="float-in h-full" style={{ animationDelay: `${index * 70}ms` }}>
@@ -67,6 +74,7 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
+      <PricingFAQ />
       <PromoSection />
     </>
   );

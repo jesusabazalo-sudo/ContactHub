@@ -1,5 +1,11 @@
-import { Check, MessageCircle } from 'lucide-react';
+import { Check, CreditCard, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { APP_CONFIG } from '../../config/app';
+import { useAuth } from '../../features/auth/AuthProvider';
+import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
+import { isStripeEnabled } from '../../lib/stripe';
 import type { PricingPlan } from '../../types';
 import Badge from '../ui/Badge';
 
@@ -9,6 +15,9 @@ type PricingCardProps = {
 };
 
 export default function PricingCard({ plan, compact = false }: PricingCardProps) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const folderText = plan.folderLimit === 'total' ? 'Todas las carpetas' : `${plan.folderLimit} carpeta${plan.folderLimit === 1 ? '' : 's'}`;
   const chatMessages: Record<string, string> = {
     individual: 'Hola, quiero revisar la carpeta de S/20. Mi meta es encontrar una oportunidad concreta.',
@@ -20,6 +29,35 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
 
   function openChat() {
     window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: chatMessages[plan.id] ?? `Hola, quiero informacion sobre ${plan.name}` } }));
+  }
+
+  async function handleStripeCheckout() {
+    if (!user) {
+      navigate('/auth?redirect=/precios');
+      return;
+    }
+    if (!supabase || !isSupabaseConfigured) {
+      toast.error('El pago con tarjeta no está disponible en este momento.');
+      return;
+    }
+    setIsCheckingOut(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+        body: {
+          plan_id: plan.id,
+          user_id: user.id,
+          success_url: `${window.location.origin}/mis-contactos?pago=exitoso`,
+          cancel_url: `${window.location.origin}/precios`,
+        },
+      });
+      if (error) throw new Error(error.message);
+      const result = data as { url?: string; error?: string } | null;
+      if (!result?.url) throw new Error(result?.error ?? 'No se pudo iniciar el pago.');
+      window.location.href = result.url;
+    } catch (checkoutError) {
+      toast.error(checkoutError instanceof Error ? checkoutError.message : 'No se pudo iniciar el pago con tarjeta.');
+      setIsCheckingOut(false);
+    }
   }
 
   return (
@@ -58,18 +96,40 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
         <p className="mt-2">Incluye acceso a las carpetas indicadas y teléfonos completos cuando el permiso queda activo.</p>
         <p className="mt-2">No incluye resultados garantizados, claves privadas ni acceso automático sin revisión.</p>
       </div>
-      <button
-        type="button"
-        onClick={openChat}
-        className={`focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition ${
-          plan.isRecommended
-            ? 'bg-brand text-brand-contrast hover:bg-brand-hover'
-            : 'border border-border bg-surface text-content hover:border-brand/40'
-        }`}
-      >
-        <MessageCircle className="h-4 w-4" />
-        {plan.cta}
-      </button>
+      {isStripeEnabled ? (
+        <>
+          <button
+            type="button"
+            onClick={() => void handleStripeCheckout()}
+            disabled={isCheckingOut}
+            className="focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <CreditCard className="h-4 w-4" />
+            {isCheckingOut ? 'Redirigiendo...' : 'Pagar con tarjeta'}
+          </button>
+          <button
+            type="button"
+            onClick={openChat}
+            className="focus-ring mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-content transition hover:border-brand/40"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Pagar por Yape/Plin (sin comisión)
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={openChat}
+          className={`focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition ${
+            plan.isRecommended
+              ? 'bg-brand text-brand-contrast hover:bg-brand-hover'
+              : 'border border-border bg-surface text-content hover:border-brand/40'
+          }`}
+        >
+          <MessageCircle className="h-4 w-4" />
+          {plan.cta}
+        </button>
+      )}
     </article>
   );
 }

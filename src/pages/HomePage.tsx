@@ -9,6 +9,7 @@ import Hero from '../components/landing/Hero';
 import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
 import PromoSection from '../components/landing/PromoSection';
+import SocialProof from '../components/landing/SocialProof';
 import TrustExplainer from '../components/landing/TrustExplainer';
 import WhatYouReceive from '../components/landing/WhatYouReceive';
 import MissionsSection from '../components/missions/MissionsSection';
@@ -89,6 +90,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <SocialProof />
       <TrustExplainer />
       {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
       <HowItWorks />

@@ -623,8 +623,12 @@ select {
   will-change: transform, border-radius, opacity;
 }
 
-[data-theme='dark'] .nebula-orb { opacity: 1; }
-[data-theme='light'] .nebula-orb { opacity: 0.55; }
+/* Atenuado a propósito: la versión anterior (opacity: 1 / 0.55) generaba un
+   fondo demasiado "espectáculo" para un producto que necesita transmitir
+   confianza (feedback real: "parece una página que me va a estafar"). Menos
+   movimiento y menos intensidad = más premium, menos hype-site. */
+[data-theme='dark'] .nebula-orb { opacity: 0.45; }
+[data-theme='light'] .nebula-orb { opacity: 0.35; }
 
 /* Orbe 1 — grande, centro-arriba, movimiento lento */
 .nebula-orb-1 {
