@@ -1,5 +1,5 @@
 import { ArrowRight, CheckCircle2, Clock, Sparkles, Users } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 import { getOfficialCategoryDisplayParts } from '../../data/officialCategories';
@@ -31,7 +31,7 @@ function daysSince(dateString: string): number | null {
   return Math.max(0, Math.floor((Date.now() - then) / (1000 * 60 * 60 * 24)));
 }
 
-export default function CategoryCard({ category, accessLevel = 0 }: CategoryCardProps) {
+function CategoryCard({ category, accessLevel = 0 }: CategoryCardProps) {
   const display = getOfficialCategoryDisplayParts(category);
   const order = category.sortOrder ?? 0;
   const orderLabel = order ? String(order).padStart(2, '0') : '--';
@@ -203,3 +203,5 @@ function LockOpenIcon() {
     </svg>
   );
 }
+
+export default memo(CategoryCard);

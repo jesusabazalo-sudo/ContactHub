@@ -5,6 +5,7 @@ import { APP_CONFIG } from '../../config/app';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useRipple } from '../../hooks/useRipple';
+import { CACHE_TTL, queryCache } from '../../lib/queryCache';
 import { supabase } from '../../lib/supabaseClient';
 import GlobalSearch from '../search/GlobalSearch';
 
@@ -83,29 +84,31 @@ export default function Hero() {
         return;
       }
       try {
-        const { data: categories, error } = await supabase
-          .from('categories')
-          .select('id, name, slug, icon')
-          .eq('is_active', true)
-          .order('name')
-          .limit(3);
-        if (error || !categories?.length) throw error ?? new Error('Sin categorías activas');
+        const withCounts = await queryCache.withCache('hero:folders', CACHE_TTL.heroStats, async () => {
+          const { data: categories, error } = await supabase!
+            .from('categories')
+            .select('id, name, slug, icon')
+            .eq('is_active', true)
+            .order('name')
+            .limit(3);
+          if (error || !categories?.length) throw error ?? new Error('Sin categorías activas');
 
-        const withCounts = await Promise.all(
-          categories.map(async (category, index) => {
-            const { count } = await supabase!
-              .from('contacts')
-              .select('category_id', { count: 'exact', head: true })
-              .eq('status', 'active')
-              .eq('category_id', category.id);
-            return {
-              order: String(index + 1).padStart(2, '0'),
-              name: category.name,
-              detail: humanizeSlug(category.slug),
-              count: String(count ?? 0),
-            };
-          }),
-        );
+          return Promise.all(
+            categories.map(async (category, index) => {
+              const { count } = await supabase!
+                .from('contacts')
+                .select('category_id', { count: 'exact', head: true })
+                .eq('status', 'active')
+                .eq('category_id', category.id);
+              return {
+                order: String(index + 1).padStart(2, '0'),
+                name: category.name,
+                detail: humanizeSlug(category.slug),
+                count: String(count ?? 0),
+              };
+            }),
+          );
+        });
         if (!cancelled) setFolders(withCounts);
       } catch (loadError) {
         console.error('Hero folders load:', loadError);
@@ -142,10 +145,13 @@ export default function Hero() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Plataforma organizada y acceso verificado
           </div>
-          <h1 className="mt-7 font-display text-[2.5rem] font-bold leading-[1.05] tracking-tight text-content sm:text-6xl lg:text-7xl">
+          <h1
+            className="mt-7 font-display font-bold leading-[1.05] tracking-tight text-content"
+            style={{ fontSize: 'clamp(2rem, 5vw, 4.5rem)' }}
+          >
             <span className="gradient-heading">Encuentra</span> contactos que te acerquen a tus metas.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-content-secondary">
+          <p className="mx-auto mt-6 max-w-2xl leading-8 text-content-secondary" style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)' }}>
             Explora categorías, prueba contactos gratis y desbloquea solo la información que realmente necesitas.
           </p>
           <GlobalSearch />

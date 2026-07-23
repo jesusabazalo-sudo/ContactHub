@@ -2,6 +2,7 @@ import { ArrowRight, Clock, FolderOpen, Search, Sparkles, UserRoundSearch, X } f
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { CACHE_TTL, queryCache } from '../../lib/queryCache';
 import { normalizeSearchText, searchCategories, searchContacts } from '../../lib/searchUtils';
 import { getCatalogCategories, getCatalogCategoryPreviews } from '../../services/catalogService';
 import type { Category, PreviewContact } from '../../types';
@@ -64,7 +65,7 @@ export default function GlobalSearch() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [contacts, setContacts] = useState<PublicContactResult[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => readRecentSearches());
-  const debouncedQuery = useDebouncedValue(query, 350);
+  const debouncedQuery = useDebouncedValue(query, 200);
 
   function rememberSearch(term: string) {
     const next = writeRecentSearches(term);
@@ -90,7 +91,8 @@ export default function GlobalSearch() {
     async function loadPublicSearchData() {
       setIsLoading(true);
       try {
-        const loadedCategories = (await getCatalogCategories()).filter((category) => category.sortOrder !== 18);
+        const allCategories = await queryCache.withCache('catalog:categories', CACHE_TTL.categories, getCatalogCategories);
+        const loadedCategories = allCategories.filter((category) => category.sortOrder !== 18);
         const previews = await getCatalogCategoryPreviews({
           categoryIds: loadedCategories.map((category) => category.id),
           isRegistered: false,

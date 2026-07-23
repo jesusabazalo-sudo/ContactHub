@@ -517,6 +517,26 @@ export type Database = {
         };
         Relationships: [];
       };
+      contact_views: {
+        Row: {
+          id: string;
+          user_id: string;
+          contact_id: string;
+          action: 'view' | 'copy' | 'whatsapp';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          contact_id: string;
+          action: 'view' | 'copy' | 'whatsapp';
+          created_at?: string;
+        };
+        Update: {
+          action?: 'view' | 'copy' | 'whatsapp';
+        };
+        Relationships: [];
+      };
       reward_requests: {
         Row: {
           id: string;

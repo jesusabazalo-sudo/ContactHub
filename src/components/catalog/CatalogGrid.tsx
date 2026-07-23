@@ -74,7 +74,7 @@ export default function CatalogGrid({ categories, getAccessLevel, view = 'grid' 
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [@media(min-width:1920px)]:grid-cols-5 [@media(min-width:1920px)]:gap-6">
         {regularCategories.map((category, index) => (
           <div key={category.id} className="float-in h-full" style={{ animationDelay: `${Math.min(index, 11) * 45}ms` }}>
             <CategoryCard category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
