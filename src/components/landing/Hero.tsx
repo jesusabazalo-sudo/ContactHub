@@ -118,6 +118,9 @@ export default function Hero() {
 
   return (
     <section className="hero-platform relative overflow-hidden border-b border-border">
+      {/* Fondo atenuado a propósito: menos elementos animados compitiendo con el
+          mensaje principal (antes: 5 orbes + 8 sparkles + 6 partículas = 19
+          elementos en movimiento). Ver nota en index.css sobre .nebula-orb. */}
       <div className="hero-nebula" aria-hidden="true">
         <div className="nebula-orb nebula-orb-1" />
         <div className="nebula-orb nebula-orb-2" />
@@ -128,15 +131,8 @@ export default function Hero() {
         <span className="nebula-sparkle" />
         <span className="nebula-sparkle" />
         <span className="nebula-sparkle" />
-        <span className="nebula-sparkle" />
-        <span className="nebula-sparkle" />
-        <span className="nebula-sparkle" />
-        <span className="nebula-sparkle" />
       </div>
       <div className="hero-dots" aria-hidden="true" />
-      <div className="hero-particles" aria-hidden="true">
-        <span /><span /><span /><span /><span /><span />
-      </div>
       <div className="container-shell relative z-10 pb-16 pt-16 sm:pt-24 lg:pb-20 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center">
           <div className="professional-kicker mx-auto w-fit">
@@ -182,6 +178,9 @@ export default function Hero() {
             <span className="hidden h-1 w-1 rounded-full bg-content-muted sm:block" />
             <span>Acceso desde {APP_CONFIG.startingPrice}</span>
           </div>
+          <p className="mt-4 text-xs text-content-muted">
+            Usado por emprendedores de Lima, Arequipa y Trujillo
+          </p>
         </div>
 
         <div className="platform-frame mx-auto mt-14 max-w-6xl">

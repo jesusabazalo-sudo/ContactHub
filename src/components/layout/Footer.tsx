@@ -1,3 +1,4 @@
+import { Lock, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 
@@ -12,6 +13,9 @@ const exploreLinks = [
 const trustLinks = [
   { label: 'Preguntas frecuentes', to: '/faq' },
   { label: 'Soporte', to: '/soporte' },
+  { label: 'Términos y condiciones', to: '/terminos' },
+  { label: 'Privacidad', to: '/privacidad' },
+  { label: 'Libro de reclamaciones', to: '/reclamaciones' },
 ];
 
 function openSupportChat() {
@@ -82,8 +86,19 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-border py-5">
-        <div className="container-shell text-xs text-content-muted">
-          <span>© {year} ContactHub · Hecho en Perú</span>
+        <div className="container-shell flex flex-col gap-3 text-xs text-content-muted sm:flex-row sm:items-center sm:justify-between">
+          <span>© {year} ContactHub · Hecho en Perú 🇵🇪</span>
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5 text-brand-text" aria-hidden="true" />
+              Plataforma segura
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-brand-text" aria-hidden="true" />
+              Contactos verificados
+            </span>
+            <span>Soporte por WhatsApp</span>
+          </span>
         </div>
       </div>
     </footer>

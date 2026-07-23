@@ -1,4 +1,4 @@
-import { Copy, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
+import { Copy, Lock, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -460,6 +460,7 @@ export default function ChatWidget() {
   const { user } = useAuth();
   const autofill = useAutofillProfile();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPrivacyNoticeVisible, setIsPrivacyNoticeVisible] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([localMessage(welcomeMessage, 'admin')]);
   const [text, setText] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -1074,6 +1075,23 @@ export default function ChatWidget() {
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {isPrivacyNoticeVisible ? (
+            <div className="flex items-center justify-between gap-3 border-b border-brand-400/10 bg-brand-400/[0.04] px-5 py-2">
+              <p className="flex items-center gap-1.5 text-xs text-content-secondary">
+                <Lock className="h-3 w-3 flex-none text-brand-text" />
+                Esta conversación es privada. No compartimos tus datos.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsPrivacyNoticeVisible(false)}
+                aria-label="Cerrar aviso de privacidad"
+                className="focus-ring flex-none rounded-full p-1 text-content-muted transition hover:text-content"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : null}
 
           <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
             <p className="rounded-2xl border border-brand-400/15 bg-muted px-3 py-2 text-center text-[11px] leading-5 text-content-secondary">{chatRetentionNote}</p>
