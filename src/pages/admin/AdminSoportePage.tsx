@@ -1,5 +1,5 @@
 import { MessageCircle, Send } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminNotice from '../../components/admin/AdminNotice';
@@ -44,6 +44,7 @@ export default function AdminSoportePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   async function loadSupport() {
     setIsLoading(true);
@@ -120,6 +121,10 @@ export default function AdminSoportePage() {
     .filter((message) => message.user_id === selectedUserId)
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: 'end' });
+  }, [selectedUserId, selectedMessages.length]);
+
   async function openConversation(userId: string) {
     setSelectedUserId(userId);
     const client = ensureClient();
@@ -194,6 +199,7 @@ export default function AdminSoportePage() {
                     </div>
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
               <div className="mt-4 flex gap-2">
                 <input

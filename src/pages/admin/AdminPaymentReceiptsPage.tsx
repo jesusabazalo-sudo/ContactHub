@@ -213,6 +213,10 @@ export default function AdminPaymentReceiptsPage() {
     void loadReceipts();
   }, []);
 
+  function patchReceiptLocally(receiptId: string, status: ReceiptStatus) {
+    setReceipts((current) => current.map((item) => (item.id === receiptId ? { ...item, comprobante_status: status } : item)));
+  }
+
   async function updateReceiptStatus(receipt: ChatReceipt, status: ReceiptStatus) {
     if (!supabase || !isSupabaseConfigured) return false;
     setIsUpdatingId(receipt.id);
@@ -226,7 +230,9 @@ export default function AdminPaymentReceiptsPage() {
       toast.error(updateError.message);
       return false;
     }
-    await loadReceipts();
+    // Actualización optimista: solo se corrige el item en memoria, sin recargar
+    // toda la lista (evita re-firmar 250 URLs de imagen de nuevo).
+    patchReceiptLocally(receipt.id, status);
     return true;
   }
 
@@ -264,6 +270,7 @@ export default function AdminPaymentReceiptsPage() {
     if (!categoryIds.length) { toast.error('Elige al menos una carpeta para activar.'); return; }
 
     const names = categories.filter((category) => categoryIds.includes(category.id)).map((category) => category.displayLabel);
+    if (!window.confirm(`¿Activar acceso a "${names.join(', ')}" para ${receipt.user_email ?? 'este usuario'}?`)) return;
     setIsUpdatingId(receipt.id);
     try {
       const accessResult = await grantCategoryAccess({
@@ -292,7 +299,7 @@ export default function AdminPaymentReceiptsPage() {
 
       setSelectedReceipt(null);
       setSelectedCategoryIds([]);
-      await loadReceipts();
+      patchReceiptLocally(receipt.id, 'verificado');
       toast.success(`Acceso activado para ${accessResult.targetUserEmail ?? 'el cliente'}: ${names.join(', ')}.`);
     } catch (activationError) {
       console.error('AdminPaymentReceiptsPage activate catch:', activationError);

@@ -78,7 +78,7 @@ export default function AdminUsersPage() {
     const channel = client
       .channel('profiles-online')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
-        const next = payload.new as Record<string, any>;
+        const next = payload.new as { id: string; is_online?: boolean; last_seen?: string | null; session_count?: number | null };
         setUsers((current) =>
           current.map((item) =>
             item.id === next.id
@@ -129,6 +129,12 @@ export default function AdminUsersPage() {
 
   async function saveGift() {
     if (!giftUser || !adminUser?.id || !supabase || !isSupabaseConfigured || giftCategoryIds.length === 0) return;
+
+    const selectedNames = categories.filter((category) => giftCategoryIds.includes(category.id)).map((category) => category.name);
+    const confirmed = window.confirm(
+      `¿Regalar acceso a "${selectedNames.join(', ')}" para ${giftUser.email ?? 'este usuario'}? Esta acción concede acceso completo sin pago.`,
+    );
+    if (!confirmed) return;
 
     setIsGiftSaving(true);
     try {

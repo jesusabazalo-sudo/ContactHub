@@ -1,4 +1,4 @@
-import { Archive, Check, ChevronDown, Copy, ExternalLink, Plus, RefreshCw, Save, Search, Tags, Trash2, X, XCircle } from 'lucide-react';
+import { Archive, Check, ChevronDown, Copy, ExternalLink, Loader2, Plus, RefreshCw, Save, Search, Tags, Trash2, X, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -517,6 +517,7 @@ export default function AdminContactsPage() {
   const [loading, setLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [loadingRowId, setLoadingRowId] = useState<string | null>(null);
   const [repairPlan, setRepairPlan] = useState<CategoryRepairPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -1032,6 +1033,7 @@ export default function AdminContactsPage() {
     const category = categoryById.get(contact.category_id);
     const autoDescription = contact.description?.trim() || defaultDescriptionFor(category);
 
+    setLoadingRowId(contact.id);
     setActionLoading(true);
     try {
       const detected = detectPhoneCountry(phone);
@@ -1056,6 +1058,7 @@ export default function AdminContactsPage() {
       toast.success('Contacto aprobado y movido a publicables.');
       await reloadCurrentPage();
     } finally {
+      setLoadingRowId(null);
       setActionLoading(false);
     }
   }
@@ -1151,7 +1154,7 @@ export default function AdminContactsPage() {
   }
 
   async function archiveRow(contact: ContactRow) {
-    setActionLoading(true);
+    setLoadingRowId(contact.id);
     try {
       const ok = await deleteContact(contact.id);
       if (!ok) {
@@ -1163,7 +1166,7 @@ export default function AdminContactsPage() {
       toast.success('Contactos eliminados correctamente.');
       await reloadCurrentPage();
     } finally {
-      setActionLoading(false);
+      setLoadingRowId(null);
     }
   }
 
@@ -1615,7 +1618,10 @@ export default function AdminContactsPage() {
           </select>
           <select
             value={qualityFilter}
-            onChange={(event) => setQualityFilter(event.target.value as ContactQualityFilter)}
+            onChange={(event) => {
+              setCurrentPage(0);
+              setQualityFilter(event.target.value as ContactQualityFilter);
+            }}
             className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content"
           >
             <option value="all">Calidad: todas</option>
@@ -1628,7 +1634,10 @@ export default function AdminContactsPage() {
           </select>
           <input
             value={tagFilter}
-            onChange={(event) => setTagFilter(sanitizeTextInput(event.target.value, 40))}
+            onChange={(event) => {
+              setCurrentPage(0);
+              setTagFilter(sanitizeTextInput(event.target.value, 40));
+            }}
             placeholder="Filtrar tag"
             className="focus-ring h-11 rounded-full border border-border bg-canvas/70 px-4 text-sm text-content placeholder:text-content-muted"
           />
@@ -1806,19 +1815,19 @@ export default function AdminContactsPage() {
                     <td className="px-4 py-3 text-xs text-content-muted">{contact.created_at ? new Date(contact.created_at).toLocaleDateString('es-PE') : '-'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" disabled={actionLoading} onClick={(e) => { e.stopPropagation(); openEdit(contact); }} className="rounded-full border border-border bg-muted p-2 text-brand-text hover:border-brand-400/40" title="Editar">
+                        <button type="button" disabled={loadingRowId === contact.id} onClick={(e) => { e.stopPropagation(); openEdit(contact); }} className="rounded-full border border-border bg-muted p-2 text-brand-text hover:border-brand-400/40 disabled:cursor-not-allowed disabled:opacity-40" title="Editar">
                           ✏️
                         </button>
-                        <button type="button" disabled={actionLoading || isPublicableContact(contact)} onClick={(e) => { e.stopPropagation(); void approveContact(contact); }} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-text hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
-                          <Check className="h-4 w-4" />
+                        <button type="button" disabled={loadingRowId === contact.id || isPublicableContact(contact)} onClick={(e) => { e.stopPropagation(); void approveContact(contact); }} className="rounded-full border border-brand-400/25 bg-brand-400/10 p-2 text-brand-text hover:border-brand-400/50 disabled:cursor-not-allowed disabled:opacity-40" title="Aprobar">
+                          {loadingRowId === contact.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                         </button>
-                        <button type="button" disabled={actionLoading} onClick={(e) => { e.stopPropagation(); openDuplicate(contact); }} className="rounded-full border border-border bg-muted p-2 text-content hover:border-brand-400/40" title="Duplicar">
+                        <button type="button" disabled={loadingRowId === contact.id} onClick={(e) => { e.stopPropagation(); openDuplicate(contact); }} className="rounded-full border border-border bg-muted p-2 text-content hover:border-brand-400/40 disabled:cursor-not-allowed disabled:opacity-40" title="Duplicar">
                           <Copy className="h-4 w-4" />
                         </button>
-                        <button type="button" disabled={actionLoading || contact.status === 'inactive'} onClick={(e) => { e.stopPropagation(); void archiveRow(contact); }} className="rounded-full border border-border bg-muted p-2 text-yellow-100 hover:border-yellow-300/40" title="Archivar">
-                          <Archive className="h-4 w-4" />
+                        <button type="button" disabled={loadingRowId === contact.id || contact.status === 'inactive'} onClick={(e) => { e.stopPropagation(); void archiveRow(contact); }} className="rounded-full border border-border bg-muted p-2 text-yellow-100 hover:border-yellow-300/40 disabled:cursor-not-allowed disabled:opacity-40" title="Archivar">
+                          {loadingRowId === contact.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
                         </button>
-                        <button type="button" disabled={actionLoading} onClick={(e) => { e.stopPropagation(); void deleteRow(contact); }} className="rounded-full border border-red-400/20 bg-red-500/10 p-2 text-red-300 hover:border-red-300/50" title="Archivar con confirmación">
+                        <button type="button" disabled={loadingRowId === contact.id} onClick={(e) => { e.stopPropagation(); void deleteRow(contact); }} className="rounded-full border border-red-400/20 bg-red-500/10 p-2 text-red-300 hover:border-red-300/50 disabled:cursor-not-allowed disabled:opacity-40" title="Archivar con confirmación">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -1853,7 +1862,7 @@ export default function AdminContactsPage() {
       {selectedIds.length ? (
         <div className="fixed bottom-4 left-1/2 z-50 w-[min(960px,calc(100vw-24px))] -translate-x-1/2 rounded-2xl border border-border bg-surface p-4 shadow-2xl">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <span className="text-sm font-bold text-content">{selectedIds.length} contactos seleccionados</span>
+            <span className="text-sm font-bold text-content">{selectedIds.length} de {filteredContacts.length} seleccionados</span>
             <div className="flex flex-wrap gap-2">
               <select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value as ContactStatus)} className="h-10 rounded-full border border-border bg-canvas px-3 text-xs text-content">
                 <option value="active">Activo</option>

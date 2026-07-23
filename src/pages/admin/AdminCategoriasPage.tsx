@@ -130,8 +130,10 @@ export default function AdminCategoriasPage() {
 
   async function toggleValue(category: AdminCategoryRow, key: 'is_active' | 'is_featured' | 'is_new' | 'is_top') {
     if (key === 'is_active' && category.is_active) {
-      const confirmed = window.confirm(`Vas a desactivar "${category.name}". Dejará de verse en el catálogo público. ¿Deseas continuar?`);
-      if (!confirmed) return;
+      const message = category.contactsCount > 50
+        ? `¿Desactivar "${category.name}"? Esta carpeta tiene ${category.contactsCount} contactos activos y dejará de ser visible para los usuarios.`
+        : `Vas a desactivar "${category.name}". Dejará de verse en el catálogo público. ¿Deseas continuar?`;
+      if (!window.confirm(message)) return;
     }
     const cellKey = `${category.id}-${key}`;
     setTogglingKey(cellKey);
@@ -292,6 +294,15 @@ export default function AdminCategoriasPage() {
                 <X className="h-4 w-4" />
               </button>
             </div>
+            <div className="mt-5 rounded-2xl border border-brand-400/20 bg-brand-400/[0.05] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-content-muted">Vista previa</p>
+              <p className="mt-2 flex items-center gap-2 font-display text-lg font-bold text-content">
+                <span aria-hidden="true">{editing.icon || '📁'}</span>
+                {editing.name || 'Sin nombre'}
+              </p>
+              <p className="mt-1 text-sm text-content-secondary">{editing.short_description || 'Sin descripción corta'}</p>
+            </div>
+
             <div className="mt-6 grid gap-4">
               {[
                 ['name', 'Nombre'],
