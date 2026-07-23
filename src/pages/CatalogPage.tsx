@@ -1,9 +1,10 @@
+import { LayoutGrid, List } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import CatalogGrid from '../components/catalog/CatalogGrid';
 import CategoryFilters, { type CatalogFilter } from '../components/catalog/CategoryFilters';
 import FriendlyErrorState from '../components/system/FriendlyErrorState';
-import LoadingState from '../components/system/LoadingState';
 import SectionHeading from '../components/ui/SectionHeading';
+import SkeletonCard from '../components/ui/SkeletonCard';
 import { APP_CONFIG } from '../config/app';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -11,6 +12,8 @@ import { searchCategories } from '../lib/searchUtils';
 import { supabase } from '../lib/supabaseClient';
 import { getCatalogCategories, getCatalogCategoryPreviews } from '../services/catalogService';
 import type { Category } from '../types';
+
+const CATALOG_VIEW_STORAGE_KEY = 'contacthub_catalog_view';
 
 export default function CatalogPage() {
   const { user, isAdmin } = useAuth();
@@ -20,7 +23,14 @@ export default function CatalogPage() {
   const [filter, setFilter] = useState<CatalogFilter>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'grid' | 'list'>(
+    () => (window.localStorage.getItem(CATALOG_VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid'),
+  );
   const debouncedSearch = useDebouncedValue(search, 350);
+
+  useEffect(() => {
+    window.localStorage.setItem(CATALOG_VIEW_STORAGE_KEY, view);
+  }, [view]);
 
   async function loadCategories() {
     setIsLoading(true);
@@ -105,7 +115,6 @@ export default function CatalogPage() {
     });
   }, [categories, debouncedSearch, filter, purchasedCategoryIds]);
 
-  if (isLoading) return <LoadingState title="Cargando catálogo" message="Estamos leyendo categorías y conteos reales desde Supabase." />;
   if (error) return <FriendlyErrorState title="No se pudo cargar el catálogo." message={error} onRetry={loadCategories} />;
 
   return (
@@ -130,17 +139,54 @@ export default function CatalogPage() {
             Mostrando solo tus carpetas desbloqueadas.
           </div>
         ) : null}
-        <div className="mt-6 flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-content-secondary sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            {filteredCategories.length} carpeta(s) encontradas{debouncedSearch ? ` para "${debouncedSearch}"` : ''}.
-          </span>
-          <span className="text-xs font-semibold text-content-muted">Busca por nombre, descripción, tags o casos de uso.</span>
-        </div>
+        {isLoading ? null : (
+          <div className="mt-6 flex flex-col gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-content-secondary sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              {filteredCategories.length} carpeta(s) encontradas{debouncedSearch ? ` para "${debouncedSearch}"` : ''}.
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="hidden text-xs font-semibold text-content-muted sm:block">Busca por nombre, descripción, tags o casos de uso.</span>
+              <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-muted p-1">
+                <button
+                  type="button"
+                  onClick={() => setView('grid')}
+                  aria-label="Vista grid"
+                  aria-pressed={view === 'grid'}
+                  className={`focus-ring flex h-8 w-8 items-center justify-center rounded-md transition ${
+                    view === 'grid' ? 'bg-brand text-brand-contrast' : 'text-content-muted hover:text-content'
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('list')}
+                  aria-label="Vista lista"
+                  aria-pressed={view === 'list'}
+                  className={`focus-ring flex h-8 w-8 items-center justify-center rounded-md transition ${
+                    view === 'list' ? 'bg-brand text-brand-contrast' : 'text-content-muted hover:text-content'
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="mt-8">
-          <CatalogGrid
-            categories={filteredCategories}
-            getAccessLevel={(category) => (isAdmin || purchasedCategoryIds.has(category.id) ? 2 : user ? 1 : 0)}
-          />
+          {isLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonCard key={index} variant="category" />
+              ))}
+            </div>
+          ) : (
+            <CatalogGrid
+              categories={filteredCategories}
+              view={view}
+              getAccessLevel={(category) => (isAdmin || purchasedCategoryIds.has(category.id) ? 2 : user ? 1 : 0)}
+            />
+          )}
         </div>
       </div>
     </section>

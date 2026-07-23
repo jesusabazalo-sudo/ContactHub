@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useCountUp } from '../../hooks/useCountUp';
+import { useRipple } from '../../hooks/useRipple';
 import { supabase } from '../../lib/supabaseClient';
 import GlobalSearch from '../search/GlobalSearch';
 
@@ -40,6 +41,8 @@ export default function Hero() {
   const { user } = useAuth();
   const [folders, setFolders] = useState<HeroFolder[] | null>(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
+  const exploreRipple = useRipple<HTMLAnchorElement>();
+  const trialRipple = useRipple<HTMLButtonElement>();
   const { value: contactsCount, ref: contactsStatRef } = useCountUp<HTMLSpanElement>({
     end: CONTACTS_COUNT_TARGET,
     duration: 1500,
@@ -148,16 +151,20 @@ export default function Hero() {
           <GlobalSearch />
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
+              ref={exploreRipple.ref}
+              onPointerDown={exploreRipple.onPointerDown}
               to="/catalogo"
-              className="btn-primary-glow btn-glow-animated focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast"
+              className="btn-primary-glow btn-glow-animated ripple-container focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast"
             >
               Explorar catálogo
               <ArrowRight className="h-4 w-4" />
             </Link>
             <button
+              ref={trialRipple.ref}
+              onPointerDown={trialRipple.onPointerDown}
               type="button"
               onClick={() => window.dispatchEvent(new Event('contacthub:open-trial'))}
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-surface px-6 text-sm font-semibold text-content transition hover:border-brand/40"
+              className="ripple-container focus-ring inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-surface px-6 text-sm font-semibold text-content transition hover:border-brand/40"
             >
               Probar 3 contactos gratis
             </button>

@@ -1,4 +1,4 @@
-import { ArrowRight, FolderOpen, Search, Sparkles, UserRoundSearch, X } from 'lucide-react';
+import { ArrowRight, Clock, FolderOpen, Search, Sparkles, UserRoundSearch, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -7,6 +7,27 @@ import { getCatalogCategories, getCatalogCategoryPreviews } from '../../services
 import type { Category, PreviewContact } from '../../types';
 
 const suggestions = ['IA', 'libros', 'proveedores', 'fitness', 'marketing', 'streaming', 'cocina', 'música', 'diseño'];
+const RECENT_SEARCHES_KEY = 'contacthub_recent_searches';
+const MAX_RECENT_SEARCHES = 5;
+
+function readRecentSearches(): string[] {
+  try {
+    const raw = window.localStorage.getItem(RECENT_SEARCHES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string').slice(0, MAX_RECENT_SEARCHES) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentSearches(term: string) {
+  const trimmed = term.trim();
+  if (!trimmed) return;
+  const current = readRecentSearches().filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
+  const next = [trimmed, ...current].slice(0, MAX_RECENT_SEARCHES);
+  window.localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+  return next;
+}
 
 type PublicContactResult = PreviewContact & {
   categoryId: string;
@@ -42,7 +63,18 @@ export default function GlobalSearch() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [contacts, setContacts] = useState<PublicContactResult[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => readRecentSearches());
   const debouncedQuery = useDebouncedValue(query, 350);
+
+  function rememberSearch(term: string) {
+    const next = writeRecentSearches(term);
+    if (next) setRecentSearches(next);
+  }
+
+  function clearRecentSearches() {
+    window.localStorage.removeItem(RECENT_SEARCHES_KEY);
+    setRecentSearches([]);
+  }
 
   useEffect(() => {
     function closeOnOutsideClick(event: PointerEvent) {
@@ -121,6 +153,7 @@ export default function GlobalSearch() {
             if (event.key === 'Escape') setIsOpen(false);
             if (event.key === 'Enter' && categoryResults[0]) {
               event.preventDefault();
+              rememberSearch(query);
               navigate(`/catalogo/${categoryResults[0].slug}`);
               setIsOpen(false);
             }
@@ -143,6 +176,35 @@ export default function GlobalSearch() {
                 <Sparkles className="h-4 w-4 text-brand-text" />
                 Busca por palabra clave, categoría o necesidad.
               </div>
+              {recentSearches.length ? (
+                <section className="mt-4">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-content-secondary">
+                      <Clock className="h-4 w-4 text-brand-text" />
+                      Búsquedas recientes
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={clearRecentSearches}
+                      className="focus-ring rounded px-1.5 py-0.5 text-[11px] font-semibold text-content-muted transition hover:text-content"
+                    >
+                      Limpiar
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2 px-2">
+                    {recentSearches.map((term) => (
+                      <button
+                        key={term}
+                        type="button"
+                        onClick={() => chooseSuggestion(term)}
+                        className="focus-ring rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-content-secondary transition hover:border-brand-400/35 hover:text-content"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
               <SearchSuggestions onChoose={chooseSuggestion} />
             </div>
           ) : isTyping || isLoading ? (
@@ -167,6 +229,7 @@ export default function GlobalSearch() {
                         key={category.id}
                         type="button"
                         onClick={() => {
+                          rememberSearch(debouncedQuery);
                           navigate(`/catalogo/${category.slug}`);
                           setIsOpen(false);
                         }}
@@ -196,6 +259,7 @@ export default function GlobalSearch() {
                         key={`${contact.categoryId}-${contact.id}`}
                         type="button"
                         onClick={() => {
+                          rememberSearch(debouncedQuery);
                           navigate(`/catalogo/${contact.categorySlug}`);
                           setIsOpen(false);
                         }}

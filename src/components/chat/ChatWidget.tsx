@@ -1,4 +1,4 @@
-import { Copy, Lock, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
+import { Copy, Loader2, Lock, MessageCircle, Paperclip, Send, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -1186,8 +1186,9 @@ export default function ChatWidget() {
                         type="button"
                         onClick={() => void confirmReceiptUpload()}
                         disabled={isUploadingReceipt}
-                        className="rounded-full bg-brand-400 px-3 py-1.5 text-xs font-black text-ink-950 transition hover:bg-white disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-brand-400 px-3 py-1.5 text-xs font-black text-ink-950 transition hover:bg-white disabled:opacity-60"
                       >
+                        {isUploadingReceipt ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                         {isUploadingReceipt ? 'Enviando...' : 'Enviar comprobante'}
                       </button>
                       <button
@@ -1240,7 +1241,7 @@ export default function ChatWidget() {
                 disabled={isSendingMessage}
                 className="focus-ring btn-primary-glow inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-gradient-to-r from-brand-400 to-accent-cyan text-ink-950 shadow-glow transition hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Send className="h-5 w-5" />
+                {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-5 w-5" />}
               </button>
             </div>
           </div>

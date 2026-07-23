@@ -1,5 +1,6 @@
 import { Star } from 'lucide-react';
 import { APP_CONFIG } from '../../config/app';
+import AnimatedNumber from '../ui/AnimatedNumber';
 import SectionHeading from '../ui/SectionHeading';
 
 type Testimonial = {
@@ -34,12 +35,15 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const stats = [
-  { value: APP_CONFIG.contactsClaim, label: 'contactos curados' },
-  { value: APP_CONFIG.categoriesClaim, label: 'categorías' },
-  { value: '+100', label: 'usuarios activos' },
-  { value: '<24h', label: 'tiempo de acceso' },
+const CONTACTS_STAT_TARGET = Number(APP_CONFIG.contactsClaim.replace(/\D/g, '')) || 0;
+const CATEGORIES_STAT_TARGET = Number(APP_CONFIG.categoriesClaim.replace(/\D/g, '')) || 0;
+
+const animatedStats = [
+  { end: CONTACTS_STAT_TARGET, suffix: '+', label: 'contactos curados' },
+  { end: CATEGORIES_STAT_TARGET, suffix: '', label: 'categorías' },
+  { end: 100, prefix: '+', suffix: '', label: 'usuarios activos' },
 ];
+const staticStats = [{ value: '<24h', label: 'tiempo de acceso' }];
 
 const accentClasses: Record<Testimonial['accent'], string> = {
   brand: 'bg-brand/15 text-brand-text',
@@ -82,7 +86,18 @@ export default function SocialProof() {
           ))}
         </div>
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {stats.map((stat) => (
+          {animatedStats.map((stat) => (
+            <div key={stat.label} className="rounded-xl border border-border bg-surface p-4 text-center">
+              <AnimatedNumber
+                value={stat.end}
+                prefix={stat.prefix}
+                suffix={stat.suffix}
+                className="font-display text-2xl font-bold text-brand-text"
+              />
+              <p className="mt-1 text-xs text-content-muted">{stat.label}</p>
+            </div>
+          ))}
+          {staticStats.map((stat) => (
             <div key={stat.label} className="rounded-xl border border-border bg-surface p-4 text-center">
               <p className="font-display text-2xl font-bold text-brand-text">{stat.value}</p>
               <p className="mt-1 text-xs text-content-muted">{stat.label}</p>

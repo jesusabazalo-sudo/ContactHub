@@ -1,12 +1,50 @@
+import { ArrowRight, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { APP_CONFIG } from '../../config/app';
+import { getOfficialCategoryDisplayParts } from '../../data/officialCategories';
 import type { Category } from '../../types';
 import CategoryCard from './CategoryCard';
 
 type CatalogGridProps = {
   categories: Category[];
   getAccessLevel?: (category: Category) => 0 | 1 | 2;
+  view?: 'grid' | 'list';
 };
 
-export default function CatalogGrid({ categories, getAccessLevel }: CatalogGridProps) {
+function CategoryListRow({ category, accessLevel }: { category: Category; accessLevel: 0 | 1 | 2 }) {
+  const display = getOfficialCategoryDisplayParts(category);
+  const hasAccess = accessLevel === 2;
+
+  return (
+    <Link
+      to={`/catalogo/${category.slug}`}
+      className="card-hover professional-card stable-card group flex min-w-0 items-center gap-4 p-4 transition duration-200 hover:border-brand/40"
+    >
+      <span className="shrink-0 text-2xl" aria-hidden="true">
+        {category.icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-base font-bold text-content">{display.displayTitle}</p>
+        <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-content-secondary">{category.shortDescription || category.description}</p>
+      </div>
+      <span className="hidden shrink-0 items-center gap-1.5 text-xs font-semibold text-content-muted sm:flex">
+        <Users className="h-3.5 w-3.5" />
+        {category.contactsCount}
+      </span>
+      <span className="hidden shrink-0 text-sm font-bold text-brand-text sm:block">Desde {APP_CONFIG.startingPrice}</span>
+      <span
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition group-hover:bg-brand group-hover:text-brand-contrast ${
+          hasAccess ? 'bg-brand/15 text-brand-text' : 'border border-border text-content'
+        }`}
+      >
+        {hasAccess ? 'Explorar' : 'Ver'}
+        <ArrowRight className="h-3.5 w-3.5" />
+      </span>
+    </Link>
+  );
+}
+
+export default function CatalogGrid({ categories, getAccessLevel, view = 'grid' }: CatalogGridProps) {
   if (categories.length === 0) {
     return (
       <div className="rounded-2xl border border-border bg-surface p-10 text-center">
@@ -21,6 +59,18 @@ export default function CatalogGrid({ categories, getAccessLevel }: CatalogGridP
   const orderedCategories = [...categories].sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name));
   const premiumCategory = orderedCategories.find((category) => category.sortOrder === 25 || category.isPremiumOfficial);
   const regularCategories = orderedCategories.filter((category) => category.id !== premiumCategory?.id);
+
+  if (view === 'list') {
+    return (
+      <div className="space-y-3">
+        {orderedCategories.map((category, index) => (
+          <div key={category.id} className="float-in" style={{ animationDelay: `${Math.min(index, 11) * 35}ms` }}>
+            <CategoryListRow category={category} accessLevel={getAccessLevel?.(category) ?? 0} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
