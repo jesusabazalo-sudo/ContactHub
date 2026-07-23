@@ -6,6 +6,7 @@ import { APP_CONFIG } from '../../config/app';
 import { officialCategories } from '../../data/officialCategories';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useAutofillProfile } from '../../hooks/useAutofillProfile';
+import { checkRateLimit, getRateLimitMessage } from '../../lib/rateLimit';
 import { sanitizeText } from '../../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 
@@ -947,6 +948,10 @@ export default function ChatWidget() {
     if (isSendingMessageRef.current) return;
     const message = sanitizeText(messageOverride ?? text, 500);
     if (!message) return;
+    if (!checkRateLimit('chat-send', 5, 60000)) {
+      toast.error(getRateLimitMessage(60000));
+      return;
+    }
     isSendingMessageRef.current = true;
     setIsSendingMessage(true);
     setText('');

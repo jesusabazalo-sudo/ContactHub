@@ -82,6 +82,7 @@ export default function AdminRecompensasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
+  const [missionFilter, setMissionFilter] = useState<'all' | MissionRequestRow['status']>('pending');
   const [error, setError] = useState<string | null>(null);
 
   async function loadData() {
@@ -146,6 +147,11 @@ export default function AdminRecompensasPage() {
     return profiles.filter((profile) => [profile.email, profile.full_name].join(' ').toLowerCase().includes(normalized));
   }, [profiles, query]);
 
+  const filteredMissionRequests = useMemo(
+    () => (missionFilter === 'all' ? missionRequests : missionRequests.filter((request) => request.status === missionFilter)),
+    [missionFilter, missionRequests],
+  );
+
   function toggleCategory(categoryId: string) {
     setSelectedCategoryIds((current) => (current.includes(categoryId) ? current.filter((id) => id !== categoryId) : [...current, categoryId]));
   }
@@ -165,6 +171,9 @@ export default function AdminRecompensasPage() {
   async function updateMissionStatus(request: MissionRequestRow, status: MissionRequestRow['status']) {
     const client = rewardsClient();
     if (!client) return;
+    const userLabel = profileById.get(request.user_id)?.email ?? request.user_id;
+    const verb = status === 'approved' ? 'aprobar' : 'rechazar';
+    if (!window.confirm(`¿${verb.charAt(0).toUpperCase()}${verb.slice(1)} la misión de ${userLabel}?`)) return;
     setUpdatingRequestId(request.id);
     try {
       const { error: updateError } = await client
@@ -390,6 +399,26 @@ export default function AdminRecompensasPage() {
           </button>
         </div>
 
+        <div className="mt-4 flex flex-wrap gap-2">
+          {([
+            ['pending', 'Pendientes'],
+            ['approved', 'Aprobadas'],
+            ['rejected', 'Rechazadas'],
+            ['all', 'Todas'],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setMissionFilter(id)}
+              className={`focus-ring rounded-full border px-4 py-2 text-xs font-bold transition ${
+                missionFilter === id ? 'border-brand-400 bg-brand-400 text-ink-950' : 'border-border bg-muted text-content-secondary hover:border-brand-400/35'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="mt-5 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-canvas/70 text-xs uppercase text-content-muted">
@@ -402,7 +431,7 @@ export default function AdminRecompensasPage() {
               </tr>
             </thead>
             <tbody>
-              {missionRequests.map((request) => (
+              {filteredMissionRequests.map((request) => (
                 <tr key={request.id} className="border-t border-border align-top">
                   <td className="px-4 py-3 text-content">{profileById.get(request.user_id)?.email ?? request.user_id}</td>
                   <td className="px-4 py-3">
@@ -451,9 +480,9 @@ export default function AdminRecompensasPage() {
                   </td>
                 </tr>
               ))}
-              {!missionRequests.length ? (
+              {!filteredMissionRequests.length ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-content-secondary">Todavía no hay misiones pendientes.</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-content-secondary">No hay misiones con ese filtro.</td>
                 </tr>
               ) : null}
             </tbody>
