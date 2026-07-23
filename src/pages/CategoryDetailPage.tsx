@@ -4,7 +4,9 @@ import { Link, useParams } from 'react-router-dom';
 import ContactCard from '../components/contacts/ContactCard';
 import Badge from '../components/ui/Badge';
 import Icon from '../components/ui/Icon';
+import SkeletonCard from '../components/ui/SkeletonCard';
 import { useAuth } from '../features/auth/AuthProvider';
+import { useRipple } from '../hooks/useRipple';
 import { isSupabaseConfigured, queryWithRetry, supabase, withTimeout } from '../lib/supabaseClient';
 import { getCategoryDetail, type CatalogContact } from '../services/catalogService';
 import type { Category } from '../types';
@@ -25,6 +27,7 @@ export default function CategoryDetailPage() {
   const [isLoadingDetail, setIsLoadingDetail] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const unlockButtonRipple = useRipple<HTMLButtonElement>();
 
   function openChatForCategory() {
     if (!category) return;
@@ -132,9 +135,24 @@ export default function CategoryDetailPage() {
     return (
       <section className="section-pad bg-canvas">
         <div className="container-shell">
-          <div className="rounded-2xl border border-border bg-surface p-8 text-center">
-            <h1 className="font-display text-3xl font-bold text-content">Cargando carpeta</h1>
-            <p className="mt-3 text-sm leading-6 text-content-secondary">Estamos leyendo los contactos reales desde Supabase.</p>
+          <div className="skeleton-block h-6 w-40" />
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="rounded-2xl border border-border bg-surface p-6">
+              <div className="skeleton-block h-14 w-14 rounded-2xl" />
+              <div className="skeleton-block mt-5 h-9 w-2/3 rounded-full" />
+              <div className="skeleton-block mt-4 h-4 w-full rounded-full" />
+              <div className="skeleton-block mt-2 h-4 w-4/5 rounded-full" />
+            </div>
+            <div className="rounded-2xl border border-border bg-surface p-6">
+              <div className="skeleton-block h-4 w-24 rounded-full" />
+              <div className="skeleton-block mt-3 h-8 w-32 rounded-full" />
+              <div className="skeleton-block mt-6 h-12 w-full rounded-full" />
+            </div>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <SkeletonCard key={index} variant="contact" />
+            ))}
           </div>
         </div>
       </section>
@@ -233,9 +251,11 @@ export default function CategoryDetailPage() {
             {!canViewFullCategory ? (
               <div className="mt-6 grid gap-3">
                 <button
+                  ref={unlockButtonRipple.ref}
                   type="button"
+                  onPointerDown={unlockButtonRipple.onPointerDown}
                   onClick={openChatForCategory}
-                  className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+                  className="ripple-container focus-ring inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Desbloquear carpeta

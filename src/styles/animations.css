@@ -1,0 +1,215 @@
+/* ============================================================================
+   ContactHub — Sistema de microinteracciones (Fase 2)
+   Solo transform/opacity para no bloquear el hilo principal. Todo respeta
+   prefers-reduced-motion (ver bloque final).
+   ============================================================================ */
+
+/* ---- Ripple (useRipple.ts) ---- */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-span {
+  position: absolute;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.3);
+  transform: scale(0);
+  animation: rippleExpand 500ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleExpand {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ---- Copy-number (A3) ---- */
+.copy-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.copy-tooltip.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-check-pop {
+  animation: checkPop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ---- WhatsApp click (A4) ---- */
+@keyframes whatsappPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-whatsapp-pulse {
+  animation: whatsappPulse 420ms ease-out;
+}
+
+@keyframes iconSpin360 {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-icon-spin {
+  animation: iconSpin360 420ms ease-out;
+}
+
+/* ---- Unlock success (A5) ---- */
+@keyframes unlockFlash {
+  0% { opacity: 0; }
+  30% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+
+.unlock-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgb(var(--brand) / 0.35);
+  pointer-events: none;
+  animation: unlockFlash 900ms ease-out forwards;
+  z-index: 20;
+}
+
+@keyframes badgeFlip {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(90deg); }
+  100% { transform: rotateY(0deg); }
+}
+
+.animate-badge-flip {
+  animation: badgeFlip 500ms ease-in-out;
+  backface-visibility: hidden;
+}
+
+@keyframes celebrationFade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.unlock-celebration {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: inherit;
+  background: rgb(var(--brand) / 0.92);
+  color: rgb(var(--brand-contrast));
+  animation: celebrationFade 1.5s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes cardBreathe {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.animate-card-breathe {
+  animation: cardBreathe 700ms ease-in-out;
+}
+
+/* ---- Skeletons (A7) ---- */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.skeleton-block {
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+  background: rgb(var(--muted));
+  border-radius: 8px;
+}
+
+/* ---- Card top-border shimmer (B1) ---- */
+@keyframes topShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.card-top-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--brand) / 0.9) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+}
+
+.group:hover .card-top-shimmer::before {
+  opacity: 1;
+  animation: topShimmer 1.2s linear infinite;
+}
+
+/* ---- Toasts (D2) ---- */
+@keyframes toastSlideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-toast-slide-up {
+  animation: toastSlideUp 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes toastProgress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.toast-progress-bar {
+  transform-origin: left;
+  animation: toastProgress linear forwards;
+}
+
+/* ---- Reduced motion: apaga toda animación no esencial ---- */
+@media (prefers-reduced-motion: reduce) {
+  .ripple-span,
+  .animate-check-pop,
+  .animate-whatsapp-pulse,
+  .animate-icon-spin,
+  .unlock-flash,
+  .animate-badge-flip,
+  .unlock-celebration,
+  .animate-card-breathe,
+  .skeleton-block,
+  .card-top-shimmer::before,
+  .animate-toast-slide-up,
+  .toast-progress-bar {
+    animation: none !important;
+    transition: none !important;
+  }
+}
