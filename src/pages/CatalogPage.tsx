@@ -1,5 +1,5 @@
 import { LayoutGrid, List } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CatalogGrid from '../components/catalog/CatalogGrid';
 import CategoryFilters, { type CatalogFilter } from '../components/catalog/CategoryFilters';
 import FriendlyErrorState from '../components/system/FriendlyErrorState';
@@ -8,6 +8,7 @@ import SkeletonCard from '../components/ui/SkeletonCard';
 import { APP_CONFIG } from '../config/app';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { CACHE_TTL, queryCache } from '../lib/queryCache';
 import { searchCategories } from '../lib/searchUtils';
 import { supabase } from '../lib/supabaseClient';
 import { getCatalogCategories, getCatalogCategoryPreviews } from '../services/catalogService';
@@ -32,11 +33,11 @@ export default function CatalogPage() {
     window.localStorage.setItem(CATALOG_VIEW_STORAGE_KEY, view);
   }, [view]);
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const cats = await getCatalogCategories();
+      const cats = await queryCache.withCache('catalog:categories', CACHE_TTL.categories, getCatalogCategories);
       if (import.meta.env.DEV) console.info('Categories loaded:', cats.length);
       setCategories(cats);
     } catch (loadError) {
@@ -45,11 +46,11 @@ export default function CatalogPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadCategories();
-  }, []);
+  }, [loadCategories]);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +103,11 @@ export default function CatalogPage() {
     void loadPreviews();
   }, [categoryIdsKey, isAdmin, purchasedIdsKey, user]);
 
+  const getAccessLevel = useCallback(
+    (category: Category): 0 | 1 | 2 => (isAdmin || purchasedCategoryIds.has(category.id) ? 2 : user ? 1 : 0),
+    [isAdmin, purchasedCategoryIds, user],
+  );
+
   const filteredCategories = useMemo(() => {
     return searchCategories(debouncedSearch, categories).filter((category) => {
       const matchesFilter =
@@ -152,7 +158,7 @@ export default function CatalogPage() {
                   onClick={() => setView('grid')}
                   aria-label="Vista grid"
                   aria-pressed={view === 'grid'}
-                  className={`focus-ring flex h-8 w-8 items-center justify-center rounded-md transition ${
+                  className={`focus-ring flex h-11 w-11 items-center justify-center rounded-md transition sm:h-8 sm:w-8 ${
                     view === 'grid' ? 'bg-brand text-brand-contrast' : 'text-content-muted hover:text-content'
                   }`}
                 >
@@ -163,7 +169,7 @@ export default function CatalogPage() {
                   onClick={() => setView('list')}
                   aria-label="Vista lista"
                   aria-pressed={view === 'list'}
-                  className={`focus-ring flex h-8 w-8 items-center justify-center rounded-md transition ${
+                  className={`focus-ring flex h-11 w-11 items-center justify-center rounded-md transition sm:h-8 sm:w-8 ${
                     view === 'list' ? 'bg-brand text-brand-contrast' : 'text-content-muted hover:text-content'
                   }`}
                 >
@@ -175,17 +181,13 @@ export default function CatalogPage() {
         )}
         <div className="mt-8">
           {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 [@media(min-width:1920px)]:grid-cols-5 [@media(min-width:1920px)]:gap-6">
+              {Array.from({ length: 8 }).map((_, index) => (
                 <SkeletonCard key={index} variant="category" />
               ))}
             </div>
           ) : (
-            <CatalogGrid
-              categories={filteredCategories}
-              view={view}
-              getAccessLevel={(category) => (isAdmin || purchasedCategoryIds.has(category.id) ? 2 : user ? 1 : 0)}
-            />
+            <CatalogGrid categories={filteredCategories} view={view} getAccessLevel={getAccessLevel} />
           )}
         </div>
       </div>

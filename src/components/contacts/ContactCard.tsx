@@ -27,9 +27,11 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../features/auth/AuthProvider';
 import { useRipple } from '../../hooks/useRipple';
+import { recordContactAction } from '../../lib/activityTracking';
 import { notify } from '../../lib/toast';
 import { buildContactWhatsAppMessage, buildWhatsAppLink } from '../../lib/whatsapp';
 import { getPhoneDisplay } from '../../utils/phone';
@@ -96,7 +98,7 @@ function displayPhone(contact: ContactCardContact, accessLevel: 0 | 1 | 2) {
   return getPhoneDisplay(sourcePhone, accessLevel);
 }
 
-export default function ContactCard({
+function ContactCard({
   contact,
   canSeeFullPhone,
   canContactDirect,
@@ -110,6 +112,7 @@ export default function ContactCard({
   onDeactivate,
 }: ContactCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const tags = contact.tags ?? [];
   const resolvedAccessLevel: 0 | 1 | 2 = accessLevel ?? (canSeeFullPhone ? 2 : 1);
   const visiblePhone = displayPhone(contact, resolvedAccessLevel);
@@ -136,12 +139,14 @@ export default function ContactCard({
     setIsCopied(true);
     if (copyResetTimeoutRef.current) window.clearTimeout(copyResetTimeoutRef.current);
     copyResetTimeoutRef.current = window.setTimeout(() => setIsCopied(false), 2000);
+    if (user?.id) void recordContactAction(user.id, contact.id, 'copy');
   }
 
   function pulseWhatsapp() {
     setIsWhatsappPulsing(true);
     if (whatsappPulseTimeoutRef.current) window.clearTimeout(whatsappPulseTimeoutRef.current);
     whatsappPulseTimeoutRef.current = window.setTimeout(() => setIsWhatsappPulsing(false), 420);
+    if (user?.id) void recordContactAction(user.id, contact.id, 'whatsapp');
   }
 
   return (
@@ -352,3 +357,5 @@ export default function ContactCard({
     </article>
   );
 }
+
+export default memo(ContactCard);

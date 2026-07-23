@@ -8,9 +8,9 @@ import MobileMenu from './MobileMenu';
 
 const links = [
   { label: 'Inicio', to: '/' },
-  { label: 'Catálogo', to: '/catalogo' },
+  { label: 'Catálogo', to: '/catalogo', prefetch: () => import('../../pages/CatalogPage') },
   { label: 'Cómo funciona', to: '/#como-funciona' },
-  { label: 'Precios', to: '/precios' },
+  { label: 'Precios', to: '/precios', prefetch: () => import('../../pages/PricingPage') },
   { label: 'Publicar', to: '/publica-tu-servicio' },
   { label: 'Ayuda', to: '/faq' },
 ];
@@ -90,6 +90,7 @@ export default function Header() {
               <NavLink
                 key={link.to}
                 to={link.to}
+                onMouseEnter={() => void link.prefetch?.()}
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-2 text-sm font-medium transition duration-200 ${
                     isActive ? 'bg-muted text-content' : 'text-content-secondary hover:bg-muted hover:text-content'
