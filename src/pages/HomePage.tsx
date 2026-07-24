@@ -251,8 +251,8 @@ function TrialModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-4" onClick={onOverlayClick(onClose)}>
       <div
-        className="w-full max-w-4xl min-h-[300px] rounded-2xl border border-brand-400/25 bg-canvas p-6 shadow-2xl"
-        style={{ boxShadow: '0 0 0 1px rgba(16,200,140,0.15), 0 25px 50px rgba(0,0,0,0.8)' }}
+        className="relative w-full max-w-2xl min-h-[300px] rounded-2xl border border-brand-400/30 bg-[#0f1f1a] p-6 shadow-2xl"
+        style={{ boxShadow: '0 0 0 1px rgba(16,200,140,0.2), 0 30px 60px rgba(0,0,0,0.9)' }}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -262,21 +262,19 @@ function TrialModal({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-muted text-content transition hover:bg-surface hover:border-brand-400/30"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-brand-400/20 bg-white/5 text-content transition hover:bg-white/10"
             aria-label="Cerrar"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+            ✕
           </button>
         </div>
         {error ? <div className="mt-4 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">{error}<button type="button" onClick={() => setError(null)} className="ml-3 underline">Reintentar</button></div> : null}
-        {isLoading ? (
-          <div className="mt-8 flex flex-col items-center gap-4 py-8">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-400/20 border-t-brand-400" />
+        {isLoading && (
+          <div className="mt-10 flex flex-col items-center gap-4 py-10">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-400/20 border-t-brand-400" />
             <p className="text-sm text-content-secondary">Cargando carpetas...</p>
           </div>
-        ) : null}
+        )}
         {step === 'category' ? (
           <div className="mt-6 grid max-h-[60vh] gap-3 overflow-auto sm:grid-cols-2 lg:grid-cols-3">
             {!isLoading && categories.length === 0 && !error ? (

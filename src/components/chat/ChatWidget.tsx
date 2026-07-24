@@ -1067,8 +1067,8 @@ export default function ChatWidget() {
     <div data-contacthub-chat className="fixed bottom-5 right-5 z-50">
       <input ref={receiptInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" className="hidden" onChange={(event) => void handleReceiptFile(event.target.files?.[0])} />
       {isOpen ? (
-        <div className="dopamine-card neon-edge fixed inset-x-[2vw] bottom-20 flex h-[90vh] flex-col overflow-hidden rounded-3xl sm:static sm:mb-4 sm:h-[min(780px,90vh)] sm:min-h-[600px] sm:w-[680px] sm:min-w-[480px] sm:max-w-[calc(100vw-2rem)]">
-          <div className="flex items-start justify-between gap-4 border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-6 py-6">
+        <div className="dopamine-card neon-edge fixed inset-x-[3vw] bottom-[72px] z-[55] flex h-[82vh] max-h-[680px] flex-col overflow-hidden rounded-2xl sm:static sm:mb-4 sm:h-[min(720px,85vh)] sm:min-h-[560px] sm:w-[600px] sm:min-w-[440px] sm:max-w-[calc(100vw-2rem)]">
+          <div className="flex flex-shrink-0 items-start justify-between gap-4 border-b border-brand-400/15 bg-gradient-to-r from-brand-400/10 via-white/[0.03] to-accent-violet/10 px-6 py-6">
             <div className="min-w-0">
               <p className="font-display text-2xl font-bold leading-tight text-content">Soporte ContactHub</p>
               <p className="mt-2 flex items-center gap-2 text-sm text-brand-text">
@@ -1082,7 +1082,7 @@ export default function ChatWidget() {
           </div>
 
           {isPrivacyNoticeVisible ? (
-            <div className="flex items-center justify-between gap-3 border-b border-brand-400/10 bg-brand-400/[0.04] px-5 py-2">
+            <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-brand-400/10 bg-brand-400/[0.04] px-5 py-2">
               <p className="flex items-center gap-1.5 text-xs text-content-secondary">
                 <Lock className="h-3 w-3 flex-none text-brand-text" />
                 Esta conversación es privada. No compartimos tus datos.
@@ -1098,7 +1098,7 @@ export default function ChatWidget() {
             </div>
           ) : null}
 
-          <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
+          <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
             <p className="rounded-2xl border border-brand-400/15 bg-muted px-3 py-2 text-center text-[11px] leading-5 text-content-secondary">{chatRetentionNote}</p>
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -1144,7 +1144,7 @@ export default function ChatWidget() {
             ) : null}
           </div>
 
-          <div className="border-t border-brand-400/15 bg-canvas/60 px-5 pt-3 pb-5">
+          <div className="flex-shrink-0 border-t border-brand-400/15 bg-canvas/60 px-5 pt-3 pb-5">
             <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-content-muted">
               {currentFlow === 'main'
                 ? 'Elige una opción rápida'
@@ -1164,7 +1164,7 @@ export default function ChatWidget() {
                     currentFlow
                   }`}
             </p>
-            <div className="mb-4 flex h-11 items-center gap-1.5 overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-muted px-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+            <div className="mb-4 flex h-11 flex-shrink-0 items-center gap-1.5 overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-muted px-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
               {quickActions.map((action) => (
                 <button
                   key={`${action.type}-${action.value ?? action.label}`}
@@ -1222,7 +1222,7 @@ export default function ChatWidget() {
               Enviar comprobante Yape/Plin
             </button>
 
-            <div className="flex items-end gap-2.5 rounded-2xl border border-brand-400/15 bg-canvas/70 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="flex flex-shrink-0 items-end gap-2.5 rounded-2xl border border-brand-400/15 bg-canvas/70 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <button type="button" onClick={() => receiptInputRef.current?.click()} className="focus-ring inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-border bg-muted text-content transition hover:border-purple-400/50 hover:text-purple-200">
                 <Paperclip className="h-4 w-4" />
               </button>
@@ -1253,7 +1253,7 @@ export default function ChatWidget() {
         </div>
       ) : null}
 
-      <button type="button" onClick={() => setIsOpen((current) => !current)} className="badge-pulse relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 via-accent-cyan to-brand-500 text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
+      <button type="button" onClick={() => setIsOpen((current) => !current)} className="badge-pulse relative z-[50] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 via-accent-cyan to-brand-500 text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
         <MessageCircle className="h-6 w-6" />
         {unread ? <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-content">{unread}</span> : null}
       </button>
