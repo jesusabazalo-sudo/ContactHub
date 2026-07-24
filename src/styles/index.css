@@ -639,11 +639,12 @@ select {
   will-change: transform, border-radius, opacity;
 }
 
-/* Atenuado a propósito: la versión anterior (opacity: 1 / 0.55) generaba un
-   fondo demasiado "espectáculo" para un producto que necesita transmitir
-   confianza (feedback real: "parece una página que me va a estafar"). Menos
-   movimiento y menos intensidad = más premium, menos hype-site. */
-[data-theme='dark'] .nebula-orb { opacity: 0.45; }
+/* Ampliado de nuevo: en producción (compresión/gamma de pantallas reales) la
+   versión atenuada (opacity 0.45) casi no se notaba — el feedback de "parece
+   estafa" fue sobre el VOLUMEN de elementos en movimiento (19 a la vez), no
+   sobre el brillo en sí. Aquí se sube la intensidad pero el conteo total de
+   orbes en pantalla en un momento dado sigue siendo razonable. */
+[data-theme='dark'] .nebula-orb { opacity: 1; }
 [data-theme='light'] .nebula-orb { opacity: 0.35; }
 
 /* Orbe 1 — grande, centro-arriba, movimiento lento */
@@ -654,11 +655,12 @@ select {
   left: 50%;
   transform: translateX(-50%);
   background: radial-gradient(ellipse at 40% 40%,
-    rgb(var(--brand) / 0.55) 0%,
-    rgb(var(--brand) / 0.20) 45%,
+    rgb(var(--brand) / 0.75) 0%,
+    rgb(var(--brand) / 0.35) 45%,
     transparent 70%
   );
   animation: lavaFloat1 18s ease-in-out infinite;
+  filter: blur(40px);
 }
 
 /* Orbe 2 — mediano, izquierda */
@@ -668,12 +670,12 @@ select {
   top: 60px;
   left: -80px;
   background: radial-gradient(ellipse at 60% 50%,
-    rgb(var(--brand) / 0.35) 0%,
-    rgb(var(--brand) / 0.10) 50%,
+    rgb(var(--brand) / 0.55) 0%,
+    rgb(var(--brand) / 0.25) 50%,
     transparent 70%
   );
   animation: lavaFloat2 22s ease-in-out infinite;
-  filter: blur(80px);
+  filter: blur(55px);
 }
 
 /* Orbe 3 — pequeño, derecha */
@@ -683,12 +685,12 @@ select {
   top: 100px;
   right: -60px;
   background: radial-gradient(ellipse at 40% 60%,
-    rgb(var(--brand) / 0.30) 0%,
-    rgb(var(--brand) / 0.08) 55%,
+    rgb(var(--brand) / 0.50) 0%,
+    rgb(var(--brand) / 0.22) 55%,
     transparent 72%
   );
   animation: lavaFloat3 16s ease-in-out infinite;
-  filter: blur(70px);
+  filter: blur(50px);
 }
 
 /* Orbe 4 — cohete ascendente, morfo de forma */
@@ -698,12 +700,12 @@ select {
   bottom: 40px;
   left: 20%;
   background: radial-gradient(ellipse at 50% 30%,
-    rgb(var(--brand) / 0.45) 0%,
-    rgb(var(--brand) / 0.15) 50%,
+    rgb(var(--brand) / 0.65) 0%,
+    rgb(var(--brand) / 0.35) 50%,
     transparent 72%
   );
   animation: rocketLava 14s ease-in-out infinite;
-  filter: blur(50px);
+  filter: blur(35px);
   border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
 }
 
@@ -714,14 +716,91 @@ select {
   bottom: 20px;
   right: 18%;
   background: radial-gradient(ellipse at 50% 30%,
-    rgb(var(--brand) / 0.38) 0%,
-    rgb(var(--brand) / 0.10) 55%,
+    rgb(var(--brand) / 0.58) 0%,
+    rgb(var(--brand) / 0.28) 55%,
     transparent 72%
   );
   animation: rocketLava 19s ease-in-out infinite reverse;
-  filter: blur(45px);
+  filter: blur(30px);
   border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
   animation-delay: -7s;
+}
+
+/* Orbe 6 — burbuja mediana izquierda baja */
+.nebula-orb-6 {
+  width: 280px;
+  height: 220px;
+  bottom: 120px;
+  left: 5%;
+  background: radial-gradient(ellipse at 50% 50%,
+    rgb(var(--brand) / 0.50) 0%,
+    rgb(var(--brand) / 0.18) 50%,
+    transparent 72%
+  );
+  animation: lavaFloat2 13s ease-in-out infinite;
+  animation-delay: -4s;
+  filter: blur(35px);
+  border-radius: 50%;
+}
+
+/* Orbe 7 — burbuja pequeña flotante derecha media */
+.nebula-orb-7 {
+  width: 160px;
+  height: 160px;
+  top: 45%;
+  right: 8%;
+  background: radial-gradient(ellipse at 50% 50%,
+    rgb(var(--brand) / 0.55) 0%,
+    rgb(var(--brand) / 0.20) 50%,
+    transparent 70%
+  );
+  animation: lavaFloat3 10s ease-in-out infinite;
+  animation-delay: -2s;
+  filter: blur(28px);
+  border-radius: 50%;
+}
+
+/* Orbe 8 — cohete grande central bajo */
+.nebula-orb-8 {
+  width: 200px;
+  height: 350px;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at 50% 20%,
+    rgb(var(--brand) / 0.60) 0%,
+    rgb(var(--brand) / 0.22) 45%,
+    transparent 70%
+  );
+  animation: rocketLava 12s ease-in-out infinite;
+  animation-delay: -3s;
+  filter: blur(38px);
+  border-radius: 50% 50% 25% 25% / 60% 60% 40% 40%;
+}
+
+/* Orbe 9 — burbuja pequeña top derecha */
+.nebula-orb-9 {
+  width: 120px;
+  height: 120px;
+  top: 15%;
+  left: 15%;
+  background: radial-gradient(ellipse at 50% 50%,
+    rgb(var(--brand) / 0.65) 0%,
+    rgb(var(--brand) / 0.25) 45%,
+    transparent 68%
+  );
+  animation: lavaFloat1 8s ease-in-out infinite;
+  animation-delay: -6s;
+  filter: blur(22px);
+  border-radius: 50%;
+}
+
+/* Modo claro: todos los nuevos más suaves */
+[data-theme='light'] .nebula-orb-6,
+[data-theme='light'] .nebula-orb-7,
+[data-theme='light'] .nebula-orb-8,
+[data-theme='light'] .nebula-orb-9 {
+  opacity: 0.30;
 }
 
 /* Partícula brillante pequeña */
@@ -749,6 +828,12 @@ select {
 .nebula-sparkle:nth-child(6)  { left: 90%; --sdur: 15s; --sdelay: 6s; width:3px; height:3px; }
 .nebula-sparkle:nth-child(7)  { left: 35%; --sdur: 12s; --sdelay: 8s; }
 .nebula-sparkle:nth-child(8)  { left: 55%; --sdur: 8s;  --sdelay: 4s; width:4px; height:4px; }
+.nebula-sparkle:nth-child(9)  { left: 20%; --sdur: 9s;  --sdelay: 7s;  width: 5px; height: 5px; }
+.nebula-sparkle:nth-child(10) { left: 42%; --sdur: 11s; --sdelay: 9s;  }
+.nebula-sparkle:nth-child(11) { left: 65%; --sdur: 13s; --sdelay: 2s;  width: 3px; height: 3px; }
+.nebula-sparkle:nth-child(12) { left: 80%; --sdur: 10s; --sdelay: 11s; }
+.nebula-sparkle:nth-child(13) { left: 5%;  --sdur: 14s; --sdelay: 0s;  width: 4px; height: 4px; }
+.nebula-sparkle:nth-child(14) { left: 95%; --sdur: 8s;  --sdelay: 5s;  }
 
 /* ── ANIMACIONES LÁMPARA DE LAVA ────────────────────────────── */
 
@@ -820,7 +905,8 @@ select {
 @media (max-width: 640px) {
   .nebula-orb-1 { width: 400px; height: 300px; }
   .nebula-orb-2, .nebula-orb-3 { opacity: 0.5; }
-  .nebula-orb-4, .nebula-orb-5 { display: none; }
+  .nebula-orb-4, .nebula-orb-5, .nebula-orb-8 { display: none; }
+  .nebula-orb-6, .nebula-orb-7, .nebula-orb-9 { opacity: 0.5; }
 }
 
 /* Gradient text para el título */
