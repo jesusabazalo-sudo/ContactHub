@@ -8,6 +8,7 @@ import FoldersSection from '../components/dashboard/FoldersSection';
 import RecentActivitySection from '../components/dashboard/RecentActivitySection';
 import SettingsSection from '../components/dashboard/SettingsSection';
 import StatsSection from '../components/dashboard/StatsSection';
+import TokensSection from '../components/dashboard/TokensSection';
 import MissionsSection from '../components/missions/MissionsSection';
 import QuickGuide from '../components/onboarding/QuickGuide';
 import FriendlyErrorState from '../components/system/FriendlyErrorState';
@@ -27,6 +28,7 @@ const SECTION_COPY: Record<DashboardSection, { title: string; subtitle: string }
   folders: { title: 'Mis carpetas', subtitle: 'Tus carpetas activas y los contactos disponibles en cada una.' },
   recent: { title: 'Contactos recientes', subtitle: 'Los últimos contactos que copiaste o contactaste por WhatsApp.' },
   stats: { title: 'Mis estadísticas', subtitle: 'Un resumen visual de tu actividad en ContactHub.' },
+  tokens: { title: 'Mis tokens', subtitle: 'Tu balance, contactos desbloqueados y cómo ganar más.' },
   settings: { title: 'Configuración', subtitle: 'Tu cuenta, soporte y accesos.' },
 };
 
@@ -301,6 +303,8 @@ export default function MyContactsPage() {
             {activeSection === 'stats' ? (
               <StatsSection folders={data?.folders ?? []} totalContacts={totalContacts} activity={activity} memberSince={user?.created_at ?? null} />
             ) : null}
+
+            {activeSection === 'tokens' ? <TokensSection /> : null}
 
             {activeSection === 'settings' ? (
               <SettingsSection

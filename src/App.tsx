@@ -36,6 +36,7 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage')
 const AdminImportarPage = lazy(() => import('./pages/admin/AdminImportarPage'));
 const AdminPaymentReceiptsPage = lazy(() => import('./pages/admin/AdminPaymentReceiptsPage'));
 const AdminRecompensasPage = lazy(() => import('./pages/admin/AdminRecompensasPage'));
+const AdminTokensPage = lazy(() => import('./pages/admin/AdminTokensPage'));
 const AdminSoportePage = lazy(() => import('./pages/admin/AdminSoportePage'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
 
@@ -76,6 +77,7 @@ export default function App() {
             <Route path="/admin/importar" element={<AdminGuard><AdminImportarPage /></AdminGuard>} />
             <Route path="/admin/comprobantes" element={<AdminGuard><AdminPaymentReceiptsPage /></AdminGuard>} />
             <Route path="/admin/recompensas" element={<AdminGuard><AdminRecompensasPage /></AdminGuard>} />
+            <Route path="/admin/tokens" element={<AdminGuard><AdminTokensPage /></AdminGuard>} />
             <Route path="/admin/soporte" element={<AdminGuard><AdminSoportePage /></AdminGuard>} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

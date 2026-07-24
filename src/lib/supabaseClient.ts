@@ -517,6 +517,74 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          balance: number;
+          total_earned: number;
+          total_spent: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          balance?: number;
+          total_earned?: number;
+          total_spent?: number;
+          updated_at?: string;
+        };
+        Update: {
+          balance?: number;
+          total_earned?: number;
+          total_spent?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      token_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          reason: string;
+          reference_id: string | null;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          reason: string;
+          reference_id?: string | null;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          reason?: string;
+          description?: string | null;
+        };
+        Relationships: [];
+      };
+      contact_token_unlocks: {
+        Row: {
+          id: string;
+          user_id: string;
+          contact_id: string;
+          tokens_spent: number;
+          unlocked_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          contact_id: string;
+          tokens_spent?: number;
+          unlocked_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
       contact_views: {
         Row: {
           id: string;
@@ -663,6 +731,31 @@ export type Database = {
           category_id: string;
         };
         Returns: boolean;
+      };
+      spend_token_to_unlock: {
+        Args: {
+          p_contact_id: string;
+        };
+        Returns: {
+          success: boolean;
+          error?: string;
+          balance?: number;
+          contact_name?: string;
+          new_balance?: number;
+        };
+      };
+      award_mission_tokens: {
+        Args: {
+          p_user_id: string;
+          p_amount: number;
+          p_reason: string;
+          p_description: string;
+        };
+        Returns: {
+          success: boolean;
+          error?: string;
+          tokens_awarded?: number;
+        };
       };
     };
     Enums: Record<string, never>;
