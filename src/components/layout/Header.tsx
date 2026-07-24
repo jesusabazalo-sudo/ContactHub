@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../../features/auth/AuthProvider';
 import ThemeToggle from '../ui/ThemeToggle';
 import MobileMenu from './MobileMenu';
+import TokenBadge from './TokenBadge';
 
 const links = [
   { label: 'Inicio', to: '/' },
@@ -115,6 +116,7 @@ export default function Header() {
             ) : null}
             {session ? (
               <>
+                <TokenBadge />
                 <Link
                   to="/mis-contactos"
                   className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-content-secondary transition hover:border-brand/40 hover:text-content"

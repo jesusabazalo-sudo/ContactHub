@@ -1,4 +1,4 @@
-import { ArrowRight, Folder, LayoutGrid, Settings, TrendingUp } from 'lucide-react';
+import { ArrowRight, Coins, Folder, LayoutGrid, Settings, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatMemberSince } from '../../lib/format';
 import { getAvatarColor, getInitials } from '../../lib/avatar';
@@ -16,6 +16,7 @@ const NAV_ITEMS: Array<{ id: DashboardSection; label: string; icon: typeof Folde
   { id: 'folders', label: 'Mis carpetas', icon: Folder },
   { id: 'recent', label: 'Contactos recientes', icon: LayoutGrid },
   { id: 'stats', label: 'Mis estadísticas', icon: TrendingUp },
+  { id: 'tokens', label: 'Mis tokens', icon: Coins },
   { id: 'settings', label: 'Configuración', icon: Settings },
 ];
 

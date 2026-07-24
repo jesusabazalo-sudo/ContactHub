@@ -17,7 +17,7 @@ import PublicReviews from '../components/reviews/PublicReviews';
 import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../data/officialCategories';
 import { useAuth } from '../features/auth/AuthProvider';
 import { onOverlayClick, useModalDismiss } from '../hooks/useModalDismiss';
-import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+import { isSupabaseConfigured, supabase, withTimeout } from '../lib/supabaseClient';
 import { maskPhone } from '../utils/phone';
 
 type TrialCategory = { id: string; name: string; slug: string; icon: string; sort_order?: number | null };
@@ -148,11 +148,18 @@ function TrialModal({ onClose }: { onClose: () => void }) {
   useModalDismiss(true, onClose);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       if (!user?.id || !supabase || !isSupabaseConfigured) return;
       setIsLoading(true);
+      setError(null);
       try {
-        const { data: trial } = await supabase.from('trial_claims').select('id').eq('user_id', user.id).maybeSingle();
+        const { data: trial } = await withTimeout(
+          Promise.resolve(supabase.from('trial_claims').select('id').eq('user_id', user.id).maybeSingle()),
+          10000,
+        );
+        if (cancelled) return;
         if (trial) {
           setStep('used');
           return;
@@ -160,11 +167,11 @@ function TrialModal({ onClose }: { onClose: () => void }) {
         // No pedimos ni ordenamos por sort_order: esa columna puede no existir en
         // la BD (causaba 400 y dejaba el modal en blanco). El orden lo aplica
         // sortByOfficialOrder en el cliente a partir de officialCategories.
-        const { data, error: categoriesError } = await supabase
-          .from('categories')
-          .select('id,name,slug,icon')
-          .eq('is_active', true)
-          .order('name');
+        const { data, error: categoriesError } = await withTimeout(
+          Promise.resolve(supabase.from('categories').select('id,name,slug,icon').eq('is_active', true).order('name')),
+          10000,
+        );
+        if (cancelled) return;
         if (categoriesError) throw categoriesError;
         setCategories(
           sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))).filter((category) => {
@@ -174,32 +181,38 @@ function TrialModal({ onClose }: { onClose: () => void }) {
           }),
         );
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la prueba.');
+        if (cancelled) return;
+        const isTimeout = loadError instanceof Error && loadError.message === 'timeout';
+        setError(isTimeout ? 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.' : loadError instanceof Error ? loadError.message : 'No se pudo cargar la prueba.');
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
     void load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   async function chooseCategory(category: TrialCategory) {
-    if (!supabase) return;
+    if (!supabase || isLoading) return;
     setSelectedCategory(category);
     setIsLoading(true);
     setError(null);
     try {
       // Vista enmascarada (definer): nunca trae el teléfono real al cliente.
       // El número completo solo se revela tras reclamar, vía contact_trial_secure.
-      const { data, error: contactsError } = await supabase
-        .from('contact_public_preview')
-        .select('id,name,phone_masked')
-        .eq('category_id', category.id)
-        .limit(15);
+      const { data, error: contactsError } = await withTimeout(
+        Promise.resolve(supabase.from('contact_public_preview').select('id,name,phone_masked').eq('category_id', category.id).limit(15)),
+        10000,
+      );
       if (contactsError) throw contactsError;
       setContacts((data ?? []).map((row) => ({ id: row.id, name: row.name, phone: null, phone_masked: row.phone_masked })));
       setStep('contacts');
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar contactos.');
+      const isTimeout = loadError instanceof Error && loadError.message === 'timeout';
+      setError(isTimeout ? 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.' : loadError instanceof Error ? loadError.message : 'No se pudieron cargar contactos.');
     } finally {
       setIsLoading(false);
     }
@@ -210,11 +223,14 @@ function TrialModal({ onClose }: { onClose: () => void }) {
   }
 
   async function claimTrial() {
-    if (!user?.id || !supabase || !selectedCategory) return;
+    if (!user?.id || !supabase || !selectedCategory || isLoading) return;
     setIsLoading(true);
     setError(null);
     try {
-      const { error: insertError } = await supabase.from('trial_claims').insert({ user_id: user.id, contact_ids: selectedIds, claimed_at: new Date().toISOString() });
+      const { error: insertError } = await withTimeout(
+        Promise.resolve(supabase.from('trial_claims').insert({ user_id: user.id, contact_ids: selectedIds, claimed_at: new Date().toISOString() })),
+        10000,
+      );
       if (insertError) {
         if (insertError.message.includes('duplicate') || insertError.message.includes('unique')) {
           toast.info('Ya usaste tu prueba.');
@@ -225,7 +241,8 @@ function TrialModal({ onClose }: { onClose: () => void }) {
       }
       setStep('done');
     } catch (claimError) {
-      setError(claimError instanceof Error ? claimError.message : 'No se pudo activar tu prueba.');
+      const isTimeout = claimError instanceof Error && claimError.message === 'timeout';
+      setError(isTimeout ? 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.' : claimError instanceof Error ? claimError.message : 'No se pudo activar tu prueba.');
     } finally {
       setIsLoading(false);
     }
@@ -246,7 +263,13 @@ function TrialModal({ onClose }: { onClose: () => void }) {
         {step === 'category' ? (
           <div className="mt-6 grid max-h-[60vh] gap-3 overflow-auto sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((category) => (
-              <button key={category.id} type="button" onClick={() => void chooseCategory(category)} className="focus-ring rounded-lg border border-border bg-surface p-4 text-left text-content hover:border-brand-400/40">
+              <button
+                key={category.id}
+                type="button"
+                disabled={isLoading}
+                onClick={() => void chooseCategory(category)}
+                className="focus-ring rounded-lg border border-border bg-surface p-4 text-left text-content transition hover:border-brand-400/40 disabled:cursor-not-allowed disabled:opacity-50"
+              >
                 <span className="text-xs text-brand-text">{category.icon}</span>
                 <p className="mt-2 font-semibold">{formatCategoryOptionLabel(category, categories.indexOf(category))}</p>
               </button>

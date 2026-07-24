@@ -1,4 +1,4 @@
-import { FileCheck2, FolderKanban, Gift, Home, KeyRound, ListChecks, MessageCircle, UploadCloud, UserRoundCog, UsersRound } from 'lucide-react';
+import { Coins, FileCheck2, FolderKanban, Gift, Home, KeyRound, ListChecks, MessageCircle, UploadCloud, UserRoundCog, UsersRound } from 'lucide-react';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthProvider';
@@ -17,6 +17,7 @@ const managementLinks = [
   { label: 'Soporte', to: '/admin/soporte', icon: MessageCircle },
   { label: 'Comprobantes', to: '/admin/comprobantes', icon: FileCheck2 },
   { label: 'Recompensas', to: '/admin/recompensas', icon: Gift },
+  { label: 'Tokens', to: '/admin/tokens', icon: Coins },
   { label: 'CRM', to: '/admin/clientes', icon: UserRoundCog },
 ];
 

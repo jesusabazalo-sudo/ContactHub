@@ -29,8 +29,10 @@ import {
 } from 'lucide-react';
 import { memo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import UnlockWithToken from '../contact/UnlockWithToken';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useRipple } from '../../hooks/useRipple';
+import { useTokens } from '../../hooks/useTokens';
 import { recordContactAction } from '../../lib/activityTracking';
 import { notify } from '../../lib/toast';
 import { buildContactWhatsAppMessage, buildWhatsAppLink } from '../../lib/whatsapp';
@@ -113,11 +115,18 @@ function ContactCard({
 }: ContactCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isContactUnlocked } = useTokens();
   const tags = contact.tags ?? [];
   const resolvedAccessLevel: 0 | 1 | 2 = accessLevel ?? (canSeeFullPhone ? 2 : 1);
-  const visiblePhone = displayPhone(contact, resolvedAccessLevel);
+  const [locallyUnlockedViaToken, setLocallyUnlockedViaToken] = useState(false);
+  // Acceso completo si tiene la carpeta (accessLevel/canContactDirect) O si
+  // desbloqueó este contacto puntual con un token — son fuentes independientes.
+  const hasTokenUnlock = isContactUnlocked(contact.id) || locallyUnlockedViaToken;
+  const hasFolderAccess = Boolean(canContactDirect ?? resolvedAccessLevel === 2);
+  const showDirectActions = hasFolderAccess || hasTokenUnlock;
+  const effectiveAccessLevel: 0 | 1 | 2 = showDirectActions ? 2 : resolvedAccessLevel;
+  const visiblePhone = displayPhone(contact, effectiveAccessLevel);
   const countryFlag = contact.countryFlag ?? contact.country_flag ?? '';
-  const showDirectActions = Boolean(canContactDirect ?? resolvedAccessLevel === 2);
   const whatsappUrl = showDirectActions
     ? buildWhatsAppLink(contact.phone, buildContactWhatsAppMessage(contact.name, categoryName))
     : '';
@@ -305,20 +314,29 @@ function ContactCard({
                 </span>
               </div>
             </div>
-          ) : (
+          ) : resolvedAccessLevel === 0 ? (
             <button
               ref={unlockRipple.ref}
               type="button"
               onPointerDown={unlockRipple.onPointerDown}
-              onClick={() => navigate(resolvedAccessLevel === 0 ? '/auth' : '/precios')}
-              className={`ripple-container focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition duration-200 ${
-                resolvedAccessLevel === 0
-                  ? 'border border-border bg-surface text-content-secondary hover:border-brand/40 hover:text-content'
-                  : 'bg-brand text-brand-contrast shadow-[0_2px_12px_rgb(var(--brand)/0.16)] transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_14px_32px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]'
-              }`}
+              onClick={() => navigate('/auth')}
+              className="ripple-container focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-content-secondary transition duration-200 hover:border-brand/40 hover:text-content"
             >
-              {resolvedAccessLevel === 0 ? 'Regístrate gratis para ver más' : 'Desbloquea esta carpeta para contactar'}
+              Regístrate gratis para ver más
             </button>
+          ) : (
+            <div className="grid gap-2">
+              <UnlockWithToken contactId={contact.id} contactName={contact.name} onUnlocked={() => setLocallyUnlockedViaToken(true)} />
+              <button
+                ref={unlockRipple.ref}
+                type="button"
+                onPointerDown={unlockRipple.onPointerDown}
+                onClick={() => navigate('/precios')}
+                className="ripple-container focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-brand-contrast shadow-[0_2px_12px_rgb(var(--brand)/0.16)] transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_14px_32px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]"
+              >
+                Desbloquea toda la carpeta
+              </button>
+            </div>
           )}
 
           {isAdmin && (onEdit || onDeactivate || onDelete) ? (

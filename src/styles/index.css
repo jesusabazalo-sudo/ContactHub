@@ -557,6 +557,21 @@ select {
   }
 }
 
+/* ---- Toasts (sonner): siempre por encima de cualquier modal ---- */
+
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+}
+
+/* En móvil, arriba de la pantalla en vez de abajo — más visible sobre un
+   modal a pantalla completa (login, onboarding) y lejos del teclado. */
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    top: 1rem !important;
+    bottom: auto !important;
+  }
+}
+
 /* ---- Buscador global ---- */
 
 .global-search-shell {
