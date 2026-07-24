@@ -250,30 +250,60 @@ function TrialModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-4" onClick={onOverlayClick(onClose)}>
-      <div className="w-full max-w-4xl rounded-2xl border border-border bg-surface p-6">
+      <div
+        className="w-full max-w-4xl min-h-[300px] rounded-2xl border border-brand-400/25 bg-canvas p-6 shadow-2xl"
+        style={{ boxShadow: '0 0 0 1px rgba(16,200,140,0.15), 0 25px 50px rgba(0,0,0,0.8)' }}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-2xl font-bold text-content">{step === 'category' ? 'Elige una carpeta para tu prueba' : step === 'contacts' ? 'Elige 3 contactos' : 'Prueba gratuita'}</h2>
             <p className="mt-2 text-sm text-content-secondary">Verás 3 contactos reales. Solo puedes hacer esto una vez.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-border px-3 py-1 text-content">X</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-muted text-content transition hover:bg-surface hover:border-brand-400/30"
+            aria-label="Cerrar"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
         {error ? <div className="mt-4 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">{error}<button type="button" onClick={() => setError(null)} className="ml-3 underline">Reintentar</button></div> : null}
-        {isLoading ? <p className="mt-6 text-sm text-content-secondary">Cargando...</p> : null}
+        {isLoading ? (
+          <div className="mt-8 flex flex-col items-center gap-4 py-8">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-400/20 border-t-brand-400" />
+            <p className="text-sm text-content-secondary">Cargando carpetas...</p>
+          </div>
+        ) : null}
         {step === 'category' ? (
           <div className="mt-6 grid max-h-[60vh] gap-3 overflow-auto sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                disabled={isLoading}
-                onClick={() => void chooseCategory(category)}
-                className="focus-ring rounded-lg border border-border bg-surface p-4 text-left text-content transition hover:border-brand-400/40 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="text-xs text-brand-text">{category.icon}</span>
-                <p className="mt-2 font-semibold">{formatCategoryOptionLabel(category, categories.indexOf(category))}</p>
-              </button>
-            ))}
+            {!isLoading && categories.length === 0 && !error ? (
+              <div className="col-span-full py-8 text-center">
+                <p className="text-content-secondary">No se pudieron cargar las carpetas.</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-3 text-sm text-brand-text underline"
+                >
+                  Recargar página
+                </button>
+              </div>
+            ) : (
+              categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => void chooseCategory(category)}
+                  className="focus-ring rounded-lg border border-border bg-surface p-4 text-left text-content transition hover:border-brand-400/40 hover:bg-brand-400/5 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="text-2xl">{category.icon}</span>
+                  <p className="mt-2 font-semibold">{formatCategoryOptionLabel(category, categories.indexOf(category))}</p>
+                </button>
+              ))
+            )}
           </div>
         ) : null}
         {step === 'contacts' ? (
