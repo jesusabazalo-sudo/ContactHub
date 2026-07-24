@@ -145,13 +145,10 @@ export default function Hero() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Plataforma organizada y acceso verificado
           </div>
-          <h1
-            className="mt-7 font-display font-bold leading-[1.05] tracking-tight text-content"
-            style={{ fontSize: 'clamp(2rem, 5vw, 4.5rem)' }}
-          >
+          <h1 className="hero-title mt-7 font-display font-bold text-content">
             <span className="gradient-heading">Encuentra</span> contactos que te acerquen a tus metas.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl leading-8 text-content-secondary" style={{ fontSize: 'clamp(1rem, 2.5vw, 1.25rem)' }}>
+          <p className="hero-subtitle mx-auto mt-6 max-w-2xl leading-8 text-content-secondary">
             Explora categorías, prueba contactos gratis y desbloquea solo la información que realmente necesitas.
           </p>
           <GlobalSearch />
@@ -160,7 +157,7 @@ export default function Hero() {
               ref={exploreRipple.ref}
               onPointerDown={exploreRipple.onPointerDown}
               to="/catalogo"
-              className="btn-primary-glow btn-glow-animated ripple-container focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast"
+              className="hero-cta-pulse btn-primary-glow btn-glow-animated ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast sm:min-h-12 sm:w-auto"
             >
               Explorar catálogo
               <ArrowRight className="h-4 w-4" />
@@ -170,7 +167,7 @@ export default function Hero() {
               onPointerDown={trialRipple.onPointerDown}
               type="button"
               onClick={() => window.dispatchEvent(new Event('contacthub:open-trial'))}
-              className="ripple-container focus-ring inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-surface px-6 text-sm font-semibold text-content transition hover:border-brand/40"
+              className="ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center rounded-lg border border-border bg-surface px-6 text-sm font-semibold text-content transition hover:border-brand/40 sm:min-h-12 sm:w-auto"
             >
               Probar 3 contactos gratis
             </button>
@@ -195,6 +192,8 @@ export default function Hero() {
             Usado por emprendedores de Lima, Arequipa y Trujillo
           </p>
         </div>
+
+        <div className="divider-gradient sm:hidden" aria-hidden="true" />
 
         <div className="platform-frame mx-auto mt-14 max-w-6xl">
           <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -227,56 +226,64 @@ export default function Hero() {
                   : folders.map((folder, index) => (
                       <div
                         key={folder.order}
-                        className={`flex items-center gap-3 rounded-lg border px-3 py-3 transition ${
-                          index === 0 ? 'border-brand/30 bg-brand/[0.07]' : 'border-border bg-surface'
+                        className={`flex min-w-0 items-center gap-3 rounded-lg border border-l-[3px] p-4 transition-transform duration-100 active:scale-[0.98] ${
+                          index === 0 ? 'border-l-brand border-brand/30 bg-brand/[0.07]' : 'border-l-brand/40 border-border bg-surface/80'
                         }`}
                       >
-                        <span className="font-mono text-xs font-semibold text-brand-text">{folder.order}</span>
+                        <span className="shrink-0 font-mono text-xs font-semibold text-brand-text">{folder.order}</span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-content">{folder.name}</p>
                           <p className="truncate text-xs text-content-muted">{folder.detail}</p>
                         </div>
-                        <span className="text-xs text-content-muted">{folder.count}</span>
+                        <span className="shrink-0 whitespace-nowrap text-xs text-content-muted">{folder.count}</span>
                       </div>
                     ))}
               </div>
             </div>
 
             <div className="p-4 lg:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Tu progreso de acceso</p>
-                  <p className="mt-2 text-xl font-semibold text-content">Empieza explorando con tranquilidad</p>
+              <div className="rounded-2xl border border-brand/20 bg-gradient-to-br from-surface to-brand/[0.08] p-5 sm:rounded-none sm:border-0 sm:bg-none sm:p-0">
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-text">Tu progreso de acceso</p>
+                    <p className="mt-2 text-xl font-semibold text-content">Empieza explorando con tranquilidad</p>
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap rounded-lg border border-brand/30 bg-brand/[0.15] px-2.5 py-1 text-sm font-semibold text-brand-text">
+                    {unlockedCount} de {TOTAL_FOLDERS}
+                  </span>
                 </div>
-                <span className="rounded-lg border border-brand/20 bg-brand/10 px-3 py-1 text-xs font-semibold text-brand-text">
-                  {unlockedCount} de {TOTAL_FOLDERS}
-                </span>
-              </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-brand transition-all duration-500"
-                  style={{ width: `${Math.max(4, Math.min(100, Math.round((unlockedCount / TOTAL_FOLDERS) * 100)))}%` }}
-                />
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted sm:h-2">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-brand to-brand/70 transition-all duration-[800ms] ease-out"
+                    style={{ width: `${Math.max(4, Math.min(100, Math.round((unlockedCount / TOTAL_FOLDERS) * 100)))}%` }}
+                  />
+                </div>
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {contacts.map((contact) => (
-                  <div key={contact.name} className="rounded-lg border border-border bg-surface p-4">
+                  <div key={contact.name} className="rounded-xl border border-border bg-surface p-4 transition-colors duration-150 active:border-brand/40">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm font-semibold text-content">{contact.name}</p>
-                      <CheckCircle2 className="h-4 w-4 text-brand-text" />
+                      <p className="text-[0.9375rem] font-semibold text-content">{contact.name}</p>
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-text" />
                     </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <Lock className="h-3.5 w-3.5 text-content-muted" />
-                      <p className="font-mono text-sm text-content-secondary">{contact.phone}</p>
+                    <div className="masked-content mt-3 flex items-center gap-2">
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-brand/60" />
+                      <p className="font-mono text-sm tracking-wider text-content-secondary">{contact.phone}</p>
                     </div>
                     <p className="mt-2 text-xs text-content-muted">{contact.status} hasta activar acceso</p>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex items-center justify-between gap-4 border-t border-border pt-4 text-xs text-content-muted">
+
+              <div className="mt-4 border-t border-border pt-3 text-center text-[11px] leading-5 text-content-secondary sm:hidden">
+                🔒 Sin datos expuestos · 📲 Acceso directo WhatsApp · ✅ Verificado
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-xs text-content-muted">
                 <span>Sin datos privados expuestos</span>
                 <Link to="/catalogo" className="font-semibold text-brand-text transition hover:opacity-80">
-                  Ver catálogo completo →
+                  <span className="sm:hidden">Ver catálogo →</span>
+                  <span className="hidden sm:inline">Ver catálogo completo →</span>
                 </Link>
               </div>
             </div>
