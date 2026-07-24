@@ -1,1 +1,1 @@
-export type DashboardSection = 'folders' | 'recent' | 'stats' | 'tokens' | 'settings';
+export type DashboardSection = 'folders' | 'recent' | 'stats' | 'settings';
