@@ -155,7 +155,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
-              className="focus-ring rounded-full border border-border bg-surface p-2 text-content"
+              className="focus-ring flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-content"
               aria-label="Abrir menú"
             >
               <Menu className="h-5 w-5" />

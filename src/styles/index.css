@@ -933,3 +933,78 @@ select {
     animation: none !important;
   }
 }
+
+/* ============================================================================
+   Mobile polish (< 640px) — Hero: tipografía fluida, glow del CTA, shimmer en
+   contenido enmascarado, separadores con gradiente.
+   ============================================================================ */
+
+.hero-title {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(1.875rem, 8vw, 3rem);
+    line-height: 1.1;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(0.875rem, 3.5vw, 1rem);
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  .hero-cta-pulse {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgb(var(--brand) / 0.3); }
+  50% { box-shadow: 0 0 35px rgb(var(--brand) / 0.5); }
+}
+
+/* Shimmer sutil sobre números/contenido enmascarado, indica "hay algo detrás". */
+.masked-content {
+  position: relative;
+  overflow: hidden;
+}
+
+.masked-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgb(var(--brand) / 0.08) 50%, transparent 100%);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* Separador sutil con gradiente en vez de una línea plana */
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--brand) / 0.25), transparent);
+  margin: 24px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cta-pulse,
+  .masked-content::after {
+    animation: none !important;
+  }
+}
