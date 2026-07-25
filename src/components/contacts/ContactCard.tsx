@@ -159,7 +159,7 @@ function ContactCard({
           <CategoryIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-text">{categoryName}</p>
+          <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-text">{categoryName}</p>
           <h3 className="mt-0.5 text-[17px] font-semibold leading-snug text-content">{contact.name}</h3>
         </div>
         {!showDirectActions ? (
@@ -206,9 +206,9 @@ function ContactCard({
       ) : null}
 
       {tags.length ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {tags.map((tag) => (
-            <span key={tag} className="rounded-md bg-muted px-2.5 py-1 text-xs text-content-secondary">
+            <span key={tag} className="max-w-[120px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-content-secondary">
               {tag}
             </span>
           ))}
@@ -323,7 +323,7 @@ function ContactCard({
               type="button"
               onPointerDown={unlockRipple.onPointerDown}
               onClick={() => navigate('/precios')}
-              className="ripple-container focus-ring inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-brand-contrast shadow-[0_2px_12px_rgb(var(--brand)/0.16)] transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_14px_32px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]"
+              className="ripple-container focus-ring inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-brand-contrast shadow-[0_2px_12px_rgb(var(--brand)/0.16)] transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_14px_32px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]"
             >
               Desbloquea toda la carpeta
             </button>

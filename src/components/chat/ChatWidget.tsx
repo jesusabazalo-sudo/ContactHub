@@ -1098,7 +1098,7 @@ export default function ChatWidget() {
             </div>
           ) : null}
 
-          <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 scroll-smooth">
+          <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 scroll-smooth">
             <p className="rounded-2xl border border-brand-400/15 bg-muted px-3 py-2 text-center text-[11px] leading-5 text-content-secondary">{chatRetentionNote}</p>
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>

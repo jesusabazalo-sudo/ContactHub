@@ -222,14 +222,14 @@ export default function CategoryDetailPage() {
               {category.isTop ? <Badge tone="gold">Top</Badge> : null}
               {category.isNew ? <Badge>Nuevo</Badge> : null}
             </div>
-            <h1 className="mt-5 font-display text-3xl font-bold leading-tight text-content sm:text-5xl">
+            <h1 className="mt-5 min-w-0 break-words font-display text-3xl font-bold leading-tight text-content sm:text-5xl">
               {category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : ''}
               {category.icon} {category.name}
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-content-secondary">{category.description}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-5 flex min-w-0 flex-wrap gap-2">
               {category.tags.map((tag) => (
-                <span key={tag} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-content-secondary">
+                <span key={tag} className="max-w-[160px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-content-secondary">
                   {tag}
                 </span>
               ))}
@@ -255,12 +255,12 @@ export default function CategoryDetailPage() {
                   type="button"
                   onPointerDown={unlockButtonRipple.onPointerDown}
                   onClick={openChatForCategory}
-                  className="ripple-container focus-ring inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
+                  className="ripple-container focus-ring inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Desbloquear carpeta
                 </button>
-                <Link to="/?trial=1" className="focus-ring inline-flex w-full items-center justify-center rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/35">
+                <Link to="/?trial=1" className="focus-ring inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/35">
                   Probar 3 contactos gratis
                 </Link>
               </div>
