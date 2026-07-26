@@ -9,6 +9,16 @@ import { checkRateLimit, getRateLimitMessage } from '../lib/rateLimit';
 import { sanitizeEmail, sanitizeText } from '../lib/sanitize';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 
+function safeDecodeRedirect(raw: string | null) {
+  const fallback = '/mis-contactos';
+  if (!raw) return fallback;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return fallback;
+  }
+}
+
 type AuthMode = 'login' | 'register';
 type OnboardingAnswers = {
   busca?: string;
@@ -74,7 +84,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hasShownSessionNotice = useRef(false);
-  const redirectTo = decodeURIComponent(searchParams.get('redirect') || '/mis-contactos');
+  const redirectTo = safeDecodeRedirect(searchParams.get('redirect'));
   const reason = searchParams.get('reason');
   const notice = useMemo(() => (reason === 'session-expired' ? 'Tu sesión expiró. Inicia sesión de nuevo.' : null), [reason]);
   const isRegisterMode = mode === 'register';
