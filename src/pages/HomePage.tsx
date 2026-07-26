@@ -42,17 +42,8 @@ export default function HomePage() {
   const suggestion = answers?.busca ? suggestions[answers.busca] : null;
 
   useEffect(() => {
-    function openTrial() {
-      if (!user) {
-        navigate('/auth?redirect=/?trial=1');
-        return;
-      }
-      setIsTrialOpen(true);
-    }
-    window.addEventListener('contacthub:open-trial', openTrial);
     if (searchParams.get('trial') === '1' && user) setIsTrialOpen(true);
-    if (searchParams.get('trial') === '1' && !user) navigate('/auth?redirect=/?trial=1');
-    return () => window.removeEventListener('contacthub:open-trial', openTrial);
+    if (searchParams.get('trial') === '1' && !user) navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
   }, [navigate, searchParams, user]);
 
   useEffect(() => {

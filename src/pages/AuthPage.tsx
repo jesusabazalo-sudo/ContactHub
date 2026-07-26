@@ -74,7 +74,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hasShownSessionNotice = useRef(false);
-  const redirectTo = searchParams.get('redirect') || '/mis-contactos';
+  const redirectTo = decodeURIComponent(searchParams.get('redirect') || '/mis-contactos');
   const reason = searchParams.get('reason');
   const notice = useMemo(() => (reason === 'session-expired' ? 'Tu sesión expiró. Inicia sesión de nuevo.' : null), [reason]);
   const isRegisterMode = mode === 'register';
