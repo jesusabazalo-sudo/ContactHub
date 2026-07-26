@@ -189,7 +189,7 @@ function ContactCard({
       {tags.length ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {tags.map((tag) => (
-            <span key={tag} className="max-w-[120px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-content-secondary">
+            <span key={tag} className="max-w-[140px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-content-secondary">
               {tag}
             </span>
           ))}

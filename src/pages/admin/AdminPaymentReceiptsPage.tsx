@@ -297,6 +297,20 @@ export default function AdminPaymentReceiptsPage() {
       });
       if (notifyError) console.error('activation notify insert:', notifyError.message);
 
+      // Enviar email de notificación. Es opcional: si falla, no rompemos el
+      // flujo de activación (el acceso ya quedó concedido arriba).
+      try {
+        await supabase.functions.invoke('notify-access', {
+          body: {
+            user_email: receipt.user_email,
+            user_name: receipt.user_name ?? null,
+            category_name: names.join(', ') || 'tu carpeta',
+          },
+        });
+      } catch (emailError) {
+        console.error('notify-access invoke:', emailError);
+      }
+
       setSelectedReceipt(null);
       setSelectedCategoryIds([]);
       patchReceiptLocally(receipt.id, 'verificado');
