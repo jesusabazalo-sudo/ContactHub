@@ -54,8 +54,6 @@ type ContactCardProps = {
   canContactDirect?: boolean;
   accessLevel?: 0 | 1 | 2;
   isAdmin?: boolean;
-  isTrialUnlocked?: boolean;
-  isRewardUnlocked?: boolean;
   categoryName?: string;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -104,8 +102,6 @@ function ContactCard({
   canContactDirect,
   accessLevel,
   isAdmin = false,
-  isTrialUnlocked = false,
-  isRewardUnlocked = false,
   categoryName = 'ContactHub',
   onEdit,
   onDelete,
@@ -183,21 +179,6 @@ function ContactCard({
           </span>
         ) : null}
       </div>
-
-      {isTrialUnlocked || isRewardUnlocked ? (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {isTrialUnlocked ? (
-            <span className="rounded-full bg-brand/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-text">
-              Prueba gratis
-            </span>
-          ) : null}
-          {isRewardUnlocked ? (
-            <span className="rounded-full bg-warning/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-warning">
-              Recompensa
-            </span>
-          ) : null}
-        </div>
-      ) : null}
 
       {contact.description ? (
         <p className="mt-3 border-l-2 border-brand/40 pl-3 text-[13px] leading-relaxed text-content-secondary">

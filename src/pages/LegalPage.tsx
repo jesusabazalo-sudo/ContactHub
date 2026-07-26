@@ -30,7 +30,7 @@ export default function LegalPage() {
           <article id="uso-de-datos" className="scroll-mt-28 rounded-lg border border-border bg-surface p-6">
             <h2 className="text-lg font-bold text-content">Uso de datos</h2>
             <p className="mt-3 text-sm leading-6 text-content-secondary">
-              Tu correo funciona como una llave de acceso: permite saber qué carpetas tienes desbloqueadas, guardar tu prueba gratis, revisar comprobantes y
+              Tu correo funciona como una llave de acceso: permite saber qué carpetas tienes desbloqueadas, revisar comprobantes y
               proteger lo que desbloqueas dentro de ContactHub.
             </p>
           </article>

@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Benefits from '../components/landing/Benefits';
 import CategoryPreview from '../components/landing/CategoryPreview';
 import FAQPreview from '../components/landing/FAQPreview';
@@ -14,14 +13,9 @@ import TrustExplainer from '../components/landing/TrustExplainer';
 import WhatYouReceive from '../components/landing/WhatYouReceive';
 import MissionsSection from '../components/missions/MissionsSection';
 import PublicReviews from '../components/reviews/PublicReviews';
-import { applyOfficialCategoryDisplay, formatCategoryOptionLabel, sortByOfficialOrder } from '../data/officialCategories';
 import { useAuth } from '../features/auth/AuthProvider';
-import { onOverlayClick, useModalDismiss } from '../hooks/useModalDismiss';
-import { isSupabaseConfigured, supabase, withTimeout } from '../lib/supabaseClient';
-import { maskPhone } from '../utils/phone';
+import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 
-type TrialCategory = { id: string; name: string; slug: string; icon: string; sort_order?: number | null };
-type TrialContact = { id: string; name: string; phone: string | null; phone_masked: string };
 type OnboardingAnswers = { busca?: string; uso?: string; contacto?: string };
 
 const suggestions: Record<string, { slug: string; name: string }> = {
@@ -34,31 +28,9 @@ const suggestions: Record<string, { slug: string; name: string }> = {
 };
 
 export default function HomePage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [isTrialOpen, setIsTrialOpen] = useState(false);
+  const { user } = useAuth();
   const [answers, setAnswers] = useState<OnboardingAnswers | null>(null);
   const suggestion = answers?.busca ? suggestions[answers.busca] : null;
-
-  useEffect(() => {
-    if (isAuthLoading) return; // CRÍTICO: esperar a que el auth context restaure la sesión
-
-    function openTrial() {
-      if (!user) {
-        navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
-        return;
-      }
-      setIsTrialOpen(true);
-    }
-
-    window.addEventListener('contacthub:open-trial', openTrial);
-    if (searchParams.get('trial') === '1' && user) setIsTrialOpen(true);
-    if (searchParams.get('trial') === '1' && !user) {
-      navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
-    }
-    return () => window.removeEventListener('contacthub:open-trial', openTrial);
-  }, [isAuthLoading, navigate, searchParams, user]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -108,7 +80,6 @@ export default function HomePage() {
       <PricingPreview />
       <FAQPreview />
       <PublicReviews />
-      {isTrialOpen ? <TrialModal onClose={() => setIsTrialOpen(false)} /> : null}
     </>
   );
 }
@@ -132,217 +103,6 @@ function SuggestionBanner({ suggestion }: { suggestion: { slug: string; name: st
         >
           Ver carpeta →
         </button>
-      </div>
-    </div>
-  );
-}
-
-function TrialModal({ onClose }: { onClose: () => void }) {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [step, setStep] = useState<'category' | 'contacts' | 'done' | 'used'>('category');
-  const [categories, setCategories] = useState<TrialCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<TrialCategory | null>(null);
-  const [contacts, setContacts] = useState<TrialContact[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-
-  useModalDismiss(true, onClose);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      if (!user?.id || !supabase || !isSupabaseConfigured) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const { data: trial } = await withTimeout(
-          Promise.resolve(supabase.from('trial_claims').select('id').eq('user_id', user.id).maybeSingle()),
-          10000,
-        );
-        if (cancelled) return;
-        if (trial) {
-          setStep('used');
-          return;
-        }
-        // No pedimos ni ordenamos por sort_order: esa columna puede no existir en
-        // la BD (causaba 400 y dejaba el modal en blanco). El orden lo aplica
-        // sortByOfficialOrder en el cliente a partir de officialCategories.
-        const { data, error: categoriesError } = await withTimeout(
-          Promise.resolve(supabase.from('categories').select('id,name,slug,icon').eq('is_active', true).order('name')),
-          10000,
-        );
-        if (cancelled) return;
-        if (categoriesError) throw categoriesError;
-        setCategories(
-          sortByOfficialOrder((data ?? []).map((category) => applyOfficialCategoryDisplay(category))).filter((category) => {
-            const order = (category as TrialCategory & { sortOrder?: number | null; sort_order?: number | null }).sortOrder
-              ?? (category as TrialCategory & { sortOrder?: number | null; sort_order?: number | null }).sort_order;
-            return order !== 18;
-          }),
-        );
-      } catch (loadError) {
-        if (cancelled) return;
-        const isTimeout = loadError instanceof Error && loadError.message === 'timeout';
-        setError(isTimeout ? 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.' : loadError instanceof Error ? loadError.message : 'No se pudo cargar la prueba.');
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  async function chooseCategory(category: TrialCategory) {
-    if (!supabase || isLoading) return;
-    setSelectedCategory(category);
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Vista enmascarada (definer): nunca trae el teléfono real al cliente.
-      // El número completo solo se revela tras reclamar, vía contact_trial_secure.
-      const { data, error: contactsError } = await withTimeout(
-        Promise.resolve(supabase.from('contact_public_preview').select('id,name,phone_masked').eq('category_id', category.id).limit(15)),
-        10000,
-      );
-      if (contactsError) throw contactsError;
-      setContacts((data ?? []).map((row) => ({ id: row.id, name: row.name, phone: null, phone_masked: row.phone_masked })));
-      setStep('contacts');
-    } catch (loadError) {
-      const isTimeout = loadError instanceof Error && loadError.message === 'timeout';
-      setError(isTimeout ? 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.' : loadError instanceof Error ? loadError.message : 'No se pudieron cargar contactos.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  function toggleContact(id: string) {
-    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current);
-  }
-
-  async function claimTrial() {
-    if (!user?.id || !supabase || !selectedCategory || isLoading) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { error: insertError } = await withTimeout(
-        Promise.resolve(supabase.from('trial_claims').insert({ user_id: user.id, contact_ids: selectedIds, claimed_at: new Date().toISOString() })),
-        10000,
-      );
-      if (insertError) {
-        if (insertError.message.includes('duplicate') || insertError.message.includes('unique')) {
-          toast.info('Ya usaste tu prueba.');
-          setStep('used');
-          return;
-        }
-        throw insertError;
-      }
-      setStep('done');
-    } catch (claimError) {
-      const isTimeout = claimError instanceof Error && claimError.message === 'timeout';
-      setError(isTimeout ? 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.' : claimError instanceof Error ? claimError.message : 'No se pudo activar tu prueba.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/75 p-4" onClick={onOverlayClick(onClose)}>
-      <div
-        className="relative w-full max-w-2xl min-h-[300px] rounded-2xl border border-brand-400/30 bg-[#0f1f1a] p-6 shadow-2xl"
-        style={{ boxShadow: '0 0 0 1px rgba(16,200,140,0.2), 0 30px 60px rgba(0,0,0,0.9)' }}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-content">{step === 'category' ? 'Elige una carpeta para tu prueba' : step === 'contacts' ? 'Elige 3 contactos' : 'Prueba gratuita'}</h2>
-            <p className="mt-2 text-sm text-content-secondary">Verás 3 contactos reales. Solo puedes hacer esto una vez.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-brand-400/20 bg-white/5 text-content transition hover:bg-white/10"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
-        </div>
-        {error ? <div className="mt-4 rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-100">{error}<button type="button" onClick={() => setError(null)} className="ml-3 underline">Reintentar</button></div> : null}
-        {isLoading && (
-          <div className="mt-10 flex flex-col items-center gap-4 py-10">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-400/20 border-t-brand-400" />
-            <p className="text-sm text-content-secondary">Cargando carpetas...</p>
-          </div>
-        )}
-        {step === 'category' ? (
-          <div className="mt-6 grid max-h-[60vh] gap-3 overflow-auto sm:grid-cols-2 lg:grid-cols-3">
-            {!isLoading && categories.length === 0 && !error ? (
-              <div className="col-span-full py-8 text-center">
-                <p className="text-content-secondary">No se pudieron cargar las carpetas.</p>
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="mt-3 text-sm text-brand-text underline"
-                >
-                  Recargar página
-                </button>
-              </div>
-            ) : (
-              categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => void chooseCategory(category)}
-                  className="focus-ring rounded-lg border border-border bg-surface p-4 text-left text-content transition hover:border-brand-400/40 hover:bg-brand-400/5 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span className="text-2xl">{category.icon}</span>
-                  <p className="mt-2 font-semibold">{formatCategoryOptionLabel(category, categories.indexOf(category))}</p>
-                </button>
-              ))
-            )}
-          </div>
-        ) : null}
-        {step === 'contacts' ? (
-          <div className="mt-6">
-            <p className="mb-4 text-sm font-semibold text-brand-text">{selectedIds.length} / 3 seleccionados</p>
-            <div className="grid max-h-[50vh] gap-2 overflow-auto">
-              {contacts.map((contact) => {
-                const checked = selectedSet.has(contact.id);
-                return (
-                  <label key={contact.id} className={`flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 ${!checked && selectedIds.length >= 3 ? 'opacity-50' : ''}`}>
-                    <span className="text-sm text-content">
-                      {contact.name} <span className="font-mono text-content-muted">{maskPhone(contact.phone ?? contact.phone_masked)}</span>
-                    </span>
-                    <input type="checkbox" checked={checked} disabled={!checked && selectedIds.length >= 3} onChange={() => toggleContact(contact.id)} />
-                  </label>
-                );
-              })}
-            </div>
-            <button type="button" disabled={selectedIds.length !== 3 || isLoading} onClick={() => void claimTrial()} className="focus-ring mt-5 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 disabled:opacity-60">
-              Desbloquear mis 3 contactos
-            </button>
-          </div>
-        ) : null}
-        {step === 'done' && selectedCategory ? (
-          <div className="mt-8 rounded-xl border border-brand-400/30 bg-brand-400/10 p-6 text-center">
-            <p className="text-4xl">✅</p>
-            <p className="mt-3 font-display text-2xl font-bold text-content">¡Listo! Ya puedes ver tus 3 contactos en {selectedCategory.name}</p>
-            <button type="button" onClick={() => navigate(`/catalogo/${selectedCategory.slug}`)} className="mt-5 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950">Ir a la carpeta</button>
-          </div>
-        ) : null}
-        {step === 'used' ? (
-          <div className="mt-8 text-center">
-            <p className="font-display text-2xl font-bold text-content">Ya reclamaste tu prueba.</p>
-            <button type="button" onClick={() => navigate('/precios')} className="mt-5 rounded-full bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950">Ver precios</button>
-          </div>
-        ) : null}
       </div>
     </div>
   );

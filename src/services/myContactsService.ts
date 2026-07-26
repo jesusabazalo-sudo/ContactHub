@@ -183,24 +183,3 @@ export async function getMyContactsData(userId: string): Promise<MyContactsData>
   };
 }
 
-export async function getTrialContacts(userId: string) {
-  if (!supabase) return { used: false, contacts: [] };
-  const { data: claim, error } = await supabase.from('trial_claims').select('contact_ids, claimed_at').eq('user_id', userId).maybeSingle();
-  if (error || !claim) {
-    if (error) console.error('getTrialContacts:', error.message);
-    return { used: false, contacts: [] };
-  }
-
-  const contactIds = claim.contact_ids ?? [];
-  if (!contactIds.length) return { used: true, contacts: [], claimedAt: claim.claimed_at };
-
-  // Leer desde la vista segura (no del teléfono crudo de `contacts`). La vista ya
-  // restringe a los contactos de prueba/recompensa del propio usuario por RLS.
-  const { data: contacts, error: contactsError } = await supabase
-    .from('contact_trial_secure')
-    .select('id, name, phone, description, category_id, country_flag')
-    .in('id', contactIds);
-  if (contactsError) console.error('getTrialContacts contacts:', contactsError.message);
-
-  return { used: true, contacts: contacts ?? [], claimedAt: claim.claimed_at };
-}

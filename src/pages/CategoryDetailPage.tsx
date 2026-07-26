@@ -1,5 +1,5 @@
 import { ArrowLeft, MessageCircle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ContactCard from '../components/contacts/ContactCard';
 import Badge from '../components/ui/Badge';
@@ -7,7 +7,7 @@ import Icon from '../components/ui/Icon';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useRipple } from '../hooks/useRipple';
-import { isSupabaseConfigured, queryWithRetry, supabase, withTimeout } from '../lib/supabaseClient';
+import { withTimeout } from '../lib/supabaseClient';
 import { getCategoryDetail, type CatalogContact } from '../services/catalogService';
 import type { Category } from '../types';
 
@@ -15,9 +15,6 @@ type CategoryDetailState = {
   category: Category;
   contacts: CatalogContact[];
   hasAccess: boolean;
-  trialContactIds: string[];
-  rewardContactIds: string[];
-  phonesByContactId: Map<string, string>;
 };
 
 export default function CategoryDetailPage() {
@@ -51,52 +48,6 @@ export default function CategoryDetailPage() {
           return;
         }
 
-        let trialContactIds: string[] = [];
-        let rewardContactIds: string[] = [];
-        const phonesByContactId = new Map<string, string>();
-
-        if (user?.id && supabase && isSupabaseConfigured && !nextDetail.hasAccess && !isAdmin) {
-          const client = supabase;
-
-          const { data: trial, error: trialError } = await queryWithRetry(() =>
-            withTimeout(Promise.resolve(client.from('trial_claims').select('contact_ids').eq('user_id', user.id).maybeSingle())),
-          );
-
-          if (trialError) console.error('No se pudo leer trial_claims:', trialError);
-          else trialContactIds = trial?.contact_ids ?? [];
-
-          const { data: rewards, error: rewardsError } = await queryWithRetry<Array<{ bonus_contact_ids: string[] | null }>>(() =>
-            withTimeout(Promise.resolve(client.from('reward_requests').select('bonus_contact_ids').eq('user_id', user.id).eq('status', 'approved'))),
-          );
-
-          if (rewardsError) console.warn('No se pudieron leer recompensas aprobadas:', rewardsError);
-          else rewardContactIds = Array.from(new Set((rewards ?? []).flatMap((reward) => reward.bonus_contact_ids ?? [])));
-
-          const unlockedIds = Array.from(new Set([...trialContactIds, ...rewardContactIds])).filter((id) => nextDetail.contacts.some((contact) => contact.id === id));
-
-          if (unlockedIds.length) {
-            const { data: unlockedContacts, error: unlockedError } = await queryWithRetry(() =>
-              withTimeout(
-                Promise.resolve(
-                  client
-                    .from('contact_trial_secure')
-                    .select('id,phone')
-                    .eq('category_id', nextDetail.category.id)
-                    .in('id', unlockedIds),
-                ),
-              ),
-            );
-
-            if (unlockedError) {
-              console.warn('No se pudieron leer teléfonos desbloqueados por prueba/recompensa:', unlockedError);
-            } else {
-              for (const contact of unlockedContacts ?? []) {
-                phonesByContactId.set(contact.id, contact.phone);
-              }
-            }
-          }
-        }
-
         if (!isMounted) return;
 
         // Diagnóstico solo en desarrollo. NUNCA registrar contactos/teléfonos en
@@ -110,7 +61,7 @@ export default function CategoryDetailPage() {
           });
         }
 
-        setDetail({ ...nextDetail, trialContactIds, rewardContactIds, phonesByContactId });
+        setDetail(nextDetail);
       } catch (loadError) {
         if (!isMounted) return;
         const message = loadError instanceof Error ? loadError.message : 'No se pudo cargar esta carpeta.';
@@ -127,9 +78,6 @@ export default function CategoryDetailPage() {
       isMounted = false;
     };
   }, [isAdmin, isAdminLoading, isLoading, retryKey, slug, user?.id]);
-
-  const trialCount = useMemo(() => detail?.trialContactIds.filter((id) => detail.phonesByContactId.has(id)).length ?? 0, [detail]);
-  const rewardCount = useMemo(() => detail?.rewardContactIds.filter((id) => detail.phonesByContactId.has(id)).length ?? 0, [detail]);
 
   if (isLoading || (isAdminLoading && !isAdmin) || isLoadingDetail) {
     return (
@@ -201,7 +149,7 @@ export default function CategoryDetailPage() {
 
   if (!detail) return null;
 
-  const { category, contacts, hasAccess, phonesByContactId, rewardContactIds, trialContactIds } = detail;
+  const { category, contacts, hasAccess } = detail;
   const canViewFullCategory = Boolean(isAdmin || hasAccess);
   const accessLevel: 0 | 1 | 2 = canViewFullCategory ? 2 : user ? 1 : 0;
 
@@ -246,8 +194,6 @@ export default function CategoryDetailPage() {
                 ? 'Puedes ver los teléfonos completos de esta carpeta.'
                 : 'Puedes explorar la carpeta. Los números completos se muestran solo al desbloquear.'}
             </p>
-            {!canViewFullCategory && trialCount ? <p className="mt-3 text-xs font-semibold text-brand-text">{trialCount} contacto(s) visibles por prueba gratis.</p> : null}
-            {!canViewFullCategory && rewardCount ? <p className="mt-2 text-xs font-semibold text-amber-200">{rewardCount} contacto(s) visibles por recompensa.</p> : null}
             {!canViewFullCategory ? (
               <div className="mt-6 grid gap-3">
                 <button
@@ -260,9 +206,6 @@ export default function CategoryDetailPage() {
                   <MessageCircle className="h-4 w-4" />
                   Desbloquear carpeta
                 </button>
-                <Link to="/?trial=1" className="focus-ring inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-border bg-muted px-4 py-3 text-sm font-bold text-content transition hover:border-brand-400/35">
-                  Probar 3 contactos gratis
-                </Link>
               </div>
             ) : null}
           </aside>
@@ -279,24 +222,15 @@ export default function CategoryDetailPage() {
           {contacts.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {contacts.map((contact, index) => {
-                const unlockedPhone = phonesByContactId.get(contact.id);
-                const isTrialUnlocked = trialContactIds.includes(contact.id) && Boolean(unlockedPhone);
-                const isRewardUnlocked = rewardContactIds.includes(contact.id) && Boolean(unlockedPhone);
-                // Un desbloqueo por prueba/recompensa eleva ESTE contacto a acceso
-                // completo, aunque la carpeta siga bloqueada para el resto.
-                const hasPerContactUnlock = isTrialUnlocked || isRewardUnlocked;
-                const effectiveAccessLevel: 0 | 1 | 2 = hasPerContactUnlock ? 2 : accessLevel;
-                const canSeeFullPhone = effectiveAccessLevel === 2;
+                const canSeeFullPhone = accessLevel === 2;
                 return (
                   <div key={contact.id} className="float-in h-full" style={{ animationDelay: `${Math.min(index, 11) * 40}ms` }}>
                     <ContactCard
-                      contact={{ ...contact, phone: unlockedPhone ?? contact.phone }}
+                      contact={contact}
                       canSeeFullPhone={canSeeFullPhone}
-                      canContactDirect={effectiveAccessLevel === 2}
-                      accessLevel={effectiveAccessLevel}
+                      canContactDirect={accessLevel === 2}
+                      accessLevel={accessLevel}
                       isAdmin={isAdmin}
-                      isTrialUnlocked={isTrialUnlocked}
-                      isRewardUnlocked={isRewardUnlocked}
                       categoryName={category.name}
                     />
                   </div>

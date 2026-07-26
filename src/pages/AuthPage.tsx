@@ -319,7 +319,7 @@ export default function AuthPage() {
           <div className="mt-5 rounded-2xl border border-brand-400/25 bg-brand-400/10 p-4 text-sm leading-6 text-content-secondary">
             <p className="font-bold text-content">Tu correo es tu llave de acceso</p>
             <p className="mt-2">
-              Usamos tu correo para guardar tus carpetas desbloqueadas, registrar tu prueba gratis y asociar comprobantes. No pedimos tu contraseña de Gmail, no vendemos tu información y no publicamos tu correo.
+              Usamos tu correo para guardar tus carpetas desbloqueadas y asociar comprobantes. No pedimos tu contraseña de Gmail, no vendemos tu información y no publicamos tu correo.
             </p>
             <p className="mt-2 text-brand-text">
               Puedes explorar primero y registrarte cuando quieras guardar un acceso.

@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, FolderOpen, Lock, Search, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useCountUp } from '../../hooks/useCountUp';
@@ -40,11 +40,9 @@ function formatThousands(value: number) {
 
 export default function Hero() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [folders, setFolders] = useState<HeroFolder[] | null>(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const exploreRipple = useRipple<HTMLAnchorElement>();
-  const trialRipple = useRipple<HTMLButtonElement>();
   const { value: contactsCount, ref: contactsStatRef } = useCountUp<HTMLSpanElement>({
     end: CONTACTS_COUNT_TARGET,
     duration: 1500,
@@ -164,7 +162,7 @@ export default function Hero() {
             <span className="gradient-heading">Encuentra</span> contactos que te acerquen a tus metas.
           </h1>
           <p className="hero-subtitle mx-auto mt-6 max-w-2xl leading-8 text-content-secondary">
-            Explora categorías, prueba contactos gratis y desbloquea solo la información que realmente necesitas.
+            Explora categorías y desbloquea solo la información que realmente necesitas.
           </p>
           <GlobalSearch />
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -177,18 +175,6 @@ export default function Hero() {
               Explorar catálogo
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <button
-              ref={trialRipple.ref}
-              onPointerDown={trialRipple.onPointerDown}
-              type="button"
-              onClick={() => {
-                if (user) navigate('/?trial=1');
-                else navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
-              }}
-              className="ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center rounded-lg border border-border bg-surface px-6 text-sm font-semibold text-content transition hover:border-brand/40 sm:min-h-12 sm:w-auto"
-            >
-              Probar 3 contactos gratis
-            </button>
             <a
               href="#como-funciona"
               className="focus-ring inline-flex min-h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold text-content-secondary transition hover:text-content"

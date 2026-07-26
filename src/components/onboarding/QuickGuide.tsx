@@ -1,4 +1,4 @@
-import { BookOpen, Gift, HelpCircle, Receipt, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { BookOpen, HelpCircle, Receipt, Search, ShieldCheck, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthProvider';
@@ -11,20 +11,12 @@ type QuickGuideProps = {
 const steps = [
   'Explora el catálogo',
   'Elige una carpeta según tu meta',
-  'Usa tu prueba gratis de 3 contactos',
-  'Si te sirve, desbloquea una carpeta o pack',
+  'Desbloquea una carpeta o pack',
   'Sube tu comprobante si pagaste',
   'Revisa tus accesos en Mis contactos',
 ];
 
 const guideCards = [
-  {
-    icon: Gift,
-    title: 'Mis 3 contactos gratis',
-    text: 'Elige una carpeta y prueba ContactHub con una muestra limitada.',
-    cta: 'Usar prueba gratis',
-    to: '/?trial=1',
-  },
   {
     icon: Search,
     title: 'Explorar por metas',
@@ -41,10 +33,10 @@ const guideCards = [
   },
   {
     icon: Sparkles,
-    title: 'Ganar contacto extra',
-    text: 'Completa misiones simples y recibe recompensas cuando sean aprobadas.',
+    title: 'Apoyar a ContactHub',
+    text: 'Completa misiones simples y envía evidencia para revisión manual.',
     cta: 'Ver misiones',
-    chatMessage: 'Hola, quiero ganar un contacto gratis con una misión. ¿Cómo empiezo?',
+    chatMessage: 'Hola, quiero apoyar a ContactHub con una misión. ¿Cómo empiezo?',
   },
   {
     icon: HelpCircle,
@@ -61,10 +53,6 @@ const infoBlocks = [
     text: 'Mira el catálogo, identifica tu meta y abre una carpeta para ver muestras seguras.',
   },
   {
-    title: 'Dónde ver mi prueba gratis',
-    text: 'Toca “Ver prueba gratis”, elige una carpeta y selecciona 3 contactos reales.',
-  },
-  {
     title: 'Cómo desbloquear una carpeta',
     text: 'Elige una carpeta o pack, paga por Yape y espera la activación manual verificada.',
   },
@@ -73,7 +61,7 @@ const infoBlocks = [
     text: 'Desde el chat toca “Subir comprobante” y adjunta tu captura de pago.',
   },
   {
-    title: 'Cómo ganar contactos gratis',
+    title: 'Cómo apoyar a ContactHub',
     text: 'Completa misiones como compartir ContactHub o invitar a alguien y manda evidencia.',
   },
   {

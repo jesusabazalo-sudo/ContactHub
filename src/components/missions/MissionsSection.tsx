@@ -29,15 +29,15 @@ const missions: Mission[] = [
     id: 'share-story',
     title: 'Compartir ContactHub',
     description: 'Publica ContactHub en una historia o estado y envía captura para revisión.',
-    reward: '+1 contacto extra',
+    reward: 'Reconocimiento en revisión',
     icon: Share2,
-    evidenceMessage: 'Hola, compartí ContactHub en una historia o estado y quiero enviar evidencia para ganar un contacto extra.',
+    evidenceMessage: 'Hola, compartí ContactHub en una historia o estado y quiero enviar evidencia.',
   },
   {
     id: 'invite-friend',
     title: 'Invitar a un amigo',
     description: 'Recomienda ContactHub a alguien que pueda necesitar contactos u oportunidades.',
-    reward: '+1 contacto gratis',
+    reward: 'Reconocimiento en revisión',
     icon: UserPlus,
     evidenceMessage: 'Hola, invité a un amigo a registrarse en ContactHub y quiero enviar evidencia.',
   },
@@ -45,17 +45,17 @@ const missions: Mission[] = [
     id: 'testimonial',
     title: 'Dejar testimonio',
     description: 'Cuéntanos cómo te ayudó la plataforma. Los testimonios se revisan antes de publicarse.',
-    reward: '+3 contactos en revisión',
+    reward: 'Reconocimiento en revisión',
     icon: Star,
-    evidenceMessage: 'Hola, dejé mi testimonio en ContactHub y quiero activar mi recompensa.',
+    evidenceMessage: 'Hola, dejé mi testimonio en ContactHub y quiero enviarlo para revisión.',
   },
   {
     id: 'send-proof',
     title: 'Enviar evidencia',
     description: 'Si ya hiciste una acción de apoyo, manda la captura para que el admin la revise.',
-    reward: 'Descuento o contacto extra',
+    reward: 'Revisión manual',
     icon: UploadCloud,
-    evidenceMessage: 'Hola, vengo desde ContactHub. Quiero enviar evidencia para ganar un contacto extra.',
+    evidenceMessage: 'Hola, vengo desde ContactHub. Quiero enviar evidencia de una acción de apoyo.',
   },
 ];
 
@@ -168,9 +168,9 @@ export default function MissionsSection({ compact = false }: { compact?: boolean
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-text">Misiones</p>
-              <h2 className="mt-3 font-display text-3xl font-bold text-content">Gana contactos extra apoyando ContactHub</h2>
+              <h2 className="mt-3 font-display text-3xl font-bold text-content">Apoya a ContactHub</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-content-secondary">
-                Si ahora no puedes pagar, igual puedes empezar. Completa una acción sencilla, envía evidencia por chat y el admin revisará tu recompensa.
+                Completa una acción sencilla y envía evidencia por chat. El admin la revisará manualmente.
               </p>
             </div>
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-4 py-2 text-xs font-bold text-brand-text">
