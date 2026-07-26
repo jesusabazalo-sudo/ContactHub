@@ -5,24 +5,14 @@ export const faqs = [
       'ContactHub es un directorio organizado de contactos y oportunidades. La idea no es solo ver números, sino ayudarte a encontrar contactos que te acerquen a una meta: aprender, vender, trabajar, conseguir proveedores o resolver algo.',
   },
   {
-    question: '¿Dónde veo mis 3 contactos gratis?',
-    answer:
-      'Después de registrarte, entra a “Mis contactos” o toca “Ver prueba gratis”. Podrás elegir una carpeta y ver una muestra limitada de 3 contactos reales. La prueba se usa una sola vez.',
-  },
-  {
-    question: '¿Cómo uso la prueba gratis?',
-    answer:
-      'Inicia sesión, toca “Ver prueba gratis”, elige una carpeta y selecciona 3 contactos. Es una muestra limitada para que entiendas cómo funciona ContactHub antes de desbloquear una carpeta completa.',
-  },
-  {
     question: '¿Necesito registrarme para explorar?',
     answer:
-      'No. Puedes explorar el catálogo sin registrarte. Solo necesitas cuenta para guardar tu prueba gratis, desbloquear carpetas, subir comprobantes o ver contactos completos.',
+      'No. Puedes explorar el catálogo sin registrarte. Solo necesitas cuenta para desbloquear carpetas, subir comprobantes o ver contactos completos.',
   },
   {
     question: '¿Por qué me piden correo?',
     answer:
-      'Tu correo funciona como tu llave de acceso. Lo usamos para guardar tus carpetas desbloqueadas, registrar tu prueba gratis, asociar comprobantes y proteger tus accesos. No pedimos tu contraseña de Gmail.',
+      'Tu correo funciona como tu llave de acceso. Lo usamos para guardar tus carpetas desbloqueadas, asociar comprobantes y proteger tus accesos. No pedimos tu contraseña de Gmail.',
   },
   {
     question: '¿Qué recibo al pagar?',
@@ -45,11 +35,6 @@ export const faqs = [
       'La activación es manual y verificada. Normalmente se revisa después de recibir el comprobante.',
   },
   {
-    question: '¿Puedo ganar contactos gratis?',
-    answer:
-      'Sí. Puedes completar misiones como compartir ContactHub, invitar a alguien o enviar evidencia. Si se aprueba, puedes recibir contactos extra o recompensas.',
-  },
-  {
     question: '¿Qué pasa si no entiendo qué carpeta elegir?',
     answer:
       'Puedes usar el chat de ayuda. Dinos qué estás buscando lograr y te orientamos hacia una carpeta relacionada.',
@@ -62,6 +47,6 @@ export const faqs = [
   {
     question: '¿Los teléfonos se ven completos?',
     answer:
-      'No para usuarios sin acceso. Verás teléfonos ocultos hasta tener acceso activo, prueba gratuita o una recompensa aprobada.',
+      'No para usuarios sin acceso. Verás teléfonos ocultos hasta tener un acceso activo.',
   },
 ];

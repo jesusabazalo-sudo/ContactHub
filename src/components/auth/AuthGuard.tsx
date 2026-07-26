@@ -31,7 +31,7 @@ export default function AuthGuard({ children }: PropsWithChildren) {
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand-400/15 text-2xl">🔐</div>
             <h1 className="mt-5 font-display text-2xl font-bold text-content">Para guardar tu acceso necesitamos que inicies sesión.</h1>
             <p className="mt-4 text-sm leading-6 text-content-secondary">
-              Tu correo nos permite activar carpetas, guardar tu prueba gratis y proteger lo que desbloqueas. Puedes explorar ContactHub sin registrarte y crear cuenta cuando quieras guardar un acceso.
+              Tu correo nos permite activar carpetas y proteger lo que desbloqueas. Puedes explorar ContactHub sin registrarte y crear cuenta cuando quieras guardar un acceso.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button

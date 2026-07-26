@@ -163,15 +163,13 @@ const mainActions: ChatAction[] = [
 const helpTopics: Record<string, string> = {
   what: 'ContactHub es un directorio organizado de contactos y oportunidades. La idea no es solo ver números, sino encontrar contactos que te acerquen a una meta: aprender, vender, trabajar, crecer o resolver algo.',
   receive: 'Recibes acceso a la carpeta o pack que elijas. Los teléfonos completos solo se muestran cuando tu acceso está activo.',
-  trial: 'Puedes elegir una carpeta para ver una muestra limitada de contactos reales. La prueba se usa una sola vez.',
-  unlock: 'Después del pago o recompensa aprobada, activamos tu acceso. Desde ese momento puedes ver los contactos completos de la carpeta correspondiente.',
+  unlock: 'Después del pago, activamos tu acceso. Desde ese momento puedes ver los contactos completos de la carpeta correspondiente.',
   pay: 'Puedes pagar por Yape. Escanea el QR o copia el número si está disponible. Luego sube tu comprobante aquí mismo para revisar y activar tu acceso.',
-  trust: 'Puedes explorar antes de registrarte o pagar. El correo solo guarda tus accesos, pruebas y comprobantes. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail. El acceso se activa de forma manual y verificada.',
+  trust: 'Puedes explorar antes de registrarte o pagar. El correo solo guarda tus accesos y comprobantes. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail. El acceso se activa de forma manual y verificada.',
   whereContacts: 'Cuando tu acceso queda activo, entra a Mis contactos. Ahí verás tus carpetas desbloqueadas, progreso, buscador interno y teléfonos completos solo de tus carpetas activas.',
   delay: 'La activación es manual y verificada. Cuando envías comprobante, soporte lo revisa y te avisa en el chat cuando el acceso queda listo.',
-  explore: 'Sí. Puedes explorar el catálogo sin registrarte. Solo necesitas cuenta para guardar prueba gratis, desbloquear carpetas o enviar comprobantes.',
+  explore: 'Sí. Puedes explorar el catálogo sin registrarte. Solo necesitas cuenta para desbloquear carpetas o enviar comprobantes.',
   publish: 'Puedes postular tu producto o servicio desde Publicar mi servicio. La solicitud queda en revisión y no se publica automáticamente.',
-  free: 'Sí. Puedes registrarte, explorar el catálogo y ganar contactos extra completando misiones como compartir ContactHub y enviar evidencia.',
 };
 
 const autoResponses = [
@@ -207,13 +205,13 @@ En total hay más de 800 contactos. ¿Qué tipo de oportunidad quieres explorar?
   },
   {
     keywords: ['garantia', 'garantía', 'seguro', 'confiable', 'funciona'],
-    response: 'Te entiendo. Puedes explorar antes de decidir. No pedimos claves, codigos privados ni contrasenas externas. Los contactos completos solo se muestran cuando tu acceso esta activo, y tambien puedes probar contactos gratis.',
+    response: 'Te entiendo. Puedes explorar antes de decidir. No pedimos claves, codigos privados ni contrasenas externas. Los contactos completos solo se muestran cuando tu acceso esta activo.',
     flow: 'privacy' as ChatFlow,
   },
   {
-    keywords: ['gratis', 'prueba', 'probar', 'free'],
-    response: '🎁 Sí. Puedes registrarte gratis, explorar el catálogo y usar una prueba limitada de contactos reales.',
-    flow: 'missions' as ChatFlow,
+    keywords: ['gratis', 'free'],
+    response: '🎁 Puedes registrarte gratis y explorar el catálogo sin costo. Los teléfonos completos se muestran al desbloquear una carpeta.',
+    flow: 'privacy' as ChatFlow,
   },
   {
     keywords: ['hola', 'buenas', 'buenos', 'hey', 'hi'],
@@ -545,10 +543,8 @@ export default function ChatWidget() {
       return [
         { label: 'Qué es ContactHub', type: 'helpTopic', value: 'what' },
         { label: 'Qué recibo al pagar', type: 'helpTopic', value: 'receive' },
-        { label: 'Cómo funciona la prueba gratis', type: 'helpTopic', value: 'trial' },
     { label: 'Cómo se desbloquean contactos', type: 'helpTopic', value: 'unlock' },
     { label: 'Cómo pago', type: 'payment' },
-    { label: 'Puedo usarlo gratis', type: 'helpTopic', value: 'free' },
     { label: 'Esto es confiable', type: 'helpTopic', value: 'trust' },
     { label: 'Dónde veo mis contactos', type: 'helpTopic', value: 'whereContacts' },
     { label: 'Cuánto demora', type: 'helpTopic', value: 'delay' },
@@ -576,7 +572,6 @@ export default function ChatWidget() {
     }
     if (currentFlow === 'newUser') {
       return [
-        { label: 'Ver mis 3 contactos gratis', type: 'catalog', value: '/?trial=1' },
         { label: 'Explorar catálogo', type: 'catalog', value: '/catalogo' },
         { label: 'Ver guía rápida', type: 'catalog', value: '/guia' },
         { label: 'Hablar con soporte', type: 'human' },
@@ -870,11 +865,11 @@ export default function ChatWidget() {
     setIsTyping(false);
     const normalized = normalizeText(message);
     if (hasAny(normalized, ['no quiero poner mi correo', 'no quiero poner correo', 'por que me piden gmail', 'porque me piden gmail', 'por que piden correo', 'porque piden correo', 'es seguro registrarme', 'tengo miedo de poner mi correo', 'miedo de poner correo', 'gmail', 'estafa', 'me van a estafar', 'es confiable', 'es seguro', 'por que piden mi correo'])) {
-      await addAssistantMessage('Te entiendo. Puedes explorar ContactHub sin registrarte. Solo pedimos correo cuando quieres guardar una prueba, desbloquear una carpeta o enviar comprobante. Tu correo funciona como llave de acceso. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail.', 'privacy');
+      await addAssistantMessage('Te entiendo. Puedes explorar ContactHub sin registrarte. Solo pedimos correo cuando quieres desbloquear una carpeta o enviar comprobante. Tu correo funciona como llave de acceso. No pedimos claves bancarias, codigos privados ni contrasenas de Gmail.', 'privacy');
       return;
     }
-    if (hasAny(normalized, ['donde veo mis 3 contactos gratis', 'mis contactos gratis', 'prueba gratis', 'como empiezo', 'no se que hacer', 'acabo de registrarme', 'recien me registre', 'recien me registré', 'recién me registre', 'recién me registré', 'que hago ahora', 'donde veo mis accesos', 'guia rapida'])) {
-      await addAssistantMessage('Tranqui 👋 Si recién entraste, empieza por tu prueba gratis. Puedes elegir una carpeta y ver 3 contactos reales. También puedes explorar el catálogo antes de desbloquear algo.', 'newUser');
+    if (hasAny(normalized, ['como empiezo', 'no se que hacer', 'acabo de registrarme', 'recien me registre', 'recien me registré', 'recién me registre', 'recién me registré', 'que hago ahora', 'donde veo mis accesos', 'guia rapida'])) {
+      await addAssistantMessage('Tranqui 👋 Si recién entraste, puedes explorar el catálogo y elegir la carpeta que más se ajuste a lo que buscas antes de desbloquear algo.', 'newUser');
       return;
     }
     const plan = findPlanFromText(normalized);
@@ -895,8 +890,8 @@ export default function ChatWidget() {
       await addAssistantMessage(paymentInfoMessage(), 'payment');
       return;
     }
-    if (hasAny(normalized, ['no tengo dinero', 'no puedo pagar', 'gratis', 'ganar contacto', 'mision', 'misiones', 'puedo ver gratis'])) {
-      await addAssistantMessage('Tranqui. Puedes registrarte gratis, explorar el catálogo y ganar contactos extra completando misiones simples.', 'missions');
+    if (hasAny(normalized, ['no tengo dinero', 'no puedo pagar', 'mision', 'misiones'])) {
+      await addAssistantMessage('Tranqui. Puedes registrarte gratis y explorar el catálogo. También puedes apoyar a ContactHub completando misiones simples, que quedan sujetas a revisión manual.', 'missions');
       return;
     }
     if (hasAny(normalized, ['aprender ingles', 'ingles', 'aprender', 'curso', 'cursos', 'clase', 'libro', 'educacion'])) {

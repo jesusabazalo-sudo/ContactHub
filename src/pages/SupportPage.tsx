@@ -13,7 +13,7 @@ export default function SupportPage() {
   return (
     <section className="section-pad bg-canvas">
       <div className="container-shell">
-        <SectionHeading eyebrow="Soporte" title="Soporte ContactHub" description="Resuelve dudas sobre pagos, comprobantes, accesos, prueba gratis, publicaciones y contactos desbloqueados." />
+        <SectionHeading eyebrow="Soporte" title="Soporte ContactHub" description="Resuelve dudas sobre pagos, comprobantes, accesos, publicaciones y contactos desbloqueados." />
         <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <button type="button" onClick={() => openChat('Hola, necesito ayuda para pagar en ContactHub.')} className="focus-ring rounded-lg bg-brand-500 px-4 py-3 text-sm font-bold text-content">Cómo pagar</button>
           <button type="button" onClick={() => openChat('Hola, ya pagué y quiero enviar mi comprobante.')} className="focus-ring rounded-lg border border-brand-400/25 bg-brand-400/10 px-4 py-3 text-sm font-bold text-brand-text">Enviar comprobante</button>

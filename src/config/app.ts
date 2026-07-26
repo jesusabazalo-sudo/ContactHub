@@ -9,7 +9,6 @@ export const APP_CONFIG = {
   startingPrice: 'S/20',
   promo: 'Explora, elige según tu meta y desbloquea solo lo que te sirve.',
   ownerAdminEmail: import.meta.env.VITE_OWNER_ADMIN_EMAIL || 'tu_correo_admin@ejemplo.com',
-  trialCtaText: 'Quiero ver si esto me sirve',
   buyCtaText: 'Ya entendí — quiero avanzar',
   qrYapeUrl: '/qr-yape.png',
   welcomeChatMessage:

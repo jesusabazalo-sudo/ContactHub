@@ -41,9 +41,6 @@ export default function FoldersSection({
           <Link to="/catalogo" className="focus-ring rounded-full bg-brand px-5 py-3 text-sm font-bold text-brand-contrast transition hover:bg-brand-hover">
             Ver catálogo →
           </Link>
-          <Link to="/?trial=1" className="focus-ring rounded-full border border-border bg-muted px-5 py-3 text-sm font-bold text-content transition hover:border-brand/40">
-            Probar 3 contactos gratis
-          </Link>
         </div>
       </div>
     );
