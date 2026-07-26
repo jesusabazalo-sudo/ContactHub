@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, FolderOpen, Lock, Search, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { APP_CONFIG } from '../../config/app';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useCountUp } from '../../hooks/useCountUp';
@@ -40,6 +40,7 @@ function formatThousands(value: number) {
 
 export default function Hero() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [folders, setFolders] = useState<HeroFolder[] | null>(null);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const exploreRipple = useRipple<HTMLAnchorElement>();
@@ -180,7 +181,10 @@ export default function Hero() {
               ref={trialRipple.ref}
               onPointerDown={trialRipple.onPointerDown}
               type="button"
-              onClick={() => window.dispatchEvent(new Event('contacthub:open-trial'))}
+              onClick={() => {
+                if (user) navigate('/?trial=1');
+                else navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
+              }}
               className="ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center rounded-lg border border-border bg-surface px-6 text-sm font-semibold text-content transition hover:border-brand/40 sm:min-h-12 sm:w-auto"
             >
               Probar 3 contactos gratis
