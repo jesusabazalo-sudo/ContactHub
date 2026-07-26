@@ -43,8 +43,21 @@ export default function HomePage() {
 
   useEffect(() => {
     if (isAuthLoading) return; // CRÍTICO: esperar a que el auth context restaure la sesión
+
+    function openTrial() {
+      if (!user) {
+        navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
+        return;
+      }
+      setIsTrialOpen(true);
+    }
+
+    window.addEventListener('contacthub:open-trial', openTrial);
     if (searchParams.get('trial') === '1' && user) setIsTrialOpen(true);
-    if (searchParams.get('trial') === '1' && !user) navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
+    if (searchParams.get('trial') === '1' && !user) {
+      navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
+    }
+    return () => window.removeEventListener('contacthub:open-trial', openTrial);
   }, [isAuthLoading, navigate, searchParams, user]);
 
   useEffect(() => {
