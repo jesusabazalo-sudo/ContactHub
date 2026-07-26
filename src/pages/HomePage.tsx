@@ -34,7 +34,7 @@ const suggestions: Record<string, { slug: string; name: string }> = {
 };
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isTrialOpen, setIsTrialOpen] = useState(false);
@@ -42,9 +42,10 @@ export default function HomePage() {
   const suggestion = answers?.busca ? suggestions[answers.busca] : null;
 
   useEffect(() => {
+    if (isAuthLoading) return; // CRÍTICO: esperar a que el auth context restaure la sesión
     if (searchParams.get('trial') === '1' && user) setIsTrialOpen(true);
     if (searchParams.get('trial') === '1' && !user) navigate('/auth?redirect=' + encodeURIComponent('/?trial=1'));
-  }, [navigate, searchParams, user]);
+  }, [isAuthLoading, navigate, searchParams, user]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
