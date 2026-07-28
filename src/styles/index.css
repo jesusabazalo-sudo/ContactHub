@@ -1106,3 +1106,22 @@ select {
     animation: none !important;
   }
 }
+
+/* Separador con gradiente para romper monotonía entre secciones */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--brand) / 0.2) 30%,
+    rgb(var(--brand) / 0.35) 50%,
+    rgb(var(--brand) / 0.2) 70%,
+    transparent 100%
+  );
+  margin: 0;
+}
+
+/* Alterna el fondo de secciones para crear ritmo visual */
+.section-alt {
+  background: rgb(var(--canvas-subtle));
+}

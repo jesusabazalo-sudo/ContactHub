@@ -3,15 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Benefits from '../components/landing/Benefits';
 import CategoryPreview from '../components/landing/CategoryPreview';
 import FAQPreview from '../components/landing/FAQPreview';
-import FinalCTA from '../components/landing/FinalCTA';
 import Hero from '../components/landing/Hero';
 import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
-import PromoSection from '../components/landing/PromoSection';
 import SocialProof from '../components/landing/SocialProof';
-import TrustExplainer from '../components/landing/TrustExplainer';
-import WhatYouReceive from '../components/landing/WhatYouReceive';
-import MissionsSection from '../components/missions/MissionsSection';
 import PublicReviews from '../components/reviews/PublicReviews';
 import { useAuth } from '../features/auth/AuthProvider';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
@@ -68,15 +63,11 @@ export default function HomePage() {
     <>
       <Hero />
       <SocialProof />
-      <TrustExplainer />
+      <div className="section-divider" aria-hidden="true" />
       {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
       <HowItWorks />
-      <WhatYouReceive />
       <CategoryPreview />
       <Benefits />
-      <FinalCTA />
-      <MissionsSection />
-      <PromoSection />
       <PricingPreview />
       <FAQPreview />
       <PublicReviews />

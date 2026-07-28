@@ -15,9 +15,9 @@ const CONTACTS_COUNT_TARGET = Number(APP_CONFIG.contactsClaim.replace(/\D/g, '')
 type HeroFolder = { order: string; name: string; detail: string; count: string };
 
 const fallbackFolders: HeroFolder[] = [
-  { order: '01', name: 'Elite Business', detail: 'Negocios y proveedores', count: '42' },
-  { order: '02', name: 'IA Masters', detail: 'IA y herramientas digitales', count: '68' },
-  { order: '03', name: 'Knowledge Vault', detail: 'Educación y cursos', count: '56' },
+  { order: '01', name: 'IA Masters', detail: 'IA y herramientas digitales', count: '161+' },
+  { order: '02', name: 'Knowledge Vault', detail: 'Educación y cursos', count: '155+' },
+  { order: '03', name: 'Misc Bonus', detail: 'Varios y recursos extra', count: '120+' },
 ];
 
 const contacts = [
