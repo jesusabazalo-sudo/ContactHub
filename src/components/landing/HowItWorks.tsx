@@ -19,8 +19,8 @@ const steps = [
   },
   {
     icon: KeyRound,
-    title: 'Prueba o desbloquea',
-    text: 'Usa tu prueba gratuita o activa una carpeta. Cada permiso queda asociado de forma segura a tu cuenta.',
+    title: 'Desbloquea una carpeta',
+    text: 'Activa la carpeta que te interesa. Cada permiso queda asociado de forma segura a tu cuenta.',
   },
   {
     icon: UserRoundCheck,

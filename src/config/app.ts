@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   headline: 'No todos buscan un contacto. Algunos buscan una oportunidad.',
   whatsappNumber: '+51963187899',
   defaultCurrency: 'S/',
-  contactsClaim: '1.400+',
+  contactsClaim: '1.500+',
   categoriesClaim: '24',
   startingPrice: 'S/20',
   promo: 'Explora, elige según tu meta y desbloquea solo lo que te sirve.',
