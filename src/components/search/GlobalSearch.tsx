@@ -123,11 +123,11 @@ export default function GlobalSearch() {
   }, [debouncedQuery, hasLoaded]);
 
   const categoryResults = useMemo(
-    () => searchCategories(debouncedQuery, categories).slice(0, 4),
+    () => searchCategories(debouncedQuery, categories).slice(0, 3),
     [categories, debouncedQuery],
   );
   const contactResults = useMemo(
-    () => searchContacts(debouncedQuery, contacts).slice(0, 5),
+    () => searchContacts(debouncedQuery, contacts).slice(0, 4),
     [contacts, debouncedQuery],
   );
   const normalizedQuery = normalizeSearchText(query);
@@ -171,7 +171,7 @@ export default function GlobalSearch() {
       </label>
 
       {isOpen ? (
-        <div className="global-search-results absolute left-0 right-0 top-[calc(100%+10px)] max-h-[min(68vh,560px)] overflow-y-auto p-3 sm:p-4">
+        <div className="global-search-results absolute left-[calc(-50vw+50%)] right-[calc(-50vw+50%)] top-[calc(100%+10px)] z-50 w-screen max-h-[min(68vh,560px)] overflow-y-auto p-4 sm:left-0 sm:right-0 sm:w-auto">
           {!normalizedQuery ? (
             <div>
               <div className="flex items-center gap-2 px-2 text-sm text-content-secondary">
@@ -235,7 +235,7 @@ export default function GlobalSearch() {
                           navigate(`/catalogo/${category.slug}`);
                           setIsOpen(false);
                         }}
-                        className="focus-ring flex w-full items-center gap-3 rounded-lg border border-border bg-muted p-3 text-left transition hover:border-brand-400/35 hover:bg-brand-400/[0.07]"
+                        className="focus-ring flex w-full items-center gap-3 rounded-lg border border-border bg-muted p-4 text-left transition hover:border-brand-400/35 hover:bg-brand-400/[0.07]"
                       >
                         <span className="text-xl">{category.icon}</span>
                         <span className="min-w-0 flex-1">
@@ -265,7 +265,7 @@ export default function GlobalSearch() {
                           navigate(`/catalogo/${contact.categorySlug}`);
                           setIsOpen(false);
                         }}
-                        className="focus-ring rounded-lg border border-border bg-muted p-3 text-left transition hover:border-brand-400/30"
+                        className="focus-ring rounded-lg border border-border bg-muted p-4 text-left transition hover:border-brand-400/30"
                       >
                         <span className="line-clamp-1 text-sm font-bold text-content"><Highlight text={contact.name} query={debouncedQuery} /></span>
                         <span className="mt-1 line-clamp-2 block text-xs leading-5 text-content-secondary">{contact.description || contact.categoryName}</span>
