@@ -51,6 +51,10 @@ const accentClasses: Record<Testimonial['accent'], string> = {
   cyan: 'bg-accent-cyan/15 text-accent-cyan',
 };
 
+// Duplicado para que el loop de la cinta sea perfecto (0% a -50% cubre
+// exactamente una copia, sin salto visual al reiniciar).
+const allTestimonials = [...testimonials, ...testimonials];
+
 export default function SocialProof() {
   return (
     <section className="section-pad bg-canvas">
@@ -61,29 +65,35 @@ export default function SocialProof() {
           title="Emprendedores que ya lo están usando"
           description="Personas reales resolviendo necesidades reales, sin vueltas."
         />
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {testimonials.map((testimonial) => (
-            <article key={testimonial.name} className="professional-card flex flex-col p-5">
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className="h-3.5 w-3.5 fill-warning text-warning" />
-                ))}
-              </div>
-              <p className="mt-3 flex-1 text-sm leading-6 text-content-secondary">“{testimonial.quote}”</p>
-              <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
-                <span
-                  className={`flex h-10 w-10 flex-none items-center justify-center rounded-full text-xs font-bold ${accentClasses[testimonial.accent]}`}
-                  aria-hidden="true"
-                >
-                  {testimonial.initials}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-content">{testimonial.name}</p>
-                  <p className="text-xs text-content-muted">{testimonial.city}, Perú</p>
+        <div className="mt-10 overflow-hidden">
+          <div className="ticker-track">
+            {allTestimonials.map((testimonial, index) => (
+              <article
+                key={`${testimonial.name}-${index}`}
+                className="professional-card flex flex-col p-5"
+                style={{ minWidth: 300, flexShrink: 0, marginRight: 16 }}
+              >
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, starIndex) => (
+                    <Star key={starIndex} className="h-3.5 w-3.5 fill-warning text-warning" />
+                  ))}
                 </div>
-              </div>
-            </article>
-          ))}
+                <p className="mt-3 flex-1 text-sm leading-6 text-content-secondary">“{testimonial.quote}”</p>
+                <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+                  <span
+                    className={`flex h-10 w-10 flex-none items-center justify-center rounded-full text-xs font-bold ${accentClasses[testimonial.accent]}`}
+                    aria-hidden="true"
+                  >
+                    {testimonial.initials}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-content">{testimonial.name}</p>
+                    <p className="text-xs text-content-muted">{testimonial.city}, Perú</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {animatedStats.map((stat) => (

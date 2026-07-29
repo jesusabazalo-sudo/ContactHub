@@ -1125,3 +1125,25 @@ select {
 .section-alt {
   background: rgb(var(--canvas-subtle));
 }
+
+/* Cinta de testimonios: loop infinito con CSS puro (sin librerías). */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 30s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
