@@ -1248,8 +1248,8 @@ export default function ChatWidget() {
         </div>
       ) : null}
 
-      <button type="button" onClick={() => setIsOpen((current) => !current)} className="badge-pulse relative z-[50] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 via-accent-cyan to-brand-500 text-ink-950 shadow-glow transition hover:scale-105 active:scale-95">
-        <MessageCircle className="h-6 w-6" />
+      <button type="button" onClick={() => setIsOpen((current) => !current)} className="badge-pulse relative z-[50] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 via-accent-cyan to-brand-500 text-ink-950 shadow-glow transition hover:scale-105 active:scale-95 sm:h-16 sm:w-16">
+        <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
         {unread ? <span className="absolute -right-1 -top-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-content">{unread}</span> : null}
       </button>
     </div>
