@@ -177,22 +177,27 @@ export default function Hero() {
             </Link>
             <a
               href="#como-funciona"
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold text-content-secondary transition hover:text-content"
+              className="focus-ring hidden min-h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold text-content-secondary transition hover:text-content sm:inline-flex"
             >
               Cómo funciona
             </a>
           </div>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-content-muted">
+          <div className="mt-7 flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-content-muted sm:flex-wrap sm:gap-x-6 sm:gap-y-2 sm:text-sm">
             <span ref={contactsStatRef}>
               {formatThousands(contactsCount)}
-              {contactsCount >= CONTACTS_COUNT_TARGET ? '+' : ''} contactos organizados
+              {contactsCount >= CONTACTS_COUNT_TARGET ? '+' : ''}{' '}
+              <span className="sm:hidden">contactos</span>
+              <span className="hidden sm:inline">contactos organizados</span>
             </span>
-            <span className="hidden h-1 w-1 rounded-full bg-content-muted sm:block" />
+            <span aria-hidden="true">·</span>
             <span>{APP_CONFIG.categoriesClaim} categorías</span>
-            <span className="hidden h-1 w-1 rounded-full bg-content-muted sm:block" />
-            <span>Acceso desde {APP_CONFIG.startingPrice}</span>
+            <span aria-hidden="true">·</span>
+            <span>
+              <span className="sm:hidden">desde</span>
+              <span className="hidden sm:inline">Acceso desde</span> {APP_CONFIG.startingPrice}
+            </span>
           </div>
-          <p className="mt-4 text-xs text-content-muted">
+          <p className="mt-4 hidden text-xs text-content-muted sm:block">
             Usado por emprendedores de Lima, Arequipa y Trujillo
           </p>
         </div>

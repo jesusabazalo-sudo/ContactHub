@@ -17,11 +17,14 @@ export default function PricingPreview() {
             Comparar todos los planes
           </Link>
         </div>
-        <div className="mt-10 grid gap-4 lg:grid-cols-5">
+        <div className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 sm:grid sm:snap-none sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
           {pricingPlans.map((plan) => (
-            <PricingCard key={plan.id} plan={plan} compact />
+            <div key={plan.id} className="min-w-[280px] flex-shrink-0 snap-center sm:min-w-0">
+              <PricingCard plan={plan} compact />
+            </div>
           ))}
         </div>
+        <p className="mt-2 text-center text-xs text-content-muted sm:hidden">← desliza para ver más →</p>
       </div>
     </section>
   );

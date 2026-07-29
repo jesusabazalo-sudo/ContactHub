@@ -62,12 +62,18 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <SocialProof />
-      <div className="section-divider" aria-hidden="true" />
+      <div className="hidden sm:block">
+        <SocialProof />
+      </div>
+      <div className="section-divider hidden sm:block" aria-hidden="true" />
       {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
-      <HowItWorks />
+      <div className="hidden sm:block">
+        <HowItWorks />
+      </div>
       <CategoryPreview />
-      <Benefits />
+      <div className="hidden sm:block">
+        <Benefits />
+      </div>
       <PricingPreview />
       <FAQPreview />
       <PublicReviews />

@@ -78,7 +78,7 @@ const semanticGroups = [
   ['ingles', 'idioma', 'idiomas', 'educacion', 'curso', 'cursos'],
   ['streaming', 'striming', 'directos', 'entretenimiento', 'gaming'],
   ['cocina', 'gastronomia', 'chef', 'alimentos', 'recetas'],
-  ['fitness', 'salud', 'nutricion', 'entrenamiento', 'bienestar'],
+  ['fitness', 'gym', 'gimnasio', 'salud', 'nutricion', 'entrenamiento', 'bienestar'],
   ['marketing', 'ventas', 'redes', 'crecimiento', 'publicidad'],
   ['musica', 'audio', 'dj', 'beats', 'sonido'],
   ['diseno', 'fotografia', 'creatividad', 'grafico', 'visual'],
