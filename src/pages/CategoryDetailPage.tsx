@@ -224,7 +224,7 @@ export default function CategoryDetailPage() {
               {contacts.map((contact, index) => {
                 const canSeeFullPhone = accessLevel === 2;
                 return (
-                  <div key={contact.id} className="float-in h-full" style={{ animationDelay: `${Math.min(index, 11) * 40}ms` }}>
+                  <div key={contact.id} className="float-in h-full w-full min-w-0 overflow-hidden" style={{ animationDelay: `${Math.min(index, 11) * 40}ms` }}>
                     <ContactCard
                       contact={contact}
                       canSeeFullPhone={canSeeFullPhone}

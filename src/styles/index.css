@@ -100,6 +100,12 @@
 
 * {
   box-sizing: border-box;
+  /* Crítico: por defecto los flex/grid items tienen min-width: auto, que
+     impide que el texto largo se achique/trunque y termina desbordando la
+     card. Los componentes que necesitan un ancho mínimo real (ej. cards de
+     un carrusel horizontal) lo declaran con una clase explícita, que gana
+     por especificidad sobre este selector universal. */
+  min-width: 0;
 }
 
 html {
@@ -118,6 +124,11 @@ body {
   color: rgb(var(--content));
   font-family: Inter, system-ui, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 a {

@@ -148,7 +148,7 @@ function ContactCard({
   }
 
   return (
-    <article className="card-hover stable-card group flex h-full flex-col rounded-2xl border border-border bg-surface p-5 shadow-card-sm">
+    <article className="card-hover stable-card group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-card-sm">
       {/* Encabezado: ícono de categoría + nombre protagonista */}
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-brand/[0.12] text-brand-text transition group-hover:bg-brand/20">
@@ -189,7 +189,7 @@ function ContactCard({
       {tags.length ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {tags.map((tag) => (
-            <span key={tag} className="max-w-[140px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-content-secondary">
+            <span key={tag} className="max-w-[160px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-content-secondary">
               {tag}
             </span>
           ))}
