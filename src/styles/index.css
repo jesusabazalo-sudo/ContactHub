@@ -1147,3 +1147,14 @@ select {
     animation: none;
   }
 }
+
+/* Oculta la scrollbar en carruseles horizontales de móvil (el scroll sigue
+   funcionando por touch/drag, solo se esconde el indicador visual). */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

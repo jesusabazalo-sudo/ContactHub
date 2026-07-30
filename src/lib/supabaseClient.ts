@@ -664,6 +664,18 @@ export type Database = {
         };
         Returns: boolean;
       };
+      get_featured_contacts: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          name: string;
+          description: string;
+          category_name: string;
+          category_icon: string;
+          category_slug: string;
+          category_id: string;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
