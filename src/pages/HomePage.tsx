@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Benefits from '../components/landing/Benefits';
 import CategoryPreview from '../components/landing/CategoryPreview';
 import FAQPreview from '../components/landing/FAQPreview';
+import FeaturedContacts from '../components/landing/FeaturedContacts';
 import Hero from '../components/landing/Hero';
 import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
@@ -74,6 +75,7 @@ export default function HomePage() {
       <div className="hidden sm:block">
         <Benefits />
       </div>
+      <FeaturedContacts />
       <PricingPreview />
       <FAQPreview />
       <PublicReviews />
