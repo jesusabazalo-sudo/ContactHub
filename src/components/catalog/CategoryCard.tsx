@@ -169,14 +169,14 @@ function CategoryCard({ category, accessLevel = 0 }: CategoryCardProps) {
             Actualizado hace {updatedDays === 0 ? 'hoy' : `${updatedDays} día${updatedDays === 1 ? '' : 's'}`}
           </span>
         ) : null}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center justify-between gap-3">
           {hasAccess ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/15 px-2.5 py-1 text-xs font-semibold text-brand-text">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Acceso activo
+            <span className="inline-flex min-w-0 items-center gap-1.5 truncate rounded-full bg-brand/15 px-2.5 py-1 text-xs font-semibold text-brand-text">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">Acceso activo</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-xs text-content-muted">Números protegidos</span>
+            <span className="min-w-0 truncate text-xs text-content-muted">Números protegidos</span>
           )}
           <Link
             to={`/catalogo/${category.slug}`}
