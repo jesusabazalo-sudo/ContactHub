@@ -15,6 +15,15 @@ const links = [
   { label: 'Ayuda', to: '/faq' },
 ];
 
+function openSupportChat() {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: 'Hola, necesito ayuda de Soporte ContactHub.' } }));
+}
+
+const mobileMenuLinks = [
+  { label: 'Catálogo', to: '/catalogo' },
+  { label: 'Precios', to: '/precios' },
+];
+
 function HubLogoMark() {
   return (
     <span
@@ -44,9 +53,11 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const { isAdmin, session, signOut } = useAuth();
-  const mobileLinks = session
-    ? [...links, { label: 'Mis contactos', to: '/mis-contactos' }, ...(isAdmin ? [{ label: 'Panel Admin', to: '/admin' }] : [])]
-    : links;
+  const mobileLinks = [
+    ...mobileMenuLinks,
+    { label: 'Soporte', action: openSupportChat },
+    ...(session ? [{ label: 'Mis contactos', to: '/mis-contactos' }, ...(isAdmin ? [{ label: 'Panel Admin', to: '/admin' }] : [])] : []),
+  ];
 
   useEffect(() => {
     function handleScroll() {

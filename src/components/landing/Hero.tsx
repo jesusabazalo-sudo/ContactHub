@@ -159,10 +159,10 @@ export default function Hero() {
             Plataforma organizada y acceso verificado
           </div>
           <h1 className="hero-title mt-7 font-display font-bold text-content">
-            <span className="gradient-heading">Encuentra</span> contactos que te acerquen a tus metas.
+            <span className="gradient-heading">Encuentra</span> contactos de WhatsApp organizados por categoría
           </h1>
           <p className="hero-subtitle mx-auto mt-6 max-w-2xl leading-8 text-content-secondary">
-            Explora categorías y desbloquea solo la información que realmente necesitas.
+            IA · Cursos · Fitness · Negocios · Gaming y más. Más de 1.500 contactos verificados. Acceso desde {APP_CONFIG.startingPrice}.
           </p>
           <GlobalSearch />
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -170,17 +170,17 @@ export default function Hero() {
               ref={exploreRipple.ref}
               onPointerDown={exploreRipple.onPointerDown}
               to="/catalogo"
-              className="hero-cta-pulse btn-primary-glow btn-glow-animated ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast sm:min-h-12 sm:w-auto"
+              className="hero-cta-pulse btn-primary-glow btn-glow-animated ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast sm:w-auto"
             >
-              Explorar catálogo
+              Ver qué hay dentro
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a
-              href="#como-funciona"
-              className="focus-ring hidden min-h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold text-content-secondary transition hover:text-content sm:inline-flex"
+            <Link
+              to="/precios"
+              className="focus-ring inline-flex min-h-[52px] w-full items-center justify-center rounded-lg border border-border px-6 text-sm font-semibold text-content-secondary transition hover:border-brand/40 hover:text-content sm:w-auto"
             >
-              Cómo funciona
-            </a>
+              Ver precios
+            </Link>
           </div>
           <div className="mt-7 flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-content-muted sm:flex-wrap sm:gap-x-6 sm:gap-y-2 sm:text-sm">
             <span ref={contactsStatRef}>

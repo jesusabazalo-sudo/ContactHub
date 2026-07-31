@@ -62,13 +62,9 @@ export default function CategoryPreview() {
     <section className="section-pad section-band">
       <div className="container-shell">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <SectionHeading
-            eyebrow="Categorías principales"
-            title="Empieza por el área que más se acerca a tu meta"
-            description="Cada carpeta explica qué puedes encontrar y protege los datos privados hasta que tengas un acceso activo."
-          />
+          <SectionHeading eyebrow="¿Qué hay dentro?" title="Elige la categoría que necesitas" />
           <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm font-bold text-brand-text transition hover:text-content">
-            Explorar todas las categorías
+            Ver todas las carpetas
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

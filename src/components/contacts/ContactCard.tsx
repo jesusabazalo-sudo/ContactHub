@@ -28,7 +28,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { memo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useRipple } from '../../hooks/useRipple';
 import { recordContactAction } from '../../lib/activityTracking';
@@ -107,9 +106,7 @@ function ContactCard({
   onDelete,
   onDeactivate,
 }: ContactCardProps) {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const tags = contact.tags ?? [];
   const resolvedAccessLevel: 0 | 1 | 2 = accessLevel ?? (canSeeFullPhone ? 2 : 1);
   const hasFolderAccess = Boolean(canContactDirect ?? resolvedAccessLevel === 2);
   const showDirectActions = hasFolderAccess;
@@ -128,7 +125,6 @@ function ContactCard({
   const whatsappPulseTimeoutRef = useRef<number | null>(null);
   const copyRipple = useRipple<HTMLButtonElement>();
   const whatsappRipple = useRipple<HTMLAnchorElement>();
-  const unlockRipple = useRipple<HTMLButtonElement>();
 
   async function copyPhone() {
     if (!showDirectActions || !contact.phone) return;
@@ -184,16 +180,6 @@ function ContactCard({
         <p className="mt-3 border-l-2 border-brand/40 pl-3 text-[13px] leading-relaxed text-content-secondary">
           {contact.description}
         </p>
-      ) : null}
-
-      {tags.length ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {tags.map((tag) => (
-            <span key={tag} className="max-w-[160px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-content-secondary">
-              {tag}
-            </span>
-          ))}
-        </div>
       ) : null}
 
       {/* Bloque inferior anclado: teléfono protagonista + acciones */}
@@ -288,27 +274,7 @@ function ContactCard({
                 </span>
               </div>
             </div>
-          ) : resolvedAccessLevel === 0 ? (
-            <button
-              ref={unlockRipple.ref}
-              type="button"
-              onPointerDown={unlockRipple.onPointerDown}
-              onClick={() => navigate('/auth')}
-              className="ripple-container focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-content-secondary transition duration-200 hover:border-brand/40 hover:text-content"
-            >
-              Regístrate gratis para ver más
-            </button>
-          ) : (
-            <button
-              ref={unlockRipple.ref}
-              type="button"
-              onPointerDown={unlockRipple.onPointerDown}
-              onClick={() => navigate('/precios')}
-              className="ripple-container focus-ring inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-brand-contrast shadow-[0_2px_12px_rgb(var(--brand)/0.16)] transition-all hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-[0_14px_32px_rgb(var(--brand)/0.34)] active:translate-y-0 active:scale-[0.98]"
-            >
-              Desbloquea toda la carpeta
-            </button>
-          )}
+          ) : null}
 
           {isAdmin && (onEdit || onDeactivate || onDelete) ? (
             <div className="mt-3 flex flex-wrap gap-2">

@@ -1,9 +1,8 @@
+import { MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Benefits from '../components/landing/Benefits';
 import CategoryPreview from '../components/landing/CategoryPreview';
 import FAQPreview from '../components/landing/FAQPreview';
-import FeaturedContacts from '../components/landing/FeaturedContacts';
 import Hero from '../components/landing/Hero';
 import HowItWorks from '../components/landing/HowItWorks';
 import PricingPreview from '../components/landing/PricingPreview';
@@ -11,6 +10,10 @@ import SocialProof from '../components/landing/SocialProof';
 import PublicReviews from '../components/reviews/PublicReviews';
 import { useAuth } from '../features/auth/AuthProvider';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+
+function openSupportChat() {
+  window.dispatchEvent(new CustomEvent('contacthub:open-chat', { detail: { message: 'Hola, tengo una duda antes de elegir una carpeta.' } }));
+}
 
 type OnboardingAnswers = { busca?: string; uso?: string; contacto?: string };
 
@@ -63,22 +66,32 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
+      <CategoryPreview />
+      <HowItWorks />
+      <PricingPreview />
+      <section className="section-pad section-band">
+        <div className="container-shell flex flex-col items-center gap-4 text-center">
+          <h2 className="font-display text-2xl font-bold text-content">¿Tienes dudas?</h2>
+          <button
+            type="button"
+            onClick={openSupportChat}
+            className="focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Escríbenos por WhatsApp
+          </button>
+        </div>
+      </section>
       <div className="hidden sm:block">
         <SocialProof />
       </div>
-      <div className="section-divider hidden sm:block" aria-hidden="true" />
-      {suggestion ? <SuggestionBanner suggestion={suggestion} /> : null}
       <div className="hidden sm:block">
-        <HowItWorks />
+        <FAQPreview />
       </div>
-      <CategoryPreview />
       <div className="hidden sm:block">
-        <Benefits />
+        <PublicReviews />
       </div>
-      <FeaturedContacts />
-      <PricingPreview />
-      <FAQPreview />
-      <PublicReviews />
     </>
   );
 }
