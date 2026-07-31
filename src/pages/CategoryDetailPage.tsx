@@ -2,9 +2,9 @@ import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ContactCard from '../components/contacts/ContactCard';
-import Badge from '../components/ui/Badge';
 import Icon from '../components/ui/Icon';
 import SkeletonCard from '../components/ui/SkeletonCard';
+import { APP_CONFIG } from '../config/app';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useRipple } from '../hooks/useRipple';
 import { withTimeout } from '../lib/supabaseClient';
@@ -161,62 +161,36 @@ export default function CategoryDetailPage() {
           Volver al catálogo
         </Link>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="rounded-2xl border border-border bg-surface p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-400/10 text-2xl text-brand-text">
-                <Icon name={category.icon} className="h-7 w-7" />
-              </div>
-              {category.isTop ? <Badge tone="gold">Top</Badge> : null}
-              {category.isNew ? <Badge>Nuevo</Badge> : null}
-            </div>
-            <h1 className="mt-5 min-w-0 break-words font-display text-3xl font-bold leading-tight text-content sm:text-5xl">
-              {category.sortOrder ? `${String(category.sortOrder).padStart(2, '0')}. ` : ''}
-              {category.icon} {category.name}
-            </h1>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-content-secondary">{category.description}</p>
-            <div className="mt-5 flex min-w-0 flex-wrap gap-2">
-              {category.tags.map((tag) => (
-                <span key={tag} className="max-w-[160px] truncate whitespace-nowrap rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-content-secondary">
-                  {tag}
-                </span>
-              ))}
-            </div>
+        <div className="mt-6 flex flex-col items-center rounded-2xl border border-border bg-surface p-6 text-center sm:p-8">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-400/10 text-2xl text-brand-text">
+            <Icon name={category.icon} className="h-7 w-7" />
           </div>
-
-          <aside className="rounded-2xl border border-border bg-surface p-6">
-            <p className="text-sm font-semibold text-brand-text">{isAdmin ? 'Vista admin' : hasAccess ? 'Acceso activo' : 'Carpeta bloqueada'}</p>
-            <p className="mt-3 text-3xl font-bold text-content">
-              {contacts.length} {contacts.length === 1 ? 'contacto' : 'contactos'}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-content-secondary">
-              {canViewFullCategory
-                ? 'Puedes ver los teléfonos completos de esta carpeta.'
-                : 'Puedes explorar la carpeta. Los números completos se muestran solo al desbloquear.'}
-            </p>
-            {!canViewFullCategory ? (
-              <div className="mt-6 grid gap-3">
-                <button
-                  ref={unlockButtonRipple.ref}
-                  type="button"
-                  onPointerDown={unlockButtonRipple.onPointerDown}
-                  onClick={openChatForCategory}
-                  className="ripple-container focus-ring inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-sm font-bold text-ink-950 transition hover:bg-white"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Desbloquear carpeta
-                </button>
-              </div>
-            ) : null}
-          </aside>
+          <h1 className="mt-4 min-w-0 break-words font-display text-2xl font-bold leading-tight text-content sm:text-4xl">{category.name}</h1>
+          <p className="mt-3 text-sm font-semibold text-content-secondary sm:text-base">
+            {contacts.length} {contacts.length === 1 ? 'contacto disponible' : 'contactos disponibles'} · Acceso desde {APP_CONFIG.startingPrice}
+          </p>
+          {!canViewFullCategory ? (
+            <div className="mt-6 w-full max-w-sm">
+              <button
+                ref={unlockButtonRipple.ref}
+                type="button"
+                onPointerDown={unlockButtonRipple.onPointerDown}
+                onClick={openChatForCategory}
+                className="ripple-container focus-ring inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-brand-400 px-4 py-3 text-base font-bold text-ink-950 transition hover:bg-white"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Desbloquear esta carpeta
+              </button>
+              <p className="mt-3 text-xs text-content-muted">Paga por Yape o Plin y activa tu acceso</p>
+            </div>
+          ) : (
+            <p className="mt-5 text-sm font-semibold text-brand-text">{isAdmin ? 'Vista admin' : 'Acceso activo'}</p>
+          )}
         </div>
 
         <div className="mt-10">
           <div className="mb-5">
             <h2 className="font-display text-2xl font-bold text-content">Contactos disponibles</h2>
-            <p className="mt-2 text-sm text-content-secondary">
-              {canViewFullCategory ? 'Puedes ver los teléfonos completos de esta carpeta.' : 'Puedes explorar la carpeta. Los números completos se muestran solo al desbloquear.'}
-            </p>
           </div>
 
           {contacts.length ? (

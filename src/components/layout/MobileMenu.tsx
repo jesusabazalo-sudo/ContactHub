@@ -2,10 +2,12 @@ import { X } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useModalDismiss } from '../../hooks/useModalDismiss';
 
+type MobileMenuLink = { label: string; to: string } | { label: string; action: () => void };
+
 type MobileMenuProps = {
   isOpen: boolean;
   onClose: () => void;
-  links: Array<{ label: string; to: string }>;
+  links: MobileMenuLink[];
 };
 
 export default function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
@@ -29,22 +31,40 @@ export default function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) 
       </div>
 
       <nav className="mt-10 grid gap-3">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            onClick={onClose}
-            className={({ isActive }) =>
-              `rounded-xl border px-4 py-3 text-base font-medium transition ${
-                isActive
-                  ? 'border-brand/40 bg-brand/10 text-brand-text'
-                  : 'border-border bg-surface text-content-secondary'
-              }`
-            }
-          >
-            {link.label}
-          </NavLink>
-        ))}
+        {links.map((link) => {
+          if ('to' in link) {
+            return (
+              <NavLink
+                key={link.label}
+                to={link.to}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `rounded-xl border px-4 py-3 text-base font-medium transition ${
+                    isActive
+                      ? 'border-brand/40 bg-brand/10 text-brand-text'
+                      : 'border-border bg-surface text-content-secondary'
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            );
+          }
+          const handleClick = link.action;
+          return (
+            <button
+              key={link.label}
+              type="button"
+              onClick={() => {
+                handleClick();
+                onClose();
+              }}
+              className="rounded-xl border border-border bg-surface px-4 py-3 text-left text-base font-medium text-content-secondary transition"
+            >
+              {link.label}
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

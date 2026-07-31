@@ -1,4 +1,4 @@
-import { Check, CreditCard, MessageCircle } from 'lucide-react';
+import { CreditCard, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -7,7 +7,6 @@ import { useAuth } from '../../features/auth/AuthProvider';
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient';
 import { isStripeEnabled } from '../../lib/stripe';
 import type { PricingPlan } from '../../types';
-import Badge from '../ui/Badge';
 
 type PricingCardProps = {
   plan: PricingPlan;
@@ -66,56 +65,33 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
         plan.isRecommended ? 'border-brand/50 ring-1 ring-brand/30' : ''
       }`}
     >
-      {plan.isRecommended ? (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-contrast shadow-card-sm">
-          Recomendado
-        </span>
-      ) : null}
-      <div className="flex min-h-7 items-start justify-between gap-3">
-        <h3 className="font-display text-lg font-bold text-content">{plan.name}</h3>
-        {plan.badge && !plan.isRecommended ? <Badge tone={plan.isPremium ? 'gold' : 'green'}>{plan.badge}</Badge> : null}
-      </div>
+      <h3 className="font-display text-lg font-bold text-content">{plan.name}</h3>
       <div className="mt-5 flex items-end gap-1">
         <span className="text-sm font-semibold text-content-secondary">{APP_CONFIG.defaultCurrency}</span>
         <span className="font-display text-5xl font-bold tracking-tight text-content">{plan.price}</span>
       </div>
       <p className="mt-3 text-sm font-semibold text-brand-text">{folderText}</p>
-      <p className={`mt-4 text-sm leading-6 text-content-secondary ${compact ? 'min-h-24' : 'min-h-16'}`}>{plan.description}</p>
-      <div className="mt-5 grid gap-2.5 text-sm text-content-secondary">
-        {['Activación manual verificada', 'Acceso privado por carpeta', 'Orientación por chat antes de pagar'].map((feature) => (
-          <div key={feature} className="flex items-center gap-2.5">
-            <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-brand/15 text-brand-text">
-              <Check className="h-3 w-3" />
-            </span>
-            {feature}
-          </div>
-        ))}
-      </div>
-      <div className="mt-5 border-t border-border pt-4 text-xs leading-5 text-content-secondary">
-        <p className="font-semibold text-content">Antes de pagar</p>
-        <p className="mt-2">Incluye acceso a las carpetas indicadas y teléfonos completos cuando el permiso queda activo.</p>
-        <p className="mt-2">No incluye resultados garantizados, claves privadas ni acceso automático sin revisión.</p>
-      </div>
+      <p className="mt-2 line-clamp-2 text-sm leading-6 text-content-secondary">{plan.description}</p>
       {isStripeEnabled ? (
-        <>
+        <div className="mt-6 grid gap-2.5">
           <button
             type="button"
             onClick={() => void handleStripeCheckout()}
             disabled={isCheckingOut}
-            className="focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-brand-contrast transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             <CreditCard className="h-4 w-4" />
-            {isCheckingOut ? 'Redirigiendo...' : 'Pagar con tarjeta'}
+            {isCheckingOut ? 'Redirigiendo...' : 'Elegir este plan'}
           </button>
           <button
             type="button"
             onClick={openChat}
-            className="focus-ring mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-content transition hover:border-brand/40"
+            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-content transition hover:border-brand/40"
           >
             <MessageCircle className="h-4 w-4" />
-            Pagar por Yape/Plin (sin comisión)
+            Pagar por Yape/Plin
           </button>
-        </>
+        </div>
       ) : (
         <button
           type="button"
@@ -127,7 +103,7 @@ export default function PricingCard({ plan, compact = false }: PricingCardProps)
           }`}
         >
           <MessageCircle className="h-4 w-4" />
-          {plan.cta}
+          Elegir este plan
         </button>
       )}
     </article>

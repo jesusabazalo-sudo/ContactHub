@@ -14,8 +14,8 @@ const steps = [
   },
   {
     icon: CheckCircle2,
-    title: 'Accede en menos de 24h',
-    text: 'Un administrador verifica y activa tu acceso. Ya puedes ver y usar todos los contactos de tu carpeta.',
+    title: 'Recibe acceso en menos de 24h',
+    text: 'Un administrador verifica y activa tu acceso a todos los contactos de tu carpeta.',
   },
 ];
 
