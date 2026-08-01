@@ -89,10 +89,19 @@ export async function getCatalogCategories() {
       return [];
     }
 
-    // `categories.contacts_count` se mantiene por trigger (migración 004) contando
-    // solo contactos con status='active'. Usar la columna evita una consulta COUNT
-    // por categoría (problema N+1: antes eran ~25 round-trips para pintar el catálogo).
-    const mapped = (data ?? []).map((cat) => mapCategory(cat, cat.contacts_count ?? 0));
+    // No confiar en `categories.contacts_count`: el trigger que la mantiene puede
+    // quedar desincronizado con la tabla real. Se cuenta en vivo con una sola
+    // consulta (todos los category_id de contactos activos) y se agrupa en JS,
+    // evitando el problema N+1 de una query COUNT por categoría.
+    const { data: activeContacts, error: countsError } = await client.from('contacts').select('category_id').eq('status', 'active');
+    if (countsError) console.error('getCatalogCategories counts error:', countsError);
+
+    const countMap = (activeContacts ?? []).reduce<Record<string, number>>((acc, row) => {
+      acc[row.category_id] = (acc[row.category_id] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const mapped = (data ?? []).map((cat) => mapCategory(cat, countMap[cat.id] ?? 0));
 
     return mapped
       .filter((category) => category.sortOrder !== 18)
